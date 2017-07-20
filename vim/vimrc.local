@@ -1,0 +1,531 @@
+" =========================================================================
+" =======================  GLOBAL SETTINGS  ===============================
+" =========================================================================
+" ---- basic settings ---- {{{
+filetype plugin on
+filetype indent on
+
+set mouse=""
+set tabstop=4       " hard tab
+set shiftwidth=4    " shift width
+set softtabstop=4   " soft tab stop
+set expandtab       " use space instead
+" set smarttab "
+set ai              " auto indent
+set ruler           " show the cursor position all the time
+" set ignorecase
+" set showcmd
+" set nowrap
+" paste mode -- for wierd files, no indent
+" nnoremap <F8> :setl noai nocin nosi inde=<CR>
+" set paste
+" set nopaste
+" set pastetoggle=<F8>
+nnoremap <F8> :set invpaste paste?<CR>
+set pastetoggle=<F8>
+set showmode
+
+syntax on
+set hlsearch
+" disable hilight of searching using <Space>
+nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
+
+" ------- " folding " -------
+" vim600: set foldmethod=marker foldmarker={{{,}}} foldlevel=1:
+set foldmethod=marker foldmarker={{{,}}} foldlevel=1
+
+" ------- clipboard --------
+"set clipboard=unnamed,exclude:cons\|linux
+set clipboard=exclude:cons\|linux
+
+" =========================================================================
+" termcap: /etc/termcap (echo $TERMCAP)
+" if &term =~ "xterm\\|rxvt"
+" " use an orange cursor in insert mode
+" let &t_SI = "\<Esc>]12;orange\x7"
+" " use a red cursor otherwise
+" let &t_EI = "\<Esc>]12;red\x7"
+" silent !echo -ne "\033]12;red\007"
+" " reset cursor when vim exits
+" autocmd VimLeave * silent !echo -ne "\033]112\007"
+" " use \003]12;gray\007 for gnome-terminal
+" endif
+" let &t_ve = "\<Esc>[34h\<Esc>[?25h"
+" let &t_ve = "[34h[?25h"
+" let &t_ve = "\<Esc>[34h\<Esc>[?25h"
+
+" -------- " The rest " --------
+" variable 'iskeyword' is for searching/selection
+" variable 'isfname' is for filename setting
+" include '.' in searching, should depend on file type
+" set iskeyword+=\.     " include .
+" set iskeyword-=\.     " disable it
+" }}}
+
+" word / filename under cursor {{{
+" <cfile> <cword>
+"
+" iskeyword --> string : searching and reconizing --> \k (local to buffer)
+" set isk=@,48-57,_,128-167,224-235
+" set isk=@,48-57,_,192-255
+" set isk=@,48-57,_,192-255,#       make
+" set isk=@,48-57,_
+" set isk=a-z,A-Z,48-57,_,.,-,>     C/C++
+"
+" set @,46-57,_,192-255             make (include /)
+"
+" copy to "
+:map <F3> :let @@=expand('<cword>')<CR>
+" copy to selection
+:map <F4> :let @+=expand('<cword>')<CR>
+":map <F3> yiw
+":map <F4> "+yiw
+" }}}
+
+" file support {{{
+augroup filetype
+    au BufRead,BufNewFile *.rules     set filetype=calibre
+    au BufRead,BufNewFile *.rul       set filetype=calibre
+    au BufRead,BufNewFile *.svrf      set filetype=calibre
+    au BufRead,BufNewFile *.tech      set filetype=calibre
+    au BufRead,BufNewFile *.job,*lua  set filetype=tachyon
+    au BufRead,BufNewFile *akefile*   set filetype=make
+    au BufRead,BufNewFile .*akefile*  set filetype=make
+augroup END
+
+" GF ootcl stuff
+autocmd Syntax xml syn match OotclComment "//.*"
+autocmd Syntax xml hi def link OotclComment Comment
+
+" ------------------------------------
+" indentation/tabs for different files
+" ------------------------------------
+au FileType c,cpp    set ts=2 sw=2
+
+" -----------------------
+" set up the help manuals
+" -----------------------
+au FileType vim,help let&l:kp=':help'
+au FileType tcl      set kp=man\ n             " GF DE tcl man is in 'n' section
+au FileType c,cpp,h  set kp=man\ -S\ 3p:2:3    " programming manual pages 2, 3p, and 3
+au FileType perl     set kp=perldoc
+
+" Ignore these files when completing names and in Explorer
+set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.png,*.xpm,*.gif
+
+autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
+
+" FORMAT
+":e ++ff=dos
+":e ++ff=mac
+":e ++ff=unix
+":w ++ff=dos
+":w ++ff=mac
+":w ++ff=unix
+":set fileformat=unix to convert from dos to unix
+" }}}
+
+" =========================================================================
+" =========================  KEYBINDING  ==================================
+" =========================================================================
+nmap ; :!
+
+" window / tabpage command
+"  use 't' for windows, and 'T' for tabpages
+nmap t <C-w>
+nmap Tc :tabnew<CR>
+nmap Tn :tabnext<CR>
+nmap Tp :tabprev<CR>
+
+" nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert
+" insert date and time
+" map <F2> a<C-R>=strftime("%c")<CR><Esc>
+map <F2> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
+" Useful bubble text normal mapping for arrow keys.
+"nnoremap <UP> ddkP
+"nnoremap <DOWN> ddp
+
+vnoremap <DOWN> xjP`[<C-V>`]
+vnoremap <UP> xkP`[<C-V>`]
+vnoremap <LEFT> xhP`[<C-V>`]
+vnoremap <RIGHT> xlP`[<C-V>`]
+
+nnoremap <LEFT>  I
+nnoremap <RIGHT> A
+vnoremap <LEFT>  I
+vnoremap <RIGHT> A
+
+" set shell ?       check the external command
+" run the command in default shell (v-i) :'<,'>w !sh
+vnoremap a :w !sh<CR>
+vnoremap t :w !column -t<CR>
+" index (v-i) :'<,'>!nl -n rz
+vnoremap i :!/usr/bin/nl -n rz<CR>
+
+function! RidSpace() " clean space {{{
+    " Don't change tabs in Makefile
+    if &filetype == 'make'
+        " retab does not work for makefile
+        " silent! exec '%s/\(.\)\t/\1    /g'
+        " take a look at \@<!, retab
+        " silent! exec '%s/\t/        /g'
+        silent! exec '%s/\(^\)\@<!\t/    /g'
+    else
+        " retab     convert
+        " retab!    convert them back
+        " silent! exec '%s/\t/    /g'
+        retab
+    end
+    silent! exec '%s/\s\+$//g'
+    " gg=G  " will do the reindentation
+    " paste vim hint if no
+    " vim: ts=4 sw=4 sts=4 et
+    set foldlevel=0 foldenable
+endfunction
+nmap <silent> , :call RidSpace()<CR>
+" }}}
+
+fu! CustomFoldText() " custom fold display {{{
+    "get first non-blank line
+    let fs = v:foldstart
+    while getline(fs) =~ '^\s\+$' | let fs = nextnonblank(fs + 1)
+    endwhile
+    if fs > v:foldend
+        let line = getline(v:foldstart)
+    else
+        let line = substitute(getline(fs), '\t', repeat(' ', &tabstop), 'g')
+    endif
+    let w = winwidth(0) - &foldcolumn - (&number ? 8 : 0)
+    let foldSize = 1 + v:foldend - v:foldstart
+    let foldSizeStr = " " . foldSize . " lines "
+    " let foldLevelStr = repeat("+--", v:foldlevel)
+    let foldLevelStr = printf("+%d-", v:foldlevel)
+    let lineCount = line("$")
+    let foldPercentage = printf("[%.1f", (foldSize*1.0)/lineCount*100) . "%] "
+    let expansionString = repeat(".", w - strwidth(foldSizeStr.line.foldLevelStr.foldPercentage))
+    return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
+endf
+set foldtext=CustomFoldText() " }}}
+" =========================================================================
+" NOTE: {{{
+" =======================  GENERAL INFO  ==================================
+" vim --version      to check compiled feature
+"
+" === TABLE MODE ===
+" :vmap <A-a> !column -t
+"
+" to ignore the control characters
+" col -b
+"
+" gv    go back to previous visual selection
+" c-wf  open a new window for the file under cursor
+" va{   visual selection {
+" di"   delete in "
+" "*    system clipboard
+" %!iconv -f big5 -t utf8
+
+"
+" =======================  PATTERN REGX  ==================================
+" :g/\<condition\>\%(\s\+number\>\)\@!/p
+"
+" Explanation of the pattern
+"
+"     \<              begin of word (don't match "precondition")
+"     condition       matches itself
+"     \>              end of word (don't match "conditional")
+"     \%(             start subpattern
+"     \s\+            any number of whitespace (at least one)
+"     number          matches itself
+"     \>              end of word ("condition numbering" is different)
+"     \)              end subpattern
+"     \@!             subpattern must NOT match
+"
+" :s/\([.0-9]*\s\+\)\{3}/&\r/g
+"
+"   &   matched pattern
+"
+" insert <CR> after pattern example: s/\(\S\+\s\+\)\{76}/\0\r/g
+" :s/  / /g
+" :s/\([.0-9]* \)\{76}/&\r/g    " after matching 76 times
+"
+" =========================================================================
+" use \r to insert linebreak
+"   /[(,)]
+"   :s//\r&/g
+"
+" XML replace ]]> w/ ]]]]><![CDATA[>
+" ========================  REGISTERS  ====================================
+" NB:
+" In the normal mode: " <--- mark start
+"                     * <--- system clipboard, i,e. the * register
+" "* <-- system clipboard block
+" gg"*yG <-- from start the system clipboard block yank to the end of file
+" "*p <-- paste the system clipboard block
+"
+" NB: :set clipboard=unnamedplus (vim 7.3.74 and later)
+"                     + <--- X window clipboard
+" : help clipboard
+" : help registers
+" : '<,'>w !sh        " run shell commands
+"
+" '"'   the unnamed register, containing the text of the last delete or yank
+" '%'   the current file name
+" '#'   the alternate file name
+" '*'   the clipboard contents (X11: primary selection)
+" '+'   the clipboard contents
+" '/'   the last search pattern
+" ':'   the last command-line
+" '.'   the last inserted text
+" '-'   the last small (less than a line) delete
+" '='   the expression register: you are prompted to
+"       enter an expression (see |expression|)
+"       Note that 0x80 (128 decimal) is used for
+"       special keys.  E.g., you can use this to move
+"       the cursor up:
+"               CTRL-R ="\<Up>"
+"       Use CTRL-R CTRL-R to insert text literally.
+"       When the result is a |List| the items are used
+"       as lines.  They can have line breaks inside
+"       too.
+"       When the result is a Float it's automatically
+"       converted to a String.
+"
+" vim: ts=8 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1:
+" }}}
+" =========================================================================
+" VIM QUICK REFERENCE CARD {{{
+"
+" Insertion & replace Ã¢ÂÂ insert mode
+" i a insert before, after cursor
+" I A insert at beginning, end of line
+" gI  insert text in first column
+" o O open a new line below, above the current line
+" rc  replace character under cursor with c
+" grc like r, but without affecting layout
+" R   replace characters starting at the cursor
+" gR  like R, but without affecting layout
+" cm  change text of movement command m
+" cc or S change current line
+" C   change to the end of line
+" s   change one character and insert
+" ~   switch case and advance cursor
+" g~m switch case of movement command m
+" gum gUm lowercase, uppercase text of movement m
+" <m >m   shift left, right text of movement m
+" n<< n>> shift n lines left, right
+"
+" Deletion
+" x X delete character under, before cursor
+" dm  delete text of movement command m
+" dd D    delete current line, to the end of line
+" J gJ    join current line with next, without space
+" :rdÃ¢ÂÂµ    delete range r lines
+" :rdxÃ¢ÂÂµ   delete range r lines into register x
+"
+" Insert mode
+" ^Vc ^Vn insert char c literally, decimal value n
+" ^A  insert previously inserted text
+" ^@  same as ^A and stop insert Ã¢ÂÂ command mode
+" ^Rx ^R^Rx   insert content of register x, literally
+" ^N ^P   text completion before, after cursor
+" ^W  delete word before cursor
+" ^U  delete all inserted character in current line
+" ^D ^T   shift left, right one shift width
+" ^Kc1c2 or c1Ã¢ÂÂc2 enter digraph \c1,c2\
+" ^Oc execute c in temporary command mode
+" ^X^E ^X^Y   scroll up, down
+" <esc> or ^[ abandon edition Ã¢ÂÂ command mode
+"
+" Copying
+" "x  use register x for next delete, yank, put
+" :regÃ¢ÂÂµ   show the content of all registers
+" :reg xÃ¢ÂÂµ show the content of registers x
+" ym  yank the text of movement command m
+" yy or Y yank current line into register
+" p P put register after, before cursor position
+" ]p [p   like p, P with indent adjusted
+" gp gP   like p, P leaving cursor after new text
+"
+" Advanced insertion
+" g?m perform rot13 encoding on movement m
+" n^A n^X +n, -n to number under cursor
+" gqm format lines of movement m to fixed width
+" :rce wÃ¢ÂÂµ center lines in range r to width w
+" :rle iÃ¢ÂÂµ left align lines in range r with indent i
+" :rri wÃ¢ÂÂµ right align lines in range r to width w
+" !mcÃ¢ÂÂµ    filter lines of movement m through command c
+" n!!cÃ¢ÂÂµ   filter n lines through command c
+" :r!cÃ¢ÂÂµ   filter range r lines through command c
+"
+" Visual mode
+" v V ^V  start/stop highlighting characters, lines, block
+" o   exchange cursor position with start of highlighting
+" gv  start highlighting on previous visual area
+" aw as ap    select a word, a sentence, a paragraph
+" ab aB   select a block ( ), a block { }
+"
+" Undoing, repeating & registers
+" u U undo last command, restore last changed line
+" .  ^R   repeat last changes, redo last undo
+" n.  repeat last changes with count replaced by n
+" qc qC   record, append typed characters in register c
+" q   stop recording
+" @c  execute the content of register c
+" @@  repeat previous @ command
+" :@cÃ¢ÂÂµ    execute register c as an Ex command
+" :rg/p/cÃ¢ÂÂµ    execute Ex command c on range r
+" where pattern p matches
+"
+" Complex movement
+" - + line up, down on first non-blank character
+" B W space-separated word left, right
+" gE E    end of space-separated word left, right
+" n_  down n-1 line on first non-blank character
+" g0  beginning of screen line
+" g^  g$  first, last character of screen line
+" gk gj   screen line up, down
+" fc Fc   next, previous occurence of character c
+" tc Tc   before next, previous occurence of c
+" ; , repeat last fFtT, in opposite direction
+" [[ ]]   start of section backward, forward
+" [] ][   end of section backward, forward
+" [( ])   unclosed (, ) backward, forward
+" [{  ]}  unclosed {, } backward, forward
+" [m ]m   start of backward, forward Java method
+" [# ]#   unclosed #if, #else, #endif backward, forward
+" [* ]*   start, end of /* */ backward, forward
+"
+" Search & substitution
+" /sÃ¢ÂÂµ  ?sÃ¢ÂÂµ    search forward, backward for s
+" /s/oÃ¢ÂÂµ  ?s?oÃ¢ÂÂµ    search fwd, bwd for s with offset o
+" n or /Ã¢ÂÂµ repeat forward last search
+" N or ?Ã¢ÂÂµ repeat backward last search
+" # * search backward, forward for word under cursor
+" g# g*   same, but also find partial matches
+" gd gD   local, global definition of symbol under cursor
+" :rs/f/t/xÃ¢ÂÂµ  substitute f by t in range r
+" x: g-all occurrences, c-confirm changes
+" :rs xÃ¢ÂÂµ  repeat substitution with new r & x
+"
+" Special characters in search patterns
+" .   ^  $    any single character, start, end of line
+" \< \>   start, end of word
+" [c1-c2] a single character in range c1..c2
+" [^c1-c2]    a single character not in range
+" \i \k \I \K an identifier, keyword; excl. digits
+" \f \p \F \P a file name, printable char.; excl. digits
+" \s \S   a white space, a non-white space
+" \e \t \r \b <esc>, <tab>, <Ã¢ÂÂµ>, <Ã¢ÂÂ>
+" \= * \+ match 0..1, 0..Ã¢ÂÂ, 1..Ã¢ÂÂ of preceding atoms
+" \|  separate two branches ( Ã¢ÂÂ¡ or)
+" \( \)   group patterns into an atom
+" \& \n   the whole matched pattern, nth () group
+" \u \l   next character made upper, lowercase
+" \c \C   ignore, match case on next pattern
+"
+" Offsets in search commands
+" n or +n n line downward in column 1
+" -n  n line upward in column 1
+" e+n e-n n characters right, left to end of match
+" s+n s-n n characters right, left to start of match
+" ;sc execute search command sc next
+"
+" Marks and motions
+" mc  mark current position with mark c Ã¢ÂÂ[a..Z]
+" `c `C   go to mark c in current, C in any file
+" `0..9   go to last exit position
+" `` `"   go to position before jump, at last edit
+" `[ `]   go to start, end of previously operated text
+" :marksÃ¢ÂÂµ print the active marks list
+" :jumpsÃ¢ÂÂµ print the jump list
+" n^O go to nth older position in jump list
+" n^I go to nth newer position in jump list
+"
+" Key mapping & abbreviations
+" :map c eÃ¢ÂÂµ   map c Ã¢ÂÂ¦ e in normal & visual mode
+" :map!  c eÃ¢ÂÂµ map c Ã¢ÂÂ¦ e in insert & cmd-line mode
+" :unmap cÃ¢ÂÂµ  :unmap!  cÃ¢ÂÂµ  remove mapping c
+" :mk fÃ¢ÂÂµ  write current mappings, settings... to file f
+" :ab c eÃ¢ÂÂµ    add abbreviation for c Ã¢ÂÂ¦ e
+" :ab cÃ¢ÂÂµ  show abbreviations starting with c
+" :una cÃ¢ÂÂµ remove abbreviation c
+"
+" Tags
+" :ta tÃ¢ÂÂµ  jump to tag t
+" :ntaÃ¢ÂÂµ   jump to nth newer tag in list
+" ^] ^T   jump to the tag under cursor, return from tag
+" :ts tÃ¢ÂÂµ  list matching tags and select one for jump
+" :tj tÃ¢ÂÂµ  jump to tag or select one if multiple matches
+" :tagsÃ¢ÂÂµ  print tag list
+" :npoÃ¢ÂÂµ  :n^TÃ¢ÂÂµ    jump back from, to nth older tag
+" :tlÃ¢ÂÂµ    jump to last matching tag
+" ^W}  :pt tÃ¢ÂÂµ preview tag under cursor, tag t
+" ^W] split window and show tag under cursor
+" ^Wz or :pcÃ¢ÂÂµ close tag preview window
+"
+" Scrolling & multi-windowing
+" ^E ^Y   scroll line up, down
+" ^D ^U   scroll half a page up, down
+" ^F ^B   scroll page up, down
+" zt or zÃ¢ÂÂµ    set current line at top of window
+" zz or z.    set current line at center of window
+" zb or z-    set current line at bottom of window
+" zh zl   scroll one character to the right, left
+" zH zL   scroll half a screen to the right, left
+" ^Ws or :splitÃ¢ÂÂµ  split window in two
+" ^Wn or :newÃ¢ÂÂµ    create new empty window
+" ^Wo or :onÃ¢ÂÂµ make current window one on screen
+" ^Wj ^Wk move to window below, above
+" ^Ww ^W^W    move to window below, above (wrap)
+"
+" Ex commands (Ã¢ÂÂµ)
+" :e f    edit file f, unless changes have been made
+" :e!  f  edit file f always (by default reload current)
+" :wn :wN write file and edit next, previous one
+" :n :N   edit next, previous file in list
+" :rw write range r to current file
+" :rw f   write range r to file f
+" :rw>>f  append range r to file f
+" :q :q!  quit and confirm, quit and discard changes
+" :wq or :x or ZZ write to current file and exit
+" <up> <down> recall commands starting with current
+" :r f    insert content of file f below cursor
+" :r!  c  insert output of command c below cursor
+" :args   display the argument list
+" :rco  a :rm  a  copy, move range r below line a
+"
+" Ex ranges
+" , ;     separates two lines numbers, set to first line
+" n   an absolute line number n
+" .   $   the current line, the last line in file
+" % * entire file, visual area
+" 't  position of mark t
+" /p/ ?p? the next, previous line where p matches
+" +n -n   +n, -n to the preceding line number
+"
+" Folding
+" zfm create fold of movement m
+" :rfo    create fold for range r
+" zd zE   delete fold at cursor, all in window
+" zo zc zO zC open, close one fold; recursively
+" [z ]z   move to start, end of current open fold
+" zj zk   move down, up to start, end of next fold
+"
+" Miscellaneous
+" :shÃ¢ÂÂµ  :!cÃ¢ÂÂµ  start shell, execute command c in shell
+" K   lookup keyword under cursor with man
+" :makeÃ¢ÂÂµ  start make, read errors and jump to first
+" :cnÃ¢ÂÂµ  :cpÃ¢ÂÂµ  display the next, previous error
+" :clÃ¢ÂÂµ  :cfÃ¢ÂÂµ  list all errors, read errors from file
+" ^L ^G   redraw screen, show filename and position
+" g^G show cursor column, line, and character position
+" ga  show ASCII value of character under cursor
+" gf  open file which filename is under cursor
+" :redir>fÃ¢ÂÂµ   redirect output to file f
+" :mkview [f] save view configuration [to file f]
+" :loadview [f]   load view configuration [from file f]
+" ^@ ^K ^_  \  Fn ^Fn unmapped keys
+"
+" Copyright (C) 2005 by Laurent GRÃÂGOIRE (laurent.gregoire@icam.fr) }}}
+" =========================================================================
+" vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

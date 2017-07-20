@@ -1,0 +1,22 @@
+lualib=$HOME/project/lua/lib filter="* */*" CD=. flags=l {
+ pool.lua
+ lom.lua
+ util.lua
+}
+vim=/home/jfeng/project/vim filter="* */* */*/*" CD=. flags=l {
+ vimrc
+ vimrc.local
+
+ vim/autoload/tagbar.vim
+
+ vim/doc/gfide.txt
+ vim/doc/project.txt
+ vim/doc/tags
+
+ vim/plugin/gfide.vim
+
+ vim/syntax/calibre.vim
+ vim/syntax/tachyon.vim
+ vim/syntax/tagbar.vim
+ vim/syntax/xml.vim
+}
