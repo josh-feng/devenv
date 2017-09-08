@@ -1,6 +1,45 @@
 " =========================================================================
 " =======================  GLOBAL SETTINGS  ===============================
 " =========================================================================
+" Debian system-wide default configuration Vim
+" set runtimepath=~/.vim,/var/lib/vim/addons,/usr/share/vim/vimfiles,/usr/share/vim/@VIMCUR@,/usr/share/vim/vimfiles/after,/var/lib/vim/addons/after,~/.vim/after
+
+" source /usr/share/vim/vimcurrent/syntax/syntax.vim
+" source /usr/share/vim/vimcurrent/ftplugin/man.vim
+
+" if &term =~ "xterm"
+"  set mouse=a
+" endif
+" autocmd BufEnter * set mouse=
+
+"set fileencodings=utf-8,big5,euc-jp,gbk,euc-kr,utf-bom,iso8859-1
+"set encoding=utf8
+"set tenc=utf8
+" 使用 <F12> 來將文字編碼轉換成 Big5
+" map <F12> :set tenc=big5<cr>
+"
+
+" ============================================================================
+" auto indenting step (# of space)
+" :verbose set ai? cin? cink? cino? si? inde? indk?
+
+" If you are editing a particular file and you want to prevent
+" auto indenting within that file, enter:
+"setlocal noautoindent
+"setlocal nocindent
+"setlocal nosmartindent
+"setlocal indentexpr=
+" Here is a mapping so you can press F8 to disable auto indenting:
+" nnoremap <F8> :setl noai nocin nosi inde=<CR>
+
+
+" hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
+" hi Comment term=bold cterm=NONE ctermfg=Black ctermbg=DarkBlue gui=NONE guifg=Blue guibg=NONE
+
+
+" ab -- general abbreviation; ca -- command line mode abbreviation
+"ca mkix   !makeindex
+
 " ---- basic settings ---- {{{
 filetype plugin on
 filetype indent on
@@ -10,7 +49,7 @@ set tabstop=4       " hard tab
 set shiftwidth=4    " shift width
 set softtabstop=4   " soft tab stop
 set expandtab       " use space instead
-" set smarttab "
+" set smarttab " make tab insert indents
 set ai              " auto indent
 set ruler           " show the cursor position all the time
 " set ignorecase
@@ -92,6 +131,18 @@ augroup filetype
     au BufRead,BufNewFile *akefile*   set filetype=make
     au BufRead,BufNewFile .*akefile*  set filetype=make
 augroup END
+
+" more file type
+au BufNewFile,BufRead *.txt                     setf text
+
+"au FileType *       set kp=man
+au FileType vim,help let&l:kp=':help'
+au FileType text     set kp=sdcv           "dict
+au FileType tex      set kp=sdcv           "dict
+au FileType mail     set kp=sdcv           "dict
+au FileType bib      set kp=sdcv           "dict
+au FileType python   set kp=pydoc
+au FileType c,cpp    set kp=man\ -S\ 3c:3
 
 " GF ootcl stuff
 autocmd Syntax xml syn match OotclComment "//.*"

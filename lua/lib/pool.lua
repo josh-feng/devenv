@@ -1,6 +1,6 @@
-#!/usr/bin/env lua5.1
+#!/usr/bin/env lua
 -- ======================================================================== --
--- POOL (programming oo lua)
+-- POOL (programming oo lua) 5.1 or later
 -- ======================================================================== --
 
 -- for efficiency, announce them as local variables
@@ -23,7 +23,7 @@ end -- }}}
 local function annihilator (o, ...) -- {{{ destructor for objects
     local mt = getmetatable(o)
     while mt do
-        if 'function' == type(rawget(mt, ';')) then mt[';'](o) end
+        if 'function' == type(rawget(mt, '>')) then mt['>'](o) end
         mt = getmetatable(mt.__index)
     end
 end -- }}} NB: not collected by gc immediately
@@ -35,7 +35,7 @@ local function polymorphism (o, mt, ...) -- {{{ constructor for objects
         mtt = getmetatable(mtt)
         if mtt then polymorphism(o, mtt, ...) end
     end
-    if 'function' == type(rawget(mt, ':')) then mt[':'](o, ...) end
+    if 'function' == type(rawget(mt, '<')) then mt['<'](o, ...) end
 end -- }}}
 
 local class = { -- {{{
@@ -50,12 +50,12 @@ local class = { -- {{{
 
 function class:new (o, ...) -- {{{
     o = (getmetatable(o) or error('bad object', 2))[1] -- class creator
-    if not class.list[o] then error('bad object', 2) end
+    if not self.list[o] then error('bad object', 2) end
     return o(...)
 end -- }}}
 
 function class:parent (o) -- {{{
-    o = (type(o) == 'table' and getmetatable(o) or class.list[o]) or error('bad object/class', 2)
+    o = (type(o) == 'table' and getmetatable(o) or self.list[o]) or error('bad object/class', 2)
     o = getmetatable(o.__index)
     return o and o[1] -- parent class creator
 end -- }}}
@@ -76,9 +76,9 @@ setmetatable(class, {
             for k, v in pairs(tmpl[1]) do if type(k) == 'string' then omt[k] = v end end -- newly defined operators
         end
         tmpl = cloneTbl(tmpl) -- class template closure
-        if tmpl[':'] and type(tmpl[':']) ~= 'function' then error(' bad constructor', 2) end
-        if tmpl[';'] and type(tmpl[';']) ~= 'function' then error(' bad destructor', 2) end
-        omt[':'], omt[';'], tmpl[':'], tmpl[';'] = tmpl[':'], tmpl[';'] -- polymorphism and remove reach from object
+        if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
+        if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
+        omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'] -- polymorphism and remove reach from object
         if creator then setmetatable(tmpl, creator) end
         omt.__index = tmpl
 
@@ -107,7 +107,7 @@ local base = class {
         end;
     };
 
-    [':'] = function (o, v) o.value = v or o.value end; -- o is the object
+    ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
 }
 
 local test = class {
@@ -119,7 +119,7 @@ local test = class {
         __add = function (o1, o2) return o1.value + o2.value end; -- override
     };
 
-    [':'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
+    ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
 }
 
 local obj1, obj2, obj3 = base(3), test(2), test()
@@ -131,7 +131,7 @@ if -- failing conditions:
     or (obj2 + obj3 ~= 3) -- operator following base obj2
     or (class:parent(test) ~= base) -- aux function
     or pcall(function () obj2.var = 1 end) -- object making new var
-    or pcall(function () obj3[':'] = 1 end) -- object constructor
+    or pcall(function () obj3['<'] = 1 end) -- object constructor
     or pcall(function () class(1) end) -- bad class declaration
     then error('Class QA failed.', 1)
 end -- }}}

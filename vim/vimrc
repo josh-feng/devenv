@@ -1,6 +1,6 @@
 " ----- " Color " ----- {{{
 " set background=light
-" set background=dark
+set background=dark
 " colorscheme evening
 " hi comment ctermfg=darkgrey ctermbg=none
 " hi comment cterm=inverse ctermfg=darkgrey ctermbg=none
@@ -14,7 +14,8 @@ hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
 " GNOME-TERM
 " highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
 " highlight FoldColumn guibg=darkgrey guifg=white
-highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
+" highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
+highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
 
 " ICEWM XTERM

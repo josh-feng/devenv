@@ -1,9 +1,9 @@
-lualib=$HOME/project/lua/lib filter="* */*" CD=. flags=l {
+lualib=/home/jfeng/project/devenv/lua/lib filter="* */*" CD=. flags=l {
  pool.lua
  lom.lua
  util.lua
 }
-vim=/home/jfeng/project/vim filter="* */* */*/*" CD=. flags=l {
+vim=/home/jfeng/project/devenv/vim filter="* */* */*/*" CD=. flags=l {
  vimrc
  vimrc.local
 
