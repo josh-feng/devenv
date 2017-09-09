@@ -17,18 +17,23 @@ tun.log = function (logfile) -- {{{ initially no log file: log('logfile')
     if Log.file then
         setmetatable(Log, {__gc = function (o) if o.file then o.file:close() end end})
         tun.log = nil -- self destructive, only one log per run
+    else
+        tun.info('WRN: failed writing '..logfile)
     end
 end -- }}}
 tun.info = function (msg, header) -- {{{ message and header: info('msg', 'ERR')
     header = header and header..' ' or ''
     if tun.Timestamp then header = os.date('%T')..' '..header end
     msg = header..tun.concat(msg, '\n'..header)
-    if Log then Log.file:write(msg..'\n') end
+    if Log and Log.file then Log.file:write(msg..'\n') end
     print(msg)
 end -- }}}
 tun.fatal = function (msg) -- {{{ fatal('err msg')
     if msg then tun.info('ERR: '..msg) end
     os.exit(msg and 1 or 0)
+end -- }}}
+tun.Dbg = function (msg) -- {{{
+    if tun.debug then tun.info(msg, 'DBG:') end
 end -- }}}
 -- ======================================================================== --
 -- ===================  EXTERNAL SUBPROCESS COMMAND   ===================== --
@@ -101,19 +106,13 @@ tun.Ask = function (cmd, multi) -- {{{ Est-ce-que (Alor, on veut savoir le resul
     tun.Dbg(cmd)
     if multi then cmd = string.gsub(cmd, ';', ' 2>&1;') end
     -- NB: lua use (POSIX) sh, we can use 2>&1 to redirect stderr to stdout
-    local file = io.popen(cmd..' 2>&1')
+    local file = io.popen(cmd..' 2>&1', 'r')
     local msg = file:read('*all')
     file:close()
     return msg
 end -- }}}
-
-tun.Get = function (cmd) -- {{{ Get from stdout
-    local file = io.popen(cmd, 'r')
-    local result = file:read('*all')
-    file:close()
-    return result
-end -- }}}
 tun.Put = function (str, cmd) -- {{{ Put to stdin (str?)
+    tun.Dbg(cmd)
     local file = io.popen(cmd, 'w')
     local result = file:write(str)
     file:close()
@@ -131,7 +130,7 @@ end -- }}}
 tun.Dump = function (o, filename) -- {{{
     local file, msg = io.open(filename, 'w')
     if file == nil then error(msg) end
-    file:write(tun.concat(o, '\n'))
+    file:write(type(o) == 'table' and tun.concat(o, '\n') or tostring(o))
     file:close()
 end -- }}}
 -- ======================================================================== --
@@ -140,7 +139,7 @@ end -- }}}
 tun.concat = function (o, sep) -- string or table {{{
     if type(o) ~= 'table' then return tostring(o) end
     local t = {}
-    for i, v in ipairs(o) do tinsert(t, tostring(v)) end
+    for i, v in ipairs(o) do tinsert(t, tostring(v)) end -- make entry string
     return tconcat(t, sep or '\n')
 end -- }}}
 tun.tappi = function (src, targ) -- {{{ append src table to targ table
@@ -151,6 +150,15 @@ tun.tappi = function (src, targ) -- {{{ append src table to targ table
         tinsert(t, src)
     end
     return t
+end -- }}}
+tun.traceTbl = function (tbl, testkey, procvalue, ...) -- {{{ table trace
+    for k, v in pairs(tbl) do
+        if testkey(k) then
+            procvalue(v, ...) -- record in ...
+        elseif type(v) == 'table' then -- trace the sub table
+            tun.traceTbl(v, testkey, procvalue, ...)
+        end
+    end
 end -- }}}
 -- ======================================================================== --
 -- ========================  STRING FUNCTIONS  ============================ --
@@ -183,7 +191,7 @@ end -- }}}
 
 tun.realpath = function (bin) -- {{{ trace the binary link / realpath
     repeat
-        local l = strmatch(io.popen('ls -ld '..bin):read('*all'), '-> (.*)') -- link
+        local l = strmatch(io.popen('ls -ld '..bin..' 2>/dev/null'):read('*all'), '-> (.*)') -- link
         if l then bin = strsub(l, 1, 1) == '/' and l or strgsub(bin, '[^/]*$', '')..l end
     until not l
     return tun.normpath(bin)
@@ -197,19 +205,13 @@ tun.normpath = function (path) -- {{{ full, base, name
             tinsert(o, v)
         end
     end
-    o = tconcat(o, '/')
+    o = tun.trim(tconcat(o, '/'))
     return o, strmatch(o, '(.-/?)([^/]+)$') -- full, base, name
 end -- }}}
 tun.getstem = function (path) -- {{{
     return strgsub(strgsub(path, '^.*/', ''), '%.[^.]*$', '')
 end -- }}}
 
-tun.check = function (v) -- {{{ -- check v is true or false
-    if type(v) == 'boolean' then return v end
-    if tonumber(v) then return tonumber(v) ~= 0 end
-    v = string.lower(tostring(v))
-    return (v == 'true') or (v == 'yes') or (v == 'y')
-end -- }}}
 tun.tblToStr = function (tbl, sep) -- {{{ build the set
     local res = {}
     local assign = (sep and string.len(sep) > 1) and ' = ' or '='
@@ -238,29 +240,19 @@ tun.match = function (targ, tmpl) -- {{{ -- match assignment in tmpl
     end
     return true
 end -- }}}
+
+tun.check = function (v) -- {{{ -- check v is true or false
+    if type(v) == 'boolean' then return v end
+    if tonumber(v) then return tonumber(v) ~= 0 end
+    v = string.lower(tostring(v))
+    return (v == 'true') or (v == 'yes') or (v == 'y')
+end -- }}}
 -- ======================================================================== --
 -- =========================  debug info gadgets ========================== --
 -- ======================================================================== --
-tun.Whos = function (t) -- {{{
+tun.whos = function (t) -- {{{
     for k, v in pairs(type(t) == 'table' and t or _ENV) do
         if type(k) == 'string' then print(k, v) end
-    end
-end -- }}}
-
-tun.Dbg = function (...) -- {{{
-    if DBG and tonumber(DBG) > 0 then
-        io.write("DBG:")
-        print(...)
-    end
-end -- }}}
-
-tun.trace = function (tbl, testkey, procvalue, ...) -- {{{ table trace
-    for k, v in pairs(tbl) do
-        if testkey(k) then
-            procvalue(v, ...) -- record in ...
-        elseif type(v) == 'table' then -- trace the sub table
-            tun.trace(v, testkey, procvalue, ...)
-        end
     end
 end -- }}}
 return tun

@@ -75,7 +75,6 @@ lom.ParseXml = function (filename, doctree, mode) -- doc = lom.ParseXml(xmlfile,
     if type(doctree) == 'table' then doctree[filename] = doc end
     return doc
 end -- }}}
-
 lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfile) -- {{{ -- trace and meta
     local topxml, base = tun.normpath(xmlfile)
     local doctree = {}
@@ -176,14 +175,11 @@ lom.Collect = function (t, key, code) -- {{{
     end
     return collection
 end -- }}}
-
-lom.Pick = function (filename, key, code) -- {{{
-end -- }}}
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
 local resTbl -- result string
-local function xmlstr (s, fenc) -- {{{
+lom.xmlstr = function (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
     -- return '<!-- base64 -i -d | zcat -f -->{{{'..
@@ -222,7 +218,7 @@ local function DumpLom (node, c) -- {{{ XML format -- lom to XML
         if type(t) == 'table' then
             DumpLom(t, c)
         else
-            tinsert(resTbl, strrep(indent, c)..xmlstr(t)..'\n')
+            tinsert(resTbl, strrep(indent, c)..lom.xmlstr(t)..'\n')
         end
     end -- }}}
     if #node > 0 and node['.'] then tinsert(resTbl, strrep(indent, c - 1)..'</'..node['.']..'>\n') end -- end tag
