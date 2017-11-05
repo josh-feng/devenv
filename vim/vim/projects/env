@@ -1,22 +1,21 @@
-lualib=/home/jfeng/project/devenv/lua/lib filter="* */*" CD=. flags=l {
- pool.lua
- lom.lua
- util.lua
-}
-vim=/home/jfeng/project/devenv/vim filter="* */* */*/*" CD=. flags=l {
- vimrc
- vimrc.local
+lualib=/home/jfeng/project/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
+ README.md
+ tmux.conf
 
- vim/autoload/tagbar.vim
+ lua/lib/lom.lua
+ lua/lib/pool.lua
+ lua/lib/util.lua
 
- vim/doc/gfide.txt
- vim/doc/project.txt
- vim/doc/tags
-
- vim/plugin/gfide.vim
-
- vim/syntax/calibre.vim
- vim/syntax/tachyon.vim
- vim/syntax/tagbar.vim
- vim/syntax/xml.vim
+ vim/vimrc
+ vim/vimrc.local
+ vim/vim/autoload/tagbar.vim
+ vim/vim/doc/gfide.txt
+ vim/vim/doc/project.txt
+ vim/vim/doc/tags
+ vim/vim/plugin/gfide.vim
+ vim/vim/projects/env
+ vim/vim/syntax/calibre.vim
+ vim/vim/syntax/tachyon.vim
+ vim/vim/syntax/tagbar.vim
+ vim/vim/syntax/xml.vim
 }

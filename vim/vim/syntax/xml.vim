@@ -27,3 +27,6 @@ syntax include @CDATA_LUA  $HOME/.vim/syntax/tachyon.vim
 syntax region xmlCdataLua  start=/\V<LuaCode><![CDATA[/ end=/\V]]>/ contains=@CDATA_LUA keepend
 syntax region xmlCdataLua  start=/\V<LuaCode>/ end=/\V<\/LuaCode>/ contains=@CDATA_LUA keepend
 "syntax region xmlCdataLua  start=/\V<![CDATA[\-\-/ end=/\V]]>/ contains=@CDATA_LUA keepend
+
+" commentstring
+set cms=<!--%s-->

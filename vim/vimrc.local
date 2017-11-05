@@ -176,6 +176,16 @@ autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
 ":set fileformat=unix to convert from dos to unix
 " }}}
 
+" =========================  VIM DIFF MODE  ===============================
+" vimdiff/viewdiff mode
+" do    get change form the other
+" dp    put change to the other
+" ]c    next diff
+" [c    prev diff
+if &diff
+    set scrollbind
+else
+endif
 " =========================================================================
 " =========================  KEYBINDING  ==================================
 " =========================================================================

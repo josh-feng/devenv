@@ -2,10 +2,9 @@
 -- ======================================================================== --
 -- POOL (programming oo lua) 5.1 or later
 -- ======================================================================== --
-
 -- for efficiency, announce them as local variables
-local error, tostring, type, setmetatable, rawset, rawget =
-      error, tostring, type, setmetatable, rawset, rawget
+local error, tostring, type, setmetatable, rawset =
+      error, tostring, type, setmetatable, rawset
 
 local function cloneTbl (src) -- {{{ deep copy the string-key-ed
     local targ = {}
@@ -19,15 +18,13 @@ local function setVar (t, k, v) -- forbid creating vars -- {{{
     if t[k] == nil then error('Undefined in class:'..tostring(t), 2) end
     rawset(t, k, v)
 end -- }}}
-
 local function annihilator (o, ...) -- {{{ destructor for objects
     local mt = getmetatable(o)
     while mt do
-        if 'function' == type(rawget(mt, '>')) then mt['>'](o) end
+        if mt['>'] then mt['>'](o) end -- rawget is not necessary
         mt = getmetatable(mt.__index)
     end
 end -- }}} NB: not collected by gc immediately
-
 local function polymorphism (o, mt, ...) -- {{{ constructor for objects
     local mtt = mt.__index -- metatable template
     if mtt then
@@ -35,7 +32,7 @@ local function polymorphism (o, mt, ...) -- {{{ constructor for objects
         mtt = getmetatable(mtt)
         if mtt then polymorphism(o, mtt, ...) end
     end
-    if 'function' == type(rawget(mt, '<')) then mt['<'](o, ...) end
+    if mt['<'] then mt['<'](o, ...) end -- rawget is not necessary
 end -- }}}
 
 local class = { -- {{{
@@ -53,8 +50,7 @@ function class:new (o, ...) -- {{{
     if not self.list[o] then error('bad object', 2) end
     return o(...)
 end -- }}}
-
-function class:parent (o) -- {{{
+function class:parent (o) -- {{{ parent class
     o = (type(o) == 'table' and getmetatable(o) or self.list[o]) or error('bad object/class', 2)
     o = getmetatable(o.__index)
     return o and o[1] -- parent class creator
@@ -79,10 +75,14 @@ setmetatable(class, {
         if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
         if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
         omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'] -- polymorphism and remove reach from object
-        if creator then setmetatable(tmpl, creator) end
+        if creator then
+            creator.__gc = nil -- disable extra tmpl destructor
+            setmetatable(tmpl, creator)
+            creator.__gc = annihilator -- recover
+        end
         omt.__index = tmpl
 
-        creator = function (...) --  classes {{{ tmpl is the hidden class template
+        creator = function (...) -- classes {{{ tmpl is the hidden class template
             local o = {}
             setmetatable(o, omt) -- need member functions
             polymorphism(o, omt, ...)

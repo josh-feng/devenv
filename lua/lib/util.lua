@@ -191,7 +191,7 @@ end -- }}}
 
 tun.realpath = function (bin) -- {{{ trace the binary link / realpath
     repeat
-        local l = strmatch(io.popen('ls -ld '..bin..' 2>/dev/null'):read('*all'), '-> (.*)') -- link
+        local l = strmatch(io.popen('ls -ld '..bin..' 2>/dev/null'):read('*all'), '->%s+(.*)') -- link
         if l then bin = strsub(l, 1, 1) == '/' and l or strgsub(bin, '[^/]*$', '')..l end
     until not l
     return tun.normpath(bin)

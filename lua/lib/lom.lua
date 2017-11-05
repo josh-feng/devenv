@@ -5,15 +5,13 @@
 --      lom = require('lom')
 --      doc = lom.ParseXml(file)
 --      print(doc.Flow.LayoutWriter[1]['@name'])
---      target = lom.Collect(doc, 'E1Target')
---      boolean = lom.Collect(doc, 'Map', 1)
 --      xml = lom.Dump(doc, true)
 --      subxml = lom.Dump(doc.Flow.LayoutWriter, 'TestTag')
 -- ======================================================================== --
 local lom = {cvs_id = '$Id: $'}
 
 local lxp = require('lxp') -- the standard Lua Expat module
-local tun = require('util')
+local tun = require('util') -- for path
 
 local next, assert, type = next, assert, type
 local strlen, strsub, strmatch, strgmatch = string.len, string.sub, string.match, string.gmatch
@@ -50,19 +48,48 @@ local lomcallbacks = {
     end; -- }}}
 }
 
-local function parselom (o, mode)
+lom.Parse = function (txt, mode) -- parselom
     node = {} -- initialize the local root
     trim = mode
     local plom = lxp.new(lomcallbacks)
-    local status, msg, line, col, pos = plom:parse(o) -- passed nil if failed
+    local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
     plom:parse()
     plom:close() -- seems destroy the lxp obj
     node['?'] = status and {} or {msg..' @line '..line}
     return node
 end
-lom.Parse = parselom
 -- }}}
 -- ======================================================================== --
+local checkAttr = function(t, attrStr, fExact) -- {{{ check attr
+    for attr, val in strgmatch(strmatch(attrStr, '%[(.*)%]') or '', '(@.*)=(.*)') do
+        local q, qo = strmatch(val, '^([\'"])(.*)%1$')
+        if t[attr] ~= qo then return false end
+    end
+    if fExact then
+        for k in pairs(t) do if not strfind(k, attrStr) then return false end end
+    end
+    return true
+end -- }}}
+lom.xPath = function (dtbl, path) -- {{{ return doc table, missingTag
+    if (not path) or path == '' then return dtbl end
+    -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
+    if strsub(path, 1, 1) ~= '/' then -- assume
+        for k, v in pairs(dtbl) do
+            if type(k) ~= 'number' then dtbl = v ; break end
+        end
+    end
+    for _ in strgmatch(path, '([^/]+)') do -- tag path {{{
+        dtbl = dtbl[strmatch(_, '[^%[]+')]
+        if not dtbl then return dtbl, _ end
+        local found
+        for i = 1, #dtbl do -- first hit (TODO multiple hits)
+            if checkAttr(dtbl[i], _) then found = dtbl[i] ; break end
+        end
+        if not found then return nil, _ end
+        dtbl = found
+    end -- }}}
+    return dtbl
+end -- }}}
 lom.ParseXml = function (filename, doctree, mode) -- doc = lom.ParseXml(xmlfile, docfactory) -- {{{
     filename = tun.normpath(filename)
     if type(doctree) == 'table' and doctree[filename] then return doctree[filename] end
@@ -78,7 +105,7 @@ end -- }}}
 lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfile) -- {{{ -- trace and meta
     local topxml, base = tun.normpath(xmlfile)
     local doctree = {}
-    local doc = lom.ParseXml(topxml, doctree, mode)
+    local doc = lom.ParseXml(topxml, doctree, mode) -- doc table
 
     local function TraceTbl (t, xml) -- {{{ lua table form
         for k, v in pairs(t) do
@@ -117,68 +144,10 @@ lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfi
     if #doc['?'] == 0 then TraceTbl(doc, topxml) end -- no error msg
     return topxml, doctree
 end -- }}}
-
-local checkAttr = function(t, _) -- {{{ check attr
-    for attr, val in strgmatch(strmatch(_, '%[(.*)%]') or '', '(@.*)=(.*)') do
-        local q, qo = strmatch(val, '^([\'"])(.*)%1$')
-        if t[attr] ~= qo then return false end
-    end
-    return true
-end -- }}}
-
-lom.xPath = function (t, path) -- {{{ return doc table, missingTag
-    if (not path) or path == '' then return t end
-    -- NB: xpointer does not have standard treatment -- TODO supporting other formats
-    -- /A/B -- TODO
-    -- A/B[@attr="val",@bb='4']
-    if strsub(path, 1, 1) ~= '/' then
-        for k, v in pairs(t) do
-            -- if type(k) ~= 'number' and type(v) == 'table' then t = v ; break end
-            if type(k) ~= 'number' then t = v ; break end
-        end
-    end
-    for _ in strgmatch(path, '([^/]+)') do -- tag path {{{
-        t = t[strmatch(_, '[^%[]+')]
-        if not t then return t, _ end
-        local found
-        for i = 1, #t do -- first hit (TODO multiple hits)
-            if checkAttr(t[i], _) then found = t[i] ; break end
-        end
-        if not found then return nil, _ end
-        t = found
-    end -- }}}
-    return t
-end -- }}}
--- ======================================================================== --
-lom.Collect = function (t, key, code) -- {{{
-    local force = code and ''
-    local fuzzy = code and code == 1
-    local collection = {}
-    if type(t) == 'table' and key then
-        local function collect (subtbl, title)
-            for k, v in pairs(subtbl) do
-                if (fuzzy and strmatch(k, key)) or k == key then
-                    if title then
-                        collection[title] = v
-                        if type(v) == 'table' then
-                            collect(v, title..'/'..k)
-                        end
-                    else
-                        tinsert(collection, v) -- shield by the first
-                    end
-                elseif (type(v) == 'table') and (k ~= '/') then -- supernode
-                    collect(v, title and title..'/'..k)
-                end
-            end
-        end
-        collect(t, force)
-    end
-    return collection
-end -- }}}
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
-local resTbl -- result string
+local resTbl
 lom.xmlstr = function (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
@@ -243,7 +212,6 @@ local function DumpTbl (t, c) -- {{{ lua table form -- raw table
     end -- }}}
     tinsert(resTbl, strrep(indent, c - 1)..'}')
 end -- }}}
-
 lom.Dump = function (doc, fxml) -- {{{ dump
     if type(doc) ~= 'table' then return '' end
     if fxml then
