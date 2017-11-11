@@ -94,7 +94,7 @@ setmetatable(class, {
     end; -- }}}
 }) -- }}}
 
--- ==================  demo and self-tgest (QA)  ========================== -- {{{
+-- {{{ ==================  demo and self-tgest (QA)  =========================
 local base = class {
     value = 1;
     variant = 1;
@@ -133,8 +133,7 @@ if -- failing conditions:
     or pcall(function () obj2.var = 1 end) -- object making new var
     or pcall(function () obj3['<'] = 1 end) -- object constructor
     or pcall(function () class(1) end) -- bad class declaration
-    then error('Class QA failed.', 1)
-end -- }}}
+then error('Class QA failed.', 1) end -- }}}
 
 return class
 -- ======================================================================== --

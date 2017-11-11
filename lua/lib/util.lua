@@ -7,8 +7,8 @@ local tun = {cvs_id = "$Id: $"}
 -- ======================================================================== --
 local strgsub, strsub, strgmatch, strmatch, strfind =
     string.gsub, string.sub, string.gmatch, string.match, string.find
-local tinsert, tremove, tconcat =
-    table.insert, table.remove, table.concat
+local tinsert, tremove, tconcat, tsort =
+    table.insert, table.remove, table.concat, table.sort
 
 tun.Timestamp = false
 local Log
@@ -247,6 +247,100 @@ tun.check = function (v) -- {{{ -- check v is true or false
     v = string.lower(tostring(v))
     return (v == 'true') or (v == 'yes') or (v == 'y')
 end -- }}}
+-- ======================================================================== --
+local ctrl -- control table
+local function dumpVar (key, value, ext) -- {{{ dump variables in lua
+    local assign = type(key) == 'string' and key..' = ' or ''
+    if type(value) == 'number' then return assign..value end
+    if type(value) == 'string' then return assign..'"'..strgsub(value, '"', '\"')..'"' end
+    if type(value) ~= 'table' then return '' end
+    tinsert(ctrl, key) -- increase the depth
+    local extdef, keyhead = ''
+    if ext then -- the depths to external {{{
+        for _ = 1, #ext do
+            if #ctrl == ext[_] then
+                keyhead = strgsub(tconcat(ctrl, "."), '%.(%d+)', '[%1]')
+                break
+            end
+        end
+    end -- }}}
+    local res, kset, tmp1 = {}, {}, ctrl['L'..#ctrl]
+    for k, v in pairs(value) do
+        if type(k) == 'string' then
+            tinsert(kset, k)
+        elseif type(v) == 'table' and type(k) == 'number' then -- 2D format
+            tmp1 = false
+        end
+    end
+
+    if #value > 0 then -- {{{
+        if keyhead then
+            for i = #value, 1, -1 do -- {{{
+                local v = dumpVar(i, value[i], ext)
+                if v ~= '' then tinsert(ctrl.def, 1, keyhead..'['..i..'] = '..v) end
+            end -- }}}
+        else
+            for i = 1, #value do -- {{{
+                local v = dumpVar(i, value[i], ext)
+                if v ~= '' then tinsert(res, v) end
+            end -- }}}
+        end
+        if tmp1 and (#res > ctrl['L'..#ctrl]) then -- level L# 2D table @ column
+            local w, m = ctrl['L'..#ctrl], {} -- {{{
+            for i = 0, #res - 1 do
+                local l = string.len(tostring(res[i + 1]))
+                m[i % w] = (m[i % w] and m[i % w] >= l) and m[i % w] or l
+            end
+            for i = 0, #res - 1 do
+                res[i + 1] = string.format((i > 0 and (i % w) == 0 and '\n%' or '%')..m[i % w]..'s,', res[i + 1])
+            end
+            res = {tconcat(res, ' ')} -- }}}
+        else --
+            tmp1 = false
+            res = tconcat(res, ',\n')
+            if string.len(res) < ctrl.len then res = strgsub(res, '\n', ' ') end
+            res = {res}
+        end
+    end -- }}}
+    if #kset > 0 then -- {{{
+        table.sort(kset)
+        for i = 1, #kset do
+            local v = dumpVar(kset[i], value[kset[i]], ext)
+            if v ~= '' then -- {{{
+                if keyhead then -- recursive so must be the first
+                    tinsert(ctrl.def, 1, keyhead..'.'..v)
+                else
+                    tinsert(res, v)
+                end
+            end -- }}}
+        end
+    end -- }}}
+    kset = #res
+    tremove(ctrl)
+    res = tconcat(res, ',\n')
+    if #ctrl == 0 and #(ctrl.def) > 0 then extdef = '\n'..tconcat(ctrl.def, '\n') end
+    if not strfind(res, '\n') then return assign..'{'..res..'}'..extdef end
+    if (not tmp1) and string.len(res) < ctrl.len and kset < ctrl.num then
+        return assign..'{'..strgsub(res, '\n', ' ')..'}'..extdef
+    end
+    tmp1 = string.rep(' ', 4)
+    return assign..'{\n'..tmp1..strgsub(res, '\n', '\n'..tmp1)..'\n}'..extdef
+end -- }}}
+tun.dumpVar = function (key, value, ext) -- {{{ e.g. print(tun.dumpVar('a', a, {1, L4=3}))
+    ctrl = {def = {}, len = 111, num = 11} -- external definitions m# = cloumn_num
+    if type(ext) == 'table' then -- {{{
+        ctrl.len = ext.len or ctrl.len -- max txt width
+        ctrl.num = ext.num or ctrl.num -- max items in one line table
+        for k, v in pairs(ext) do
+            if type(k) == 'string' and strmatch(k, '^L%d+$') and tonumber(v) and v > 1 then ctrl[k] = v end
+        end
+    end -- }}}
+    return dumpVar(key, value, ext)
+end -- }}}
+-- ======================================================================== --
+-- =========================  addressing table/list ======================= --
+-- ======================================================================== --
+
 -- ======================================================================== --
 -- =========================  debug info gadgets ========================== --
 -- ======================================================================== --

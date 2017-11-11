@@ -29,4 +29,4 @@ syntax region xmlCdataLua  start=/\V<LuaCode>/ end=/\V<\/LuaCode>/ contains=@CDA
 "syntax region xmlCdataLua  start=/\V<![CDATA[\-\-/ end=/\V]]>/ contains=@CDATA_LUA keepend
 
 " commentstring
-set cms=<!--%s-->
+setlocal cms=<!--%s-->
