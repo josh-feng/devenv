@@ -16,9 +16,9 @@ local tun = require('util') -- for path
 local next, assert, type = next, assert, type
 local strlen, strsub, strmatch, strgmatch = string.len, string.sub, string.match, string.gmatch
 local strrep, strgsub, strfind = string.rep, string.gsub, string.find
-local tinsert, tremove = table.insert, table.remove
+local tinsert, tremove, tconcat = table.insert, table.remove, table.concat
 
-local indent = strrep(' ', 2)
+local indent = strrep(' ', 4)
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
@@ -147,7 +147,6 @@ end -- }}}
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
-local resTbl
 lom.xmlstr = function (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
@@ -171,60 +170,26 @@ lom.xmlstr = function (s, fenc) -- {{{
             '>', '&gt;')
     end
 end -- }}}
-local function DumpLom (node, c) -- {{{ XML format -- lom to XML
-    if node['.'] then -- {{{ start tag
-        tinsert(resTbl, strrep(indent, c)..'<'..node['.'])
-        for k, v in pairs(node) do -- {{{ attribute
-            if strsub(k, 1, 1) == '@' then
-                tinsert(resTbl, ' '..strsub(k, 2, -1)..'="'..v..'"')
-            end
-        end -- }}}
-        tinsert(resTbl, #node > 0 and '>\n' or ' />\n')
-    end -- }}}
-    c = c + 1
-    for k = 1, #node do -- {{{ data
-        local t = node[k]
-        if type(t) == 'table' then
-            DumpLom(t, c)
-        else
-            tinsert(resTbl, strrep(indent, c)..lom.xmlstr(t)..'\n')
+local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@attr'] = value; ...}
+    if not node['.'] then return end
+    local res, subnode = {}, #node > 0
+    for k, v in pairs(node) do -- {{{ attribute
+        if strsub(tostring(k), 1, 1) == '@' then
+            tinsert(res, strsub(k, 2, -1)..'="'..v..'"')
+        elseif type(k) == 'number' and type(v) == 'table' then
+            subnode = false
         end
     end -- }}}
-    if #node > 0 and node['.'] then tinsert(resTbl, strrep(indent, c - 1)..'</'..node['.']..'>\n') end -- end tag
-end -- }}}
-local function DumpTbl (t, c) -- {{{ lua table form -- raw table
-    tinsert(resTbl, '{\n')
-    c = c + 1
-    for k, v in pairs(t) do -- {{{ tag and @ttribute fisrt and skip other (survey-ed) tags
-        if k == '.' or strsub(k, 1, 1) == '@' then
-            tinsert(resTbl, strrep(indent, c)..'["'..k..'"] = "'..v..'",\n')
-        end
-    end -- }}}
-    for k = 1, #t do -- {{{ data
-        local v = t[k]
-        tinsert(resTbl, strrep(indent, c))
-        if type(v) ~= 'table' then
-            tinsert(resTbl, '"'..tostring(v)..'"')
-        else -- if next(v) ~= nil then
-            DumpTbl(v, c)
-        end
-        tinsert(resTbl, ',\n') -- tinsert(resTbl, (next(t, k) and ',' or '')..'\n')
-    end -- }}}
-    tinsert(resTbl, strrep(indent, c - 1)..'}')
+    table.sort(res)
+    res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
+    if #node == 0 then return res..' />' end
+    if subnode then return res..'>'..lom.xmlstr(tconcat(node, ' '))..'</'..node['.']..'>' end
+    res = {res..'>'}
+    for k, t in ipairs(node) do tinsert(res, type(t) == 'table' and dumpLom(t) or lom.xmlstr(t)) end
+    return strgsub(tconcat(res, '\n'), '\n', '\n'..indent)..'\n</'..node['.']..'>'
 end -- }}}
 lom.Dump = function (doc, fxml) -- {{{ dump
-    if type(doc) ~= 'table' then return '' end
-    if fxml then
-        resTbl = {
-            '<?xml version="1.0"?>\n',
-            -- '<?xml-stylesheet type="text/xsl" href="shared/keyword.xsl"?>\n'
-        }
-        DumpLom(doc, -1)
-    else
-        resTbl = {}
-        DumpTbl(doc, 0)
-    end
-    return table.concat(resTbl)
+    return type(doc) ~= 'table' and '' or (fxml and '<?xml version="1.0"?>\n'..dumpLom(doc) or tun.dumpVar(0, doc))
 end -- }}}
 
 return lom

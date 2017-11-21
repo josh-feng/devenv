@@ -120,14 +120,14 @@ end -- }}}
 -- ======================================================================== --
 -- =========================  SIMPLE I/O  ================================= --
 -- ======================================================================== --
-tun.Load = function (filename) -- {{{
+tun.LoadStr = function (filename) -- {{{
     local file, msg = io.open(filename, 'r')
     if file == nil then error(msg) end
     local chunk = file:read('*all')
     file:close()
     return chunk
 end -- }}}
-tun.Dump = function (o, filename) -- {{{
+tun.DumpStr = function (o, filename) -- {{{
     local file, msg = io.open(filename, 'w')
     if file == nil then error(msg) end
     file:write(type(o) == 'table' and tun.concat(o, '\n') or tostring(o))
@@ -248,17 +248,16 @@ tun.check = function (v) -- {{{ -- check v is true or false
     return (v == 'true') or (v == 'yes') or (v == 'y')
 end -- }}}
 -- ======================================================================== --
-local ctrl -- control table
-local function dumpVar (key, value, ext) -- {{{ dump variables in lua
-    local assign = type(key) == 'string' and key..' = ' or ''
+local function dumpVar (key, value, ctrl) -- {{{ dump variables in lua
+    local assign = type(key) == 'string' and (strfind(key, '%W') and '["'..key..'"]' or key)..' = ' or ''
     if type(value) == 'number' then return assign..value end
     if type(value) == 'string' then return assign..'"'..strgsub(value, '"', '\"')..'"' end
     if type(value) ~= 'table' then return '' end
     tinsert(ctrl, key) -- increase the depth
     local extdef, keyhead = ''
-    if ext then -- the depths to external {{{
-        for _ = 1, #ext do
-            if #ctrl == ext[_] then
+    if ctrl.ext then -- the depths to external {{{
+        for _ = 1, #(ctrl.ext) do
+            if #ctrl == ctrl.ext[_] then
                 keyhead = strgsub(tconcat(ctrl, "."), '%.(%d+)', '[%1]')
                 break
             end
@@ -276,12 +275,12 @@ local function dumpVar (key, value, ext) -- {{{ dump variables in lua
     if #value > 0 then -- {{{
         if keyhead then
             for i = #value, 1, -1 do -- {{{
-                local v = dumpVar(i, value[i], ext)
+                local v = dumpVar(i, value[i], ctrl)
                 if v ~= '' then tinsert(ctrl.def, 1, keyhead..'['..i..'] = '..v) end
             end -- }}}
         else
             for i = 1, #value do -- {{{
-                local v = dumpVar(i, value[i], ext)
+                local v = dumpVar(i, value[i], ctrl)
                 if v ~= '' then tinsert(res, v) end
             end -- }}}
         end
@@ -305,7 +304,7 @@ local function dumpVar (key, value, ext) -- {{{ dump variables in lua
     if #kset > 0 then -- {{{
         table.sort(kset)
         for i = 1, #kset do
-            local v = dumpVar(kset[i], value[kset[i]], ext)
+            local v = dumpVar(kset[i], value[kset[i]], ctrl)
             if v ~= '' then -- {{{
                 if keyhead then -- recursive so must be the first
                     tinsert(ctrl.def, 1, keyhead..'.'..v)
@@ -326,16 +325,22 @@ local function dumpVar (key, value, ext) -- {{{ dump variables in lua
     tmp1 = string.rep(' ', 4)
     return assign..'{\n'..tmp1..strgsub(res, '\n', '\n'..tmp1)..'\n}'..extdef
 end -- }}}
-tun.dumpVar = function (key, value, ext) -- {{{ e.g. print(tun.dumpVar('a', a, {1, L4=3}))
-    ctrl = {def = {}, len = 111, num = 11} -- external definitions m# = cloumn_num
+tun.dumpVar = function (key, value, ext) -- {{{
+    -- e.g. print(tun.dumpVar('a', a, {1, L4=3}))
+    -- e.g. print(tun.dumpVar('a', a,
+    -- {1, ['a.b.1.3.5'] = 'ab',
+    --     ['a.b.1.3.5'] = 13,
+    -- }))
+    local ctrl = {def = {}, len = 111, num = 11} -- external definitions m# = cloumn_num
     if type(ext) == 'table' then -- {{{
         ctrl.len = ext.len or ctrl.len -- max txt width
         ctrl.num = ext.num or ctrl.num -- max items in one line table
         for k, v in pairs(ext) do
             if type(k) == 'string' and strmatch(k, '^L%d+$') and tonumber(v) and v > 1 then ctrl[k] = v end
         end
+        ctrl.ext = ext -- control table
     end -- }}}
-    return dumpVar(key, value, ext)
+    return dumpVar(key, value, ctrl)
 end -- }}}
 -- ======================================================================== --
 -- =========================  addressing table/list ======================= --
