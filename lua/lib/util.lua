@@ -249,16 +249,17 @@ tun.check = function (v) -- {{{ -- check v is true or false
 end -- }}}
 -- ======================================================================== --
 local function dumpVar (key, value, ctrl) -- {{{ dump variables in lua
-    local assign = type(key) == 'string' and (strfind(key, '%W') and '["'..key..'"]' or key)..' = ' or ''
+    key = (type(key) == 'string' and strfind(key, '%W')) and '["'..key..'"]' or key
+    local assign = type(key) == 'number' and '' or key..' = '
     if type(value) == 'number' then return assign..value end
     if type(value) == 'string' then return assign..'"'..strgsub(value, '"', '\"')..'"' end
     if type(value) ~= 'table' then return '' end
-    tinsert(ctrl, key) -- increase the depth
+    tinsert(ctrl, type(key) == 'number' and '['..key..']' or key) -- increase the depth
     local extdef, keyhead = ''
     if ctrl.ext then -- the depths to external {{{
         for _ = 1, #(ctrl.ext) do
             if #ctrl == ctrl.ext[_] then
-                keyhead = strgsub(tconcat(ctrl, "."), '%.(%d+)', '[%1]')
+                keyhead = strgsub(tconcat(ctrl, "."), '%.%[', '[')
                 break
             end
         end
@@ -307,7 +308,7 @@ local function dumpVar (key, value, ctrl) -- {{{ dump variables in lua
             local v = dumpVar(kset[i], value[kset[i]], ctrl)
             if v ~= '' then -- {{{
                 if keyhead then -- recursive so must be the first
-                    tinsert(ctrl.def, 1, keyhead..'.'..v)
+                    tinsert(ctrl.def, 1, keyhead..(strsub(v, 1, 1) == '[' and v or '.'..v))
                 else
                     tinsert(res, v)
                 end
