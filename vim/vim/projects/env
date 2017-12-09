@@ -1,4 +1,4 @@
-lualib=/home/jfeng/project/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
+devenv=$HOME/Project/coding/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
  README.md
  tmux.conf
 
@@ -18,4 +18,8 @@ lualib=/home/jfeng/project/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
  vim/vim/syntax/tachyon.vim
  vim/vim/syntax/tagbar.vim
  vim/vim/syntax/xml.vim
+}
+pool=$HOME/Project/coding/pool filter="* */* */*/* */*/*/*" CD=. flags=l {
+ README.md
+ pool.lua
 }

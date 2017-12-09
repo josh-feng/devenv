@@ -120,16 +120,16 @@ end -- }}}
 -- ======================================================================== --
 -- =========================  SIMPLE I/O  ================================= --
 -- ======================================================================== --
-tun.loadStr = function (filename) -- {{{
+tun.loadStr = function (filename, verify) -- {{{
     local file, msg = io.open(filename, 'r')
-    if file == nil then error(msg) end
+    if file == nil then return verify and error(msg) end
     local chunk = file:read('*all')
     file:close()
     return chunk
 end -- }}}
-tun.dumpStr = function (o, filename) -- {{{
+tun.dumpStr = function (o, filename, verify) -- {{{
     local file, msg = io.open(filename, 'w')
-    if file == nil then error(msg) end
+    if file == nil then return verify and error(msg) or msg end
     file:write(type(o) == 'table' and tun.concat(o, '\n') or tostring(o))
     file:close()
 end -- }}}
