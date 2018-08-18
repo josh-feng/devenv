@@ -6,11 +6,13 @@
 local error, tostring, type, setmetatable, rawset =
       error, tostring, type, setmetatable, rawset
 
-local function cloneTbl (src) -- {{{ deep copy the string-key-ed
+local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     local targ = {}
     for k, v in pairs(src) do
-        if 'string' == type(k) then targ[k] = type(v) == 'table' and cloneTbl(v) or v end
+        if 'string' == type(k) then targ[k] = type(v) == 'table' and cloneTbl(v, mt) or v end
     end
+    mt = mt and getmetatable(src)
+    if mt then setmetatable(targ, mt) end
     return targ
 end -- }}}
 
@@ -38,10 +40,7 @@ end -- }}}
 local class = { -- {{{
     list = {}; -- class record
     copy = function (c, o) -- duplicate object o
-        local omt = getmetatable(o) or error('bad object', 2)
-        o = cloneTbl(o)
-        setmetatable(o, omt)
-        return o
+        return cloneTbl(o, getmetatable(o) or error('bad object', 2))
     end;
 }
 
