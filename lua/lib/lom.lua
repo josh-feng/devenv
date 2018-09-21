@@ -8,7 +8,7 @@
 --      xml = lom.Dump(doc, true)
 --      subxml = lom.Dump(doc.Flow.LayoutWriter, 'TestTag')
 -- ======================================================================== --
-local lom = {cvs_id = '$Id: $'}
+local lom = {id = ''} -- version control
 
 local lxp = require('lxp') -- the standard Lua Expat module
 local tun = require('util') -- for path

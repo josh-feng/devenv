@@ -564,6 +564,8 @@ if version >= 508 || !exists("did_calibre_syn_inits")
   delcommand HiLink
 endif
 
+setlocal cms=\/\/ %s
+
 let b:current_syntax = "calibre"
 
 set foldmarker={{{,}}}

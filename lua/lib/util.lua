@@ -2,7 +2,7 @@
 -- ======================================================================== --
 -- utility subroutine
 -- ======================================================================== --
-local tun = {cvs_id = "$Id: $"}
+local tun = {id = ''} -- version control
 
 -- ======================================================================== --
 local strgsub, strsub, strgmatch, strmatch, strfind =
@@ -117,6 +117,11 @@ tun.Put = function (str, cmd) -- {{{ Put to stdin (str?)
     local result = file:write(str)
     file:close()
 end -- }}}
+tun.exist = function (path) -- {{{
+    path = io.open(path, 'r')
+    return path and path:close()
+end -- }}}
+tun.isdir = function (path) return tun.exist(path..'/.') end
 -- ======================================================================== --
 -- =========================  SIMPLE I/O  ================================= --
 -- ======================================================================== --
@@ -196,7 +201,8 @@ tun.realpath = function (bin) -- {{{ trace the binary link / realpath
     until not l
     return tun.normpath(bin)
 end -- }}}
-tun.normpath = function (path) -- {{{ full, base, name
+tun.normpath = function (path, pwd) -- {{{ full, base, name
+    if pwd and strsub(path, 1, 1) ~= '/' then path = pwd..'/'..path end
     local o = {}
     for i, v in ipairs(tun.Split(strgsub(path, '/+/', '/'), '/')) do
         if v == '..' then

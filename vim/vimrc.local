@@ -7,63 +7,29 @@
 " source /usr/share/vim/vimcurrent/syntax/syntax.vim
 " source /usr/share/vim/vimcurrent/ftplugin/man.vim
 
-" if &term =~ "xterm"
-"  set mouse=a
-" endif
-" autocmd BufEnter * set mouse=
-
 "set fileencodings=utf-8,big5,euc-jp,gbk,euc-kr,utf-bom,iso8859-1
 "set encoding=utf8
 "set tenc=utf8
-" 使用 <F12> 來將文字編碼轉換成 Big5
-" map <F12> :set tenc=big5<cr>
-"
-
-" ============================================================================
-" auto indenting step (# of space)
-" :verbose set ai? cin? cink? cino? si? inde? indk?
-
-" If you are editing a particular file and you want to prevent
-" auto indenting within that file, enter:
-"setlocal noautoindent
-"setlocal nocindent
-"setlocal nosmartindent
-"setlocal indentexpr=
-" Here is a mapping so you can press F8 to disable auto indenting:
-" nnoremap <F8> :setl noai nocin nosi inde=<CR>
-
-
-" hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
-" hi Comment term=bold cterm=NONE ctermfg=Black ctermbg=DarkBlue gui=NONE guifg=Blue guibg=NONE
-
-
-" ab -- general abbreviation; ca -- command line mode abbreviation
-"ca mkix   !makeindex
-
+"將文字編碼轉換成 Big5
+"set tenc=big5<cr>
+" =========================================================================
 " ---- basic settings ---- {{{
 filetype plugin on
 filetype indent on
 
-set mouse=""
+set mouse=
 set tabstop=4       " hard tab
 set shiftwidth=4    " shift width
 set softtabstop=4   " soft tab stop
 set expandtab       " use space instead
-" set smarttab " make tab insert indents
-set ai              " auto indent
+" set smarttab      " make tab insert indents
 set ruler           " show the cursor position all the time
 " set ignorecase
 " set showcmd
 " set nowrap
-" paste mode -- for wierd files, no indent
-" nnoremap <F8> :setl noai nocin nosi inde=<CR>
-" set paste
-" set nopaste
-" set pastetoggle=<F8>
-nnoremap <F8> :set invpaste paste?<CR>
-set pastetoggle=<F8>
-set showmode
+set ai              " auto indent
 
+set showmode
 syntax on
 set hlsearch
 " disable hilight of searching using <Space>
@@ -78,6 +44,10 @@ set foldmethod=marker foldmarker={{{,}}} foldlevel=1
 set clipboard=exclude:cons\|linux
 
 " =========================================================================
+" if &term =~ "xterm"
+"  set mouse=a
+" endif
+" autocmd BufEnter * set mouse=
 " termcap: /etc/termcap (echo $TERMCAP)
 " if &term =~ "xterm\\|rxvt"
 " " use an orange cursor in insert mode
@@ -92,17 +62,15 @@ set clipboard=exclude:cons\|linux
 " let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 " let &t_ve = "[34h[?25h"
 " let &t_ve = "\<Esc>[34h\<Esc>[?25h"
+" }}}
 
+" word / filename under cursor {{{ <cfile> <cword>
 " -------- " The rest " --------
 " variable 'iskeyword' is for searching/selection
 " variable 'isfname' is for filename setting
 " include '.' in searching, should depend on file type
 " set iskeyword+=\.     " include .
 " set iskeyword-=\.     " disable it
-" }}}
-
-" word / filename under cursor {{{
-" <cfile> <cword>
 "
 " iskeyword --> string : searching and reconizing --> \k (local to buffer)
 " set isk=@,48-57,_,128-167,224-235
@@ -112,24 +80,15 @@ set clipboard=exclude:cons\|linux
 " set isk=a-z,A-Z,48-57,_,.,-,>     C/C++
 "
 " set @,46-57,_,192-255             make (include /)
-"
-" copy to "
-:map <F3> :let @@=expand('<cword>')<CR>
-" copy to selection
-:map <F4> :let @+=expand('<cword>')<CR>
-":map <F3> yiw
-":map <F4> "+yiw
 " }}}
 
 " file support {{{
 augroup filetype
-    au BufRead,BufNewFile *.rules     set filetype=calibre
-    au BufRead,BufNewFile *.rul       set filetype=calibre
-    au BufRead,BufNewFile *.svrf      set filetype=calibre
-    au BufRead,BufNewFile *.tech      set filetype=calibre
-    au BufRead,BufNewFile *.job,*lua  set filetype=tachyon
-    au BufRead,BufNewFile *akefile*   set filetype=make
-    au BufRead,BufNewFile .*akefile*  set filetype=make
+    au BufRead,BufNewFile *.rules,*.rul set filetype=calibre
+    au BufRead,BufNewFile *.tech,*.svrf set filetype=calibre
+    au BufRead,BufNewFile *.job,*lua    set filetype=tachyon
+    au BufRead,BufNewFile *akefile*     set filetype=make
+    au BufRead,BufNewFile .*akefile*    set filetype=make
 augroup END
 
 " more file type
@@ -175,9 +134,8 @@ autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
 ":w ++ff=unix
 ":set fileformat=unix to convert from dos to unix
 " }}}
-
 " =========================  VIM DIFF MODE  ===============================
-" vimdiff/viewdiff mode
+" vimdiff/viewdiff mode {{{
 " do    get change form the other
 " dp    put change to the other
 " ]c    next diff
@@ -185,23 +143,35 @@ autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
 if &diff
     set scrollbind
 else
-endif
+endif " }}}
 " =========================================================================
 " =========================  KEYBINDING  ==================================
 " =========================================================================
-nmap ; :!
-
-" window / tabpage command
-"  use 't' for windows, and 'T' for tabpages
+" nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert {{{
+" window / tabpage command: use 't' for windows, and 'T' for tabpages
 nmap t <C-w>
 nmap Tc :tabnew<CR>
 nmap Tn :tabnext<CR>
 nmap Tp :tabprev<CR>
 
-" nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert
 " insert date and time
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
 map <F2> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
+
+" copy to "
+map <F3> :let @@=expand('<cword>')<CR>
+" copy to selection
+map <F4> :let @+=expand('<cword>')<CR>
+":map <F3> yiw
+":map <F4> "+yiw
+
+" -- paste mode -- for wierd files, no indent
+" nnoremap <F8> :setl noai nocin nosi inde=<CR>
+nnoremap <F8> :set invpaste paste?<CR>
+set pastetoggle=<F8>
+
+" set nopaste
+" set paste
 " Useful bubble text normal mapping for arrow keys.
 "nnoremap <UP> ddkP
 "nnoremap <DOWN> ddp
@@ -216,12 +186,26 @@ nnoremap <RIGHT> A
 vnoremap <LEFT>  I
 vnoremap <RIGHT> A
 
+" auto indenting step (# of space)
+":verbose set ai? cin? cink? cino? si? inde? indk?
+"setlocal noautoindent
+"setlocal nocindent
+"setlocal nosmartindent
+"setlocal indentexpr=
+" nnoremap <F7> :setl noai nocin nosi inde=<CR>
+
 " set shell ?       check the external command
 " run the command in default shell (v-i) :'<,'>w !sh
 vnoremap a :w !sh<CR>
-vnoremap t :w !column -t<CR>
+vnoremap t !column -t<CR>
+vnoremap <silent> , :s/\s\+$//g<CR>
+vnoremap f :s/\(\S\)\s\+/\1:/g<CR>
+vnoremap F :s/:/ /g<CR>
 " index (v-i) :'<,'>!nl -n rz
 vnoremap i :!/usr/bin/nl -n rz<CR>
+
+nmap ; :!
+" }}}
 
 function! RidSpace() " clean space {{{
     " Don't change tabs in Makefile
@@ -243,28 +227,18 @@ function! RidSpace() " clean space {{{
     " vim: ts=4 sw=4 sts=4 et
     set foldlevel=0 foldenable
 endfunction
-nmap <silent> , :call RidSpace()<CR>
+"nmap <silent> , :call RidSpace()<CR>
+nnoremap <silent> , :call RidSpace()<CR>
 " }}}
 
 fu! CustomFoldText() " custom fold display {{{
-    "get first non-blank line
-    let fs = v:foldstart
-    while getline(fs) =~ '^\s\+$' | let fs = nextnonblank(fs + 1)
-    endwhile
-    if fs > v:foldend
-        let line = getline(v:foldstart)
-    else
-        let line = substitute(getline(fs), '\t', repeat(' ', &tabstop), 'g')
-    endif
-    let w = winwidth(0) - &foldcolumn - (&number ? 8 : 0)
-    let foldSize = 1 + v:foldend - v:foldstart
-    let foldSizeStr = " " . foldSize . " lines "
-    " let foldLevelStr = repeat("+--", v:foldlevel)
-    let foldLevelStr = printf("+%d-", v:foldlevel)
-    let lineCount = line("$")
-    let foldPercentage = printf("[%.1f", (foldSize*1.0)/lineCount*100) . "%] "
-    let expansionString = repeat(".", w - strwidth(foldSizeStr.line.foldLevelStr.foldPercentage))
-    return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
+    let line1 = getline(v:foldstart)
+    let lineCnt = line("$")
+    let w = winwidth(0) - &foldcolumn - (&number ? (strwidth(printf("%d", lineCnt)) + 2) : 0)
+    let fldCnt = 1 + v:foldend - v:foldstart
+    let fldStr = printf(" %d+%d %.1f%%", fldCnt, v:foldlevel, (fldCnt * 1.0) / lineCnt * 100)
+    let expStr = repeat(".", w - strwidth(line1.fldStr))
+    return strpart(line1, 0, w - strwidth(expStr.fldStr)).expStr.fldStr
 endf
 set foldtext=CustomFoldText() " }}}
 " =========================================================================
@@ -355,6 +329,11 @@ set foldtext=CustomFoldText() " }}}
 " }}}
 " =========================================================================
 " VIM QUICK REFERENCE CARD {{{
+
+" environment variables start w/ $ : ex. $HOME
+
+" ab -- general abbreviation; ca -- command line mode abbreviation
+"ca mkix   !makeindex
 "
 " Insertion & replace Ã¢ÂÂ insert mode
 " i a insert before, after cursor

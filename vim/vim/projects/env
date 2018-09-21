@@ -1,11 +1,12 @@
 devenv=$HOME/Project/coding/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
  README.md
  tmux.conf
-
+ # baisc
  lua/lib/lom.lua
  lua/lib/pool.lua
  lua/lib/util.lua
-
+ lua/lib/utilsc.lua
+ # VIM
  vim/vimrc
  vim/vimrc.local
  vim/vim/autoload/tagbar.vim
@@ -13,7 +14,7 @@ devenv=$HOME/Project/coding/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
  vim/vim/doc/project.txt
  vim/vim/doc/tags
  vim/vim/plugin/gfide.vim
- vim/vim/projects/env
+ # vim/vim/projects/env
  vim/vim/syntax/calibre.vim
  vim/vim/syntax/tachyon.vim
  vim/vim/syntax/tagbar.vim

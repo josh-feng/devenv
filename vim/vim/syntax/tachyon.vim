@@ -34,7 +34,7 @@ syn match JobComment    "^\#.*$"                 "
 syn match DtVar		"DT\.\w*"               " variables and functions
 
 " commentstring
-set cms=\ --\ %s
+setlocal cms=\ --\ %s
 
 " TODO LMC
 " syn match DtLMC       "GEO.*" 

@@ -1,33 +1,54 @@
 " ----- " Color " ----- {{{
 " set background=light
 set background=dark
-" colorscheme evening
-" hi comment ctermfg=darkgrey ctermbg=none
-" hi comment cterm=inverse ctermfg=darkgrey ctermbg=none
-" hi comment cterm=none ctermfg=lightblue ctermbg=none
-" hi comment cterm=none ctermfg=lightgrey ctermbg=black
-" hi comment cterm=none ctermbg=darkgrey ctermfg=none
-" hi comment term=none cterm=reverse ctermfg=darkblue ctermbg=darkgrey
-hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
-" hi comment ctermfg=darkgrey ctermbg=black guifg=darkgray gui=bold
 
-" GNOME-TERM
-" highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
-" highlight FoldColumn guibg=darkgrey guifg=white
-" highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
+" set t_Co=256
+" if (&t_Co == 256 || &t_Co == 88) && !has('gui_running') &&
+"   \ filereadable(expand("$HOME/.vim/plugin/guicolorscheme.vim"))
+"   runtime! plugin/guicolorscheme.vim
+"   GuiColorScheme rastafari
+" else
+"   colorscheme rastafari
+" endif
+
+" info http://http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
+if (&t_Co == 256) " rxvt-unicode-256color
+    hi comment ctermfg=238 ctermbg=black guifg=darkgray gui=bold
+else
+    " colorscheme evening
+    " hi comment ctermfg=darkgrey ctermbg=none
+    " hi comment cterm=inverse ctermfg=darkgrey ctermbg=none
+    " hi comment cterm=none ctermfg=lightblue ctermbg=none
+    " hi comment cterm=none ctermfg=lightgrey ctermbg=black
+    " hi comment cterm=none ctermbg=darkgrey ctermfg=none
+    " hi comment term=none cterm=reverse ctermfg=darkblue ctermbg=darkgrey
+
+    " hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
+    " hi Comment term=bold cterm=NONE ctermfg=Black ctermbg=DarkBlue gui=NONE guifg=Blue guibg=NONE
+
+    hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
+    "hi comment ctermfg=darkgrey ctermbg=black guifg=darkgray gui=bold
+endif
+
+" if &term =~ "xterm"
+    " ICEWM XTERM
+    " hi comment cterm=none ctermfg=blue ctermbg=none
+    " highlight Folded term=bold ctermbg=blue ctermfg=blue guibg=grey guifg=blue
+    " highlight FoldColumn guibg=darkgrey guifg=white
+
+    " GNOME-TERM
+    " highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
+    " highlight FoldColumn guibg=darkgrey guifg=white
+    " highlight Folded term=bold ctermbg=blue ctermfg=black guibg=grey guifg=blue
+" endif
+
 highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
 
-" ICEWM XTERM
-" hi comment cterm=none ctermfg=blue ctermbg=none
-" highlight Folded term=bold ctermbg=blue ctermfg=blue guibg=grey guifg=blue
-" highlight FoldColumn guibg=darkgrey guifg=white
-
-
-" :hi CursorLine   cterm=NONE ctermbg=darkgrey ctermfg=white guibg=darkred guifg=white
-" :hi CursorColumn cterm=NONE ctermbg=darkgrey ctermfg=white guibg=darkred guifg=white
-" :hi CursorLine   cterm=NONE ctermbg=grey ctermfg=none guibg=darkred guifg=white
-" :hi CursorColumn cterm=NONE ctermbg=grey ctermfg=none guibg=darkred guifg=white
+" hi CursorLine   cterm=NONE ctermbg=darkgrey ctermfg=white guibg=darkred guifg=white
+" hi CursorColumn cterm=NONE ctermbg=darkgrey ctermfg=white guibg=darkred guifg=white
+" hi CursorLine   cterm=NONE ctermbg=grey ctermfg=none guibg=darkred guifg=white
+" hi CursorColumn cterm=NONE ctermbg=grey ctermfg=none guibg=darkred guifg=white
 " set cursorline
 " set cursorcolumn
 " }}}
@@ -57,13 +78,7 @@ let g:ide_flags = "imsTtg"
 let g:tagbar_ctags_bin = "/usr/bin/ctags"
 
 " use netrw to choose project in ide: vim ~/.vim/projects
-" nmap <F12> :IDE %</<cfile><CR>:new +:only<CR><C-E>
-" nmap <silent> <F12> :IDE %</<cfile><CR>:IDE<CR>:new +:only<CR>:call <SID>projwin()<CR>
-" nmap <silent> <F12> :IDE %</<cfile><CR>:IDE<CR>:new +:only<CR>:IDE<CR>
 nmap <silent> <F12> :IDE %</<cfile><CR>:new +:only<CR>:IDE<CR>
 " }}}
-
-" environment variables start w/ $
-" $HOME
 " =========================================================================
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
