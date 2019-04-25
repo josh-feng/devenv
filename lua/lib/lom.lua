@@ -22,35 +22,26 @@ local indent = strrep(' ', 4)
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
--- node == token == tag == table {{{
-local node -- working variable: doc == root node
-local trim -- trim the leading and tailing space of data 0:end space, 1:blank line
+lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of data 0:end space, 1:blank line
+    local node = {} -- working variable: doc == root node (node == token == tag == table)
 
-local lomcallbacks = {
-    StartElement = function (parser, name, attr) -- {{{
-        local t = {['.'] = node} -- record parent node
-        tinsert(node, t)
-        for k, v in pairs(attr) do -- free attr info {{{
-            if type(k) == 'string' then t['@'..k] = v end
-            attr[k] = nil
-        end -- }}}
-        local subnode = node[name] -- {{{ build up the tag links
-        if not subnode then node[name] = {t} else tinsert(subnode, t) end -- }}}
-        node = t
-    end; -- }}}
-    EndElement = function (parser, name) -- {{{
-        node, node['.'] =  node['.'], name -- record the tag/node name
-    end; -- }}}
-    CharacterData = function (parser, s) -- {{{
-        if trim ~= 1 or strmatch(s, '%S') then
-            tinsert(node, trim and strmatch(s, '^(.-)%s*$') or s)
-        end
-    end; -- }}}
-}
+    local lomcallbacks = {
+        StartElement = function (parser, name, attr) -- {{{
+            local xn = {['.'] = node} -- record parent node
+            if #attr > 0 then xn['@'] = attr end
+            tinsert(node, xn)
+            node = xn
+        end; -- }}}
+        EndElement = function (parser, name) -- {{{
+            node, node['.'] =  node['.'], name -- record the tag/node name
+        end; -- }}}
+        CharacterData = function (parser, s) -- {{{
+            if trim ~= 1 or strmatch(s, '%S') then
+                tinsert(node, trim and strmatch(s, '^(.-)%s*$') or s)
+            end
+        end; -- }}}
+    }
 
-lom.Parse = function (txt, mode) -- parselom
-    node = {} -- initialize the local root
-    trim = mode
     local plom = lxp.new(lomcallbacks)
     local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
     plom:parse()
@@ -60,36 +51,6 @@ lom.Parse = function (txt, mode) -- parselom
 end
 -- }}}
 -- ======================================================================== --
-local checkAttr = function(t, attrStr, fExact) -- {{{ check attr
-    for attr, val in strgmatch(strmatch(attrStr, '%[(.*)%]') or '', '(@.*)=(.*)') do
-        local q, qo = strmatch(val, '^([\'"])(.*)%1$')
-        if t[attr] ~= qo then return false end
-    end
-    if fExact then
-        for k in pairs(t) do if not strfind(k, attrStr) then return false end end
-    end
-    return true
-end -- }}}
-lom.xPath = function (dtbl, path) -- {{{ return doc table, missingTag
-    if (not path) or path == '' then return dtbl end
-    -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
-    if strsub(path, 1, 1) ~= '/' then -- assume
-        for k, v in pairs(dtbl) do
-            if type(k) ~= 'number' then dtbl = v ; break end
-        end
-    end
-    for _ in strgmatch(path, '([^/]+)') do -- tag path {{{
-        dtbl = dtbl[strmatch(_, '[^%[]+')]
-        if not dtbl then return dtbl, _ end
-        local found
-        for i = 1, #dtbl do -- first hit (TODO multiple hits)
-            if checkAttr(dtbl[i], _) then found = dtbl[i] ; break end
-        end
-        if not found then return nil, _ end
-        dtbl = found
-    end -- }}}
-    return dtbl
-end -- }}}
 lom.ParseXml = function (filename, doctree, mode) -- doc = lom.ParseXml(xmlfile, docfactory) -- {{{
     filename = tun.normpath(filename)
     if type(doctree) == 'table' and doctree[filename] then return doctree[filename] end
@@ -107,38 +68,38 @@ lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfi
     local doctree = {}
     local doc = lom.ParseXml(topxml, doctree, mode) -- doc table
 
-    local function TraceTbl (t, xml) -- {{{ lua table form
-        for k, v in pairs(t) do
-            if k == '@xlink:href' then -- attr
+    local function TraceTbl (xn, xml) -- {{{ lua table form
+        local v = xn['@'] and xn['@']['xlink:href']
+        if v then -- attr
 
-                local link, xpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
-                if link == '' then -- back to this doc root
-                    link = xml
-                else -- new file
-                    if strsub(link, 1, 1) ~= '/' then link = strgsub(xml, '[^/]*$', '')..link end
-                    link = tun.normpath(link)
-                end -- }}}
+            local link, xpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
+            if link == '' then -- back to this doc root
+                link = xml
+            else -- new file
+                if strsub(link, 1, 1) ~= '/' then link = strgsub(xml, '[^/]*$', '')..link end
+                link = tun.normpath(link)
+            end -- }}}
 
-                if not doctree[link] then TraceTbl(lom.ParseXml(link, doctree, mode), link) end
-                link, xpath = lom.xPath(doctree[link], strmatch(xpath or '', '#xpointer%((.*)%)'))
+            if not doctree[link] then TraceTbl(lom.ParseXml(link, doctree, mode), link) end
+            link, xpath = tun.xPath(doctree[link], strmatch(xpath or '', '#xpointer%((.*)%)'))
 
-                if link then -- the linked table
-                    local meta = link
-                    repeat -- loop detect {{{
-                        meta = getmetatable(meta) and getmetatable(meta).__index
-                        if meta == t then break end
-                    until not meta -- }}}
-                    if meta then
-                        tinsert(doctree[xml]['?'], 'loop '.. v) -- error message
-                    elseif t ~= link then
-                        setmetatable(t, {__index = link})
-                    end
-                else
-                    tinsert(doctree[xml]['?'], 'broken '.. v..':'..xpath) -- error message
+            if #link == 1 then -- the linked table
+                local meta = link[1]
+                repeat -- loop detect {{{
+                    meta = getmetatable(meta) and getmetatable(meta).__index
+                    if meta == xn then break end
+                until not meta -- }}}
+                if meta then
+                    tinsert(doctree[xml]['?'], 'loop '.. v) -- error message
+                elseif xn ~= link[1] then
+                    setmetatable(xn, {__index = link[1]})
+                    TraceTbl(link[1], xml)
                 end
+            else
+                tinsert(doctree[xml]['?'], 'broken <'..xn['.']..'> '..xpath..':'..#link..':'..v) -- error message
             end
-            if type(v) == 'table' then TraceTbl(v, xml) end -- continous override
         end
+        for i = 1, #xn do if type(xn[i]) == 'table' then TraceTbl(xn[i], xml) end end -- continous override
     end -- }}}
 
     if #doc['?'] == 0 then TraceTbl(doc, topxml) end -- no error msg
@@ -158,34 +119,29 @@ lom.xmlstr = function (s, fenc) -- {{{
             local status, stdout, stderr = tun.popen(s, 'gzip -c | base64 -w 128')
             return '<!-- base64 -i -d | zcat -f -->{{{'..stdout..'}}}'
         else
-            return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
-                    strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
+            -- return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
+            --         strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
+            return (strfind(s, '&') or strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
         end
     else -- escape characters
         return strgsub(strgsub(strgsub(strgsub(strgsub(s,
-            '"', '&quot;'),
-            "'", '&apos;'),
-            '&', '&amp;'),
-            '<', '&lt;'),
-            '>', '&gt;')
+            '"', '&quot;'), "'", '&apos;'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
     end
 end -- }}}
 local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@attr'] = value; ...}
     if not node['.'] then return end
     local res, subnode = {}, #node > 0
-    for k, v in pairs(node) do -- {{{ attribute
-        if strsub(tostring(k), 1, 1) == '@' then
-            tinsert(res, strsub(k, 2, -1)..'="'..v..'"')
-        elseif type(k) == 'number' and type(v) == 'table' then
-            subnode = false
-        end
-    end -- }}}
-    table.sort(res)
+    if node['@'] then
+        for _, k in ipairs(node['@']) do
+            tinsert(res, k..'="'..strgsub(node['@'][k], '"', '\\"')..'"')
+        end -- table.sort(res)
+    end
     res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
     if #node == 0 then return res..' />' end
+    for i = 1, #node do if type(node[i]) == 'table' then subnode = false ; break end end
     if subnode then return res..'>'..lom.xmlstr(tconcat(node, ' '))..'</'..node['.']..'>' end
     res = {res..'>'}
-    for k, t in ipairs(node) do tinsert(res, type(t) == 'table' and dumpLom(t) or lom.xmlstr(t)) end
+    for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
     return strgsub(tconcat(res, '\n'), '\n', '\n'..indent)..'\n</'..node['.']..'>'
 end -- }}}
 lom.Dump = function (doc, fxml) -- {{{ dump

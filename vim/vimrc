@@ -14,6 +14,7 @@ set background=dark
 " info http://http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
 if (&t_Co == 256) " rxvt-unicode-256color
     hi comment ctermfg=238 ctermbg=black guifg=darkgray gui=bold
+    " hi comment ctermfg=238 ctermbg=black guifg=darkgray gui=bold
 else
     " colorscheme evening
     " hi comment ctermfg=darkgrey ctermbg=none

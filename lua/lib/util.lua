@@ -32,16 +32,13 @@ tun.fatal = function (msg) -- {{{ fatal('err msg')
     if msg then tun.info('ERR: '..msg) end
     os.exit(msg and 1 or 0)
 end -- }}}
-tun.Dbg = function (msg) -- {{{
-    if tun.debug then tun.info(msg, 'DBG:') end
-end -- }}}
+tun.Dbg = function (msg) if tun.debug then tun.info(msg, 'DBG:') end end
 -- ======================================================================== --
 -- ===================  EXTERNAL SUBPROCESS COMMAND   ===================== --
 -- ======================================================================== --
 local posix = require('posix')
 tun.popen = function (datastr, cmd) -- {{{ status, out, err = tun.popen(in, cmd)
     --  thread
-    --  |
     --  +--------+
     --  |        |
     --  | i-rw-> | pipe (is uni-directional)
@@ -119,20 +116,20 @@ tun.Put = function (str, cmd) -- {{{ Put to stdin (str?)
 end -- }}}
 tun.exist = function (path) -- {{{
     path = io.open(path, 'r')
-    return path and path:close()
+    return path and (path:close() or true)
 end -- }}}
 tun.isdir = function (path) return tun.exist(path..'/.') end
 -- ======================================================================== --
 -- =========================  SIMPLE I/O  ================================= --
 -- ======================================================================== --
-tun.loadStr = function (filename, verify) -- {{{
+tun.loadStr = function (filename, verify) -- {{{ load a file into a string
     local file, msg = io.open(filename, 'r')
     if file == nil then return verify and error(msg) end
     local chunk = file:read('*all')
     file:close()
     return chunk
 end -- }}}
-tun.dumpStr = function (o, filename, verify) -- {{{
+tun.dumpStr = function (o, filename, verify) -- {{{ dump a string to a file
     local file, msg = io.open(filename, 'w')
     if file == nil then return verify and error(msg) or msg end
     file:write(type(o) == 'table' and tun.concat(o, '\n') or tostring(o))
@@ -189,7 +186,7 @@ end -- }}}
 tun.trim = function (...) -- {{{ trim space
     local res = {}
     for i = 1, select('#', ...) do
-        tinsert(res, strmatch(tostring(select(i, ...)), '(%S.*%S)') or '')
+        tinsert(res, strmatch(tostring(select(i, ...)), '(%S.-)%s*$') or '')
     end
     return table.unpack(res)
 end -- }}}
@@ -226,7 +223,7 @@ tun.tblToStr = function (tbl, sep) -- {{{ build the set
     return tconcat(res, sep or ',')
 end -- }}}
 tun.strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
-    local res = {}
+    local res, order = {}
     if tmpl then
         set = set or '='
         for token in strgmatch(strgsub(tmpl, sep or ',', ' '), '(%S+)') do
@@ -234,15 +231,20 @@ tun.strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
             if k and v and k ~= '' then
                 local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
                 res[k] = qo or v
+            else
+                order = token
             end
         end
     end
-    return res
+    return res, tonumber(order)
 end -- }}}
-tun.match = function (targ, tmpl) -- {{{ -- match assignment in tmpl
+tun.match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
     if type(targ) ~= 'table' then return not next(tmpl) end
     if tmpl then
         for k, v in pairs(tmpl) do if targ[k] ~= v then return false end end
+    end
+    if fExact then
+        for k in pairs(targ) do if tmpl[k] == nil then return false end end
     end
     return true
 end -- }}}
@@ -258,7 +260,7 @@ local function dumpVar (key, value, ctrl) -- {{{ dump variables in lua
     key = (type(key) == 'string' and strfind(key, '%W')) and '["'..key..'"]' or key
     local assign = type(key) == 'number' and '' or key..' = '
     if type(value) == 'number' then return assign..value end
-    if type(value) == 'string' then return assign..'"'..strgsub(value, '"', '\"')..'"' end
+    if type(value) == 'string' then return assign..'"'..strgsub(value, '"', '\\"')..'"' end
     if type(value) ~= 'table' then return '' end
     tinsert(ctrl, type(key) == 'number' and '['..key..']' or key) -- increase the depth
     local extdef, keyhead = ''
@@ -352,6 +354,74 @@ end -- }}}
 -- ======================================================================== --
 -- =========================  addressing table/list ======================= --
 -- ======================================================================== --
+tun.xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
+    if (not path) or path == '' or #dtbl == 0 then return dtbl, path end
+    -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
+    local tag, attr, idx
+    tag, path = strmatch(path, '([^/]+)(.*)$')
+    tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
+    attr, idx = tun.strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
+    local xn = {} -- xml-node (doc)
+    repeat -- collect along the metatable (if mode is defined)
+        for i = 1, #doc do -- no metatable
+            local mt = doc[i]
+            if type(mt) == 'table' and mt['.'] == tag and tun.match(mt['@'], attr) then
+                if idx and idx < 0 then xn[1] = nil end -- clean up
+                if path ~= '' or idx == 0 then
+                    repeat -- collect along the metatable (NB: ipairs will dupe metatable)
+                        for j = 1, #mt do if type(mt[j]) == 'table' or path == '' then tinsert(xn, mt[j]) end end
+                        mt = getmetatable(mt)
+                        if mt then mt = mt.__index end
+                    until not mt
+                else
+                    tinsert(xn, mt)
+                end
+                if idx and idx > 0 then break end
+            end
+        end
+        if idx and idx > 0 and #xn > 0 then break end
+        doc = getmetatable(doc)
+        if doc then doc = doc.index end
+    until not doc
+    if path == '' and idx == 0 then xn['.'] = tag; xn = {xn} end
+    return tun.xPath(xn, path)
+end -- }}}
+tun.xnKey = function (doc, mode) -- {{{ mode: nil/dontcare, -/last, 0/only, +/first
+    mode = tonumber(mode)
+    local xn = {}
+    repeat -- collect along the metatable (if mode is defined)
+        for i = 1, #doc do -- no metatable
+            local v = doc[i]
+            local key = type(v) == 'table' and v['.']
+            if key then
+                if (not mode) or mode > 0 then xn[key] = xn[key] or v
+                elseif mode == 0 and xn[key] then error('duplicate entry', 2)
+                else xn[key] = v
+                end
+            end
+        end
+        doc = mode and getmetatable(doc)
+        if doc then doc = doc.index end
+    until not doc
+    return xn
+end -- }}}
+tun.xnVal = function (doc, ftop) -- {{{ ftop: []/all-sub-node 0/+/-:top
+    if type(doc) ~= 'table' then return doc end
+    local res, i = {}, 1
+    ftop = tonumber(ftop)
+    repeat -- collect along the metatable (if mode is defined)
+        local mt = ftop and doc or doc[i]
+        repeat -- collect along the metatable -- only values
+            for j = 1, #mt do if type(mt[j]) ~= 'table' then tinsert(res, mt[j]) end end
+            mt = getmetatable(mt)
+            if mt then mt = mt.index end
+        until not mt
+        if not ftop then i = i + 1 end
+    until ftop or i > #doc
+    if not ftop then return tconcat(res, '\n') end
+    res = strmatch(tconcat(res, ' '), '%s+', '(%S.-)%s*$') or ''
+    return ftop == 0 and tun.Split(res, ' ') or res
+end -- }}}
 
 -- ======================================================================== --
 -- =========================  debug info gadgets ========================== --
