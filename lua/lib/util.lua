@@ -355,7 +355,7 @@ end -- }}}
 -- =========================  addressing table/list ======================= --
 -- ======================================================================== --
 tun.xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
-    if (not path) or path == '' or #dtbl == 0 then return dtbl, path end
+    if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
     local tag, attr, idx
     tag, path = strmatch(path, '([^/]+)(.*)$')
@@ -419,7 +419,7 @@ tun.xnVal = function (doc, ftop) -- {{{ ftop: []/all-sub-node 0/+/-:top
         if not ftop then i = i + 1 end
     until ftop or i > #doc
     if not ftop then return tconcat(res, '\n') end
-    res = strmatch(tconcat(res, ' '), '%s+', '(%S.-)%s*$') or ''
+    res = strgsub(strmatch(tconcat(res, ' '), '(%S.-)%s*$') or '', '%s+', ' ')
     return ftop == 0 and tun.Split(res, ' ') or res
 end -- }}}
 
