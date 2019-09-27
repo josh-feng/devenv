@@ -1,11 +1,13 @@
 devenv=$HOME/Project/coding/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
  README.md
  tmux.conf
+ makefile
  # baisc
  lua/lib/lom.lua
  lua/lib/pool.lua
  lua/lib/util.lua
  lua/lib/utilsc.lua
+ lua/lib/XmlObject.lua
  # VIM
  vim/vimrc
  vim/vimrc.local
@@ -21,6 +23,14 @@ devenv=$HOME/Project/coding/devenv filter="* */* */*/* */*/*/*" CD=. flags=l {
  vim/vim/syntax/xml.vim
 }
 pool=$HOME/Project/coding/pool filter="* */* */*/* */*/*/*" CD=. flags=l {
+ MIT-license.txt
  README.md
- pool.lua
+ pool-1.0-1.rockspec
+ rml.vim
+ doc/rml.rml
+ src/lrm.lua
+ src/lrp.cpp
+ src/lrp.hpp
+ src/lsrml.lua
+ src/pool.lua
 }

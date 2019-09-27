@@ -26,7 +26,7 @@ if exists(':Tagbar') == 0
     runtime plugin/gfide.vim
 endif
 
-" Initialization : Basic init 
+" Initialization : Basic init
 
 redir => s:ftype_out
 silent filetype
@@ -87,13 +87,13 @@ function! s:Init(silent)
     return 1
 endfunction " >>>
 
-" s:InitTypes() 
+" s:InitTypes()
 function! s:InitTypes()
     call s:LogDebugMessage('Initializing types')
 
     let s:known_types = {}
 
-    " Ant 
+    " Ant
     let type_ant = s:TypeInfo.New()
     let type_ant.ctagstype = 'ant'
     let type_ant.kinds     = [
@@ -101,7 +101,7 @@ function! s:InitTypes()
         \ {'short' : 't', 'long' : 'targets',  'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.ant = type_ant
-    " Asm 
+    " Asm
     let type_asm = s:TypeInfo.New()
     let type_asm.ctagstype = 'asm'
     let type_asm.kinds     = [
@@ -111,7 +111,7 @@ function! s:InitTypes()
         \ {'short' : 'l', 'long' : 'labels',  'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.asm = type_asm
-    " ASP 
+    " ASP
     let type_aspvbs = s:TypeInfo.New()
     let type_aspvbs.ctagstype = 'asp'
     let type_aspvbs.kinds     = [
@@ -122,14 +122,14 @@ function! s:InitTypes()
         \ {'short' : 'v', 'long' : 'variables',   'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.aspvbs = type_aspvbs
-    " Awk 
+    " Awk
     let type_awk = s:TypeInfo.New()
     let type_awk.ctagstype = 'awk'
     let type_awk.kinds     = [
         \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.awk = type_awk
-    " Basic 
+    " Basic
     let type_basic = s:TypeInfo.New()
     let type_basic.ctagstype = 'basic'
     let type_basic.kinds     = [
@@ -141,7 +141,7 @@ function! s:InitTypes()
         \ {'short' : 'v', 'long' : 'variables',    'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.basic = type_basic
-    " BETA 
+    " BETA
     let type_beta = s:TypeInfo.New()
     let type_beta.ctagstype = 'beta'
     let type_beta.kinds     = [
@@ -150,7 +150,7 @@ function! s:InitTypes()
         \ {'short' : 'v', 'long' : 'patterns',  'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.beta = type_beta
-    " C 
+    " C
     let type_c = s:TypeInfo.New()
     let type_c.ctagstype = 'c'
     let type_c.kinds     = [
@@ -177,7 +177,7 @@ function! s:InitTypes()
         \ 'union'  : 'u'
     \ }
     let s:known_types.c = type_c
-    " C++ 
+    " C++
     let type_cpp = s:TypeInfo.New()
     let type_cpp.ctagstype = 'c++'
     let type_cpp.kinds     = [
@@ -210,7 +210,7 @@ function! s:InitTypes()
         \ 'union'     : 'u'
     \ }
     let s:known_types.cpp = type_cpp
-    " C# 
+    " C#
     let type_cs = s:TypeInfo.New()
     let type_cs.ctagstype = 'c#'
     let type_cs.kinds     = [
@@ -243,7 +243,7 @@ function! s:InitTypes()
         \ 'enum'      : 'g'
     \ }
     let s:known_types.cs = type_cs
-    " COBOL 
+    " COBOL
     let type_cobol = s:TypeInfo.New()
     let type_cobol.ctagstype = 'cobol'
     let type_cobol.kinds     = [
@@ -255,7 +255,7 @@ function! s:InitTypes()
         \ {'short' : 's', 'long' : 'sections',          'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.cobol = type_cobol
-    " DOS Batch 
+    " DOS Batch
     let type_dosbatch = s:TypeInfo.New()
     let type_dosbatch.ctagstype = 'dosbatch'
     let type_dosbatch.kinds     = [
@@ -263,7 +263,7 @@ function! s:InitTypes()
         \ {'short' : 'v', 'long' : 'variables', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.dosbatch = type_dosbatch
-    " Eiffel 
+    " Eiffel
     let type_eiffel = s:TypeInfo.New()
     let type_eiffel.ctagstype = 'eiffel'
     let type_eiffel.kinds     = [
@@ -280,7 +280,7 @@ function! s:InitTypes()
         \ 'feature' : 'f'
     \ }
     let s:known_types.eiffel = type_eiffel
-    " Erlang 
+    " Erlang
     let type_erlang = s:TypeInfo.New()
     let type_erlang.ctagstype = 'erlang'
     let type_erlang.kinds     = [
@@ -297,7 +297,7 @@ function! s:InitTypes()
         \ 'module' : 'm'
     \ }
     let s:known_types.erlang = type_erlang
-    " Flex 
+    " Flex
     " Vim doesn't support Flex out of the box, this is based on rough
     " guesses and probably requires
     " http://www.vim.org/scripts/script.php?script_id=2909
@@ -321,7 +321,7 @@ function! s:InitTypes()
     \ }
     let s:known_types.mxml = type_as
     let s:known_types.actionscript = type_as
-    " Fortran 
+    " Fortran
     let type_fortran = s:TypeInfo.New()
     let type_fortran.ctagstype = 'fortran'
     let type_fortran.kinds     = [
@@ -353,7 +353,7 @@ function! s:InitTypes()
         \ 'subroutine' : 's'
     \ }
     let s:known_types.fortran = type_fortran
-    " HTML 
+    " HTML
     let type_html = s:TypeInfo.New()
     let type_html.ctagstype = 'html'
     let type_html.kinds     = [
@@ -361,7 +361,7 @@ function! s:InitTypes()
         \ {'short' : 'a', 'long' : 'named anchors',       'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.html = type_html
-    " Java 
+    " Java
     let type_java = s:TypeInfo.New()
     let type_java.ctagstype = 'java'
     let type_java.kinds     = [
@@ -385,7 +385,7 @@ function! s:InitTypes()
         \ 'class'     : 'c'
     \ }
     let s:known_types.java = type_java
-    " JavaScript 
+    " JavaScript
     " JavaScript is weird -- it does have scopes, but ctags doesn't seem to
     " properly generate the information for them, instead it simply uses the
     " complete name. So ctags has to be fixed before I can do anything here.
@@ -418,35 +418,35 @@ function! s:InitTypes()
         \ ]
     endif
     let s:known_types.javascript = type_javascript
-    " Lisp 
+    " Lisp
     let type_lisp = s:TypeInfo.New()
     let type_lisp.ctagstype = 'lisp'
     let type_lisp.kinds     = [
         \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.lisp = type_lisp
-    " Lua 
+    " Lua
     let type_lua = s:TypeInfo.New()
     let type_lua.ctagstype = 'lua'
     let type_lua.kinds     = [
         \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.lua = type_lua
-    " Make 
+    " Make
     let type_make = s:TypeInfo.New()
     let type_make.ctagstype = 'make'
     let type_make.kinds     = [
         \ {'short' : 'm', 'long' : 'macros', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.make = type_make
-    " Matlab 
+    " Matlab
     let type_matlab = s:TypeInfo.New()
     let type_matlab.ctagstype = 'matlab'
     let type_matlab.kinds     = [
         \ {'short' : 'f', 'long' : 'functions', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.matlab = type_matlab
-    " Ocaml 
+    " Ocaml
     let type_ocaml = s:TypeInfo.New()
     let type_ocaml.ctagstype = 'ocaml'
     let type_ocaml.kinds     = [
@@ -472,7 +472,7 @@ function! s:InitTypes()
         \ 'type'   : 't'
     \ }
     let s:known_types.ocaml = type_ocaml
-    " Pascal 
+    " Pascal
     let type_pascal = s:TypeInfo.New()
     let type_pascal.ctagstype = 'pascal'
     let type_pascal.kinds     = [
@@ -480,7 +480,7 @@ function! s:InitTypes()
         \ {'short' : 'p', 'long' : 'procedures', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.pascal = type_pascal
-    " Perl 
+    " Perl
     let type_perl = s:TypeInfo.New()
     let type_perl.ctagstype = 'perl'
     let type_perl.kinds     = [
@@ -491,7 +491,7 @@ function! s:InitTypes()
         \ {'short' : 's', 'long' : 'subroutines', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.perl = type_perl
-    " PHP 
+    " PHP
     let type_php = s:TypeInfo.New()
     let type_php.ctagstype = 'php'
     let type_php.kinds     = [
@@ -503,7 +503,7 @@ function! s:InitTypes()
         \ {'short' : 'j', 'long' : 'javascript functions', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.php = type_php
-    " Python 
+    " Python
     let type_python = s:TypeInfo.New()
     let type_python.ctagstype = 'python'
     let type_python.kinds     = [
@@ -524,14 +524,14 @@ function! s:InitTypes()
         \ 'function' : 'f'
     \ }
     let s:known_types.python = type_python
-    " REXX 
+    " REXX
     let type_rexx = s:TypeInfo.New()
     let type_rexx.ctagstype = 'rexx'
     let type_rexx.kinds     = [
         \ {'short' : 's', 'long' : 'subroutines', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.rexx = type_rexx
-    " Ruby 
+    " Ruby
     let type_ruby = s:TypeInfo.New()
     let type_ruby.ctagstype = 'ruby'
     let type_ruby.kinds     = [
@@ -549,7 +549,7 @@ function! s:InitTypes()
         \ 'class' : 'c'
     \ }
     let s:known_types.ruby = type_ruby
-    " Scheme 
+    " Scheme
     let type_scheme = s:TypeInfo.New()
     let type_scheme.ctagstype = 'scheme'
     let type_scheme.kinds     = [
@@ -557,7 +557,7 @@ function! s:InitTypes()
         \ {'short' : 's', 'long' : 'sets',      'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.scheme = type_scheme
-    " Shell script 
+    " Shell script
     let type_sh = s:TypeInfo.New()
     let type_sh.ctagstype = 'sh'
     let type_sh.kinds     = [
@@ -566,7 +566,7 @@ function! s:InitTypes()
     let s:known_types.sh = type_sh
     let s:known_types.csh = type_sh
     let s:known_types.zsh = type_sh
-    " SLang 
+    " SLang
     let type_slang = s:TypeInfo.New()
     let type_slang.ctagstype = 'slang'
     let type_slang.kinds     = [
@@ -574,7 +574,7 @@ function! s:InitTypes()
         \ {'short' : 'f', 'long' : 'functions',  'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.slang = type_slang
-    " SML 
+    " SML
     let type_sml = s:TypeInfo.New()
     let type_sml.ctagstype = 'sml'
     let type_sml.kinds     = [
@@ -587,7 +587,7 @@ function! s:InitTypes()
         \ {'short' : 'v', 'long' : 'value bindings',         'fold' : 0, 'stl' : 0}
     \ ]
     let s:known_types.sml = type_sml
-    " SQL 
+    " SQL
     " The SQL ctags parser seems to be buggy for me, so this just uses the
     " normal kinds even though scopes should be available. Improvements
     " welcome!
@@ -617,7 +617,7 @@ function! s:InitTypes()
         \ {'short' : 'z', 'long' : 'MobiLink Properties',    'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.sql = type_sql
-    " Tcl 
+    " Tcl
     let type_tcl = s:TypeInfo.New()
     let type_tcl.ctagstype = 'tcl'
     let type_tcl.kinds     = [
@@ -626,7 +626,7 @@ function! s:InitTypes()
         \ {'short' : 'p', 'long' : 'procedures', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.tcl = type_tcl
-    " LaTeX 
+    " LaTeX
     let type_tex = s:TypeInfo.New()
     let type_tex.ctagstype = 'tex'
     let type_tex.kinds     = [
@@ -657,7 +657,7 @@ function! s:InitTypes()
     \ }
     let type_tex.sort = 0
     let s:known_types.tex = type_tex
-    " Vala 
+    " Vala
     " Vala is supported by the ctags fork provided by Anjuta, so only add the
     " type if the fork is used to prevent error messages otherwise
     if has_key(s:ctags_types, 'vala') || executable('anjuta-tags')
@@ -697,7 +697,7 @@ function! s:InitTypes()
     if !has_key(s:ctags_types, 'vala') && executable('anjuta-tags')
         let s:known_types.vala.ctagsbin = 'anjuta-tags'
     endif
-    " Vera 
+    " Vera
     " Why are variables 'virtual'?
     let type_vera = s:TypeInfo.New()
     let type_vera.ctagstype = 'vera'
@@ -725,7 +725,7 @@ function! s:InitTypes()
         \ 'virtual'   : 'v'
     \ }
     let s:known_types.vera = type_vera
-    " Verilog 
+    " Verilog
     let type_verilog = s:TypeInfo.New()
     let type_verilog.ctagstype = 'verilog'
     let type_verilog.kinds     = [
@@ -739,7 +739,7 @@ function! s:InitTypes()
         \ {'short' : 't', 'long' : 'tasks',               'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.verilog = type_verilog
-    " VHDL 
+    " VHDL
     " The VHDL ctags parser unfortunately doesn't generate proper scopes
     let type_vhdl = s:TypeInfo.New()
     let type_vhdl.ctagstype = 'vhdl'
@@ -754,7 +754,7 @@ function! s:InitTypes()
         \ {'short' : 'p', 'long' : 'procedures', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.vhdl = type_vhdl
-    " Vim 
+    " Vim
     let type_vim = s:TypeInfo.New()
     let type_vim.ctagstype = 'vim'
     let type_vim.kinds     = [
@@ -766,14 +766,14 @@ function! s:InitTypes()
         \ {'short' : 'm', 'long' : 'maps',               'fold' : 1, 'stl' : 0}
     \ ]
     let s:known_types.vim = type_vim
-    " YACC 
+    " YACC
     let type_yacc = s:TypeInfo.New()
     let type_yacc.ctagstype = 'yacc'
     let type_yacc.kinds     = [
         \ {'short' : 'l', 'long' : 'labels', 'fold' : 0, 'stl' : 1}
     \ ]
     let s:known_types.yacc = type_yacc
-    " 
+    "
 
     call s:LoadUserTypeDefs()
 
@@ -784,7 +784,7 @@ function! s:InitTypes()
     let s:type_init_done = 1
 endfunction
 
-" s:LoadUserTypeDefs() 
+" s:LoadUserTypeDefs()
 function! s:LoadUserTypeDefs(...)
     if a:0 > 0
         let type = a:1
@@ -851,7 +851,7 @@ function! s:LoadUserTypeDefs(...)
     endif
 endfunction
 
-" s:CreateTypeKinddict() 
+" s:CreateTypeKinddict()
 function! s:CreateTypeKinddict(type)
     " Create a dictionary of the kind order for fast access in sorting
     " functions
@@ -862,7 +862,7 @@ function! s:CreateTypeKinddict(type)
     endfor
 endfunction
 
-" s:RestoreSession() 
+" s:RestoreSession()
 " Properly restore Tagbar after a session got loaded
 function! s:RestoreSession()
     call s:LogDebugMessage('Restoring session')
@@ -894,7 +894,7 @@ function! s:RestoreSession()
     endif
 endfunction
 
-" s:MapKeys() 
+" s:MapKeys()
 function! s:MapKeys()
     call s:LogDebugMessage('Mapping keys')
 
@@ -941,7 +941,7 @@ function! s:MapKeys()
     nnoremap <script> <buffer> <silent> <space>  \|:silent exec 'vertical resize '.(match(g:ide_flags, '\Ct')!=-1 && winwidth('.') > g:ide_width?(g:ide_width):(winwidth('.') + g:ide_incre))<Bar>:nohlsearch<CR>
 endfunction
 
-" s:CreateAutocommands() 
+" s:CreateAutocommands()
 function! s:CreateAutocommands()
     call s:LogDebugMessage('Creating autocommands')
 
@@ -965,7 +965,7 @@ function! s:CreateAutocommands()
     let s:autocommands_done = 1
 endfunction
 
-" s:CheckForExCtags() 
+" s:CheckForExCtags()
 " Test whether the ctags binary is actually Exuberant Ctags and not GNU ctags
 " (or something else)
 function! s:CheckForExCtags(silent)
@@ -1064,7 +1064,7 @@ function! s:CheckForExCtags(silent)
     endif
 endfunction
 
-" s:CheckExCtagsVersion() 
+" s:CheckExCtagsVersion()
 function! s:CheckExCtagsVersion(output)
     call s:LogDebugMessage('Checking Exuberant Ctags version')
 
@@ -1079,7 +1079,7 @@ function! s:CheckExCtagsVersion(output)
     return major >= 6 || (major == 5 && minor >= 5)
 endfunction
 
-" s:CheckFTCtags() 
+" s:CheckFTCtags()
 function! s:CheckFTCtags(bin, ftype)
     if executable(a:bin)
         return a:bin
@@ -1097,7 +1097,7 @@ function! s:CheckFTCtags(bin, ftype)
     return ''
 endfunction
 
-" s:GetSupportedFiletypes() 
+" s:GetSupportedFiletypes()
 function! s:GetSupportedFiletypes()
     call s:LogDebugMessage('Getting filetypes sypported by Exuberant Ctags')
 
@@ -1123,11 +1123,11 @@ function! s:GetSupportedFiletypes()
     let s:checked_ctags_types = 1
 endfunction
 
-" Prototypes 
-" Base tag 
+" Prototypes
+" Base tag
 let s:BaseTag = {}
 
-" s:BaseTag.New() 
+" s:BaseTag.New()
 function! s:BaseTag.New(name) dict
     let newobj = copy(self)
 
@@ -1136,7 +1136,7 @@ function! s:BaseTag.New(name) dict
     return newobj
 endfunction
 
-" s:BaseTag._init() 
+" s:BaseTag._init()
 function! s:BaseTag._init(name) dict
     let self.name          = a:name
     let self.fields        = {}
@@ -1151,27 +1151,27 @@ function! s:BaseTag._init(name) dict
     let self.typeinfo      = {}
 endfunction
 
-" s:BaseTag.isNormalTag() 
+" s:BaseTag.isNormalTag()
 function! s:BaseTag.isNormalTag() dict
     return 0
 endfunction
 
-" s:BaseTag.isPseudoTag() 
+" s:BaseTag.isPseudoTag()
 function! s:BaseTag.isPseudoTag() dict
     return 0
 endfunction
 
-" s:BaseTag.isKindheader() 
+" s:BaseTag.isKindheader()
 function! s:BaseTag.isKindheader() dict
     return 0
 endfunction
 
-" s:BaseTag.getPrototype() 
+" s:BaseTag.getPrototype()
 function! s:BaseTag.getPrototype() dict
     return ''
 endfunction
 
-" s:BaseTag._getPrefix() 
+" s:BaseTag._getPrefix()
 function! s:BaseTag._getPrefix() dict
     let fileinfo = self.fileinfo
 
@@ -1193,7 +1193,7 @@ function! s:BaseTag._getPrefix() dict
     return prefix
 endfunction
 
-" s:BaseTag.initFoldState() 
+" s:BaseTag.initFoldState()
 function! s:BaseTag.initFoldState() dict
     let fileinfo = self.fileinfo
 
@@ -1211,7 +1211,7 @@ function! s:BaseTag.initFoldState() dict
     endif
 endfunction
 
-" s:BaseTag.getClosedParentTline() 
+" s:BaseTag.getClosedParentTline()
 function! s:BaseTag.getClosedParentTline() dict
     let tagline  = self.tline
     let fileinfo = self.fileinfo
@@ -1233,24 +1233,24 @@ function! s:BaseTag.getClosedParentTline() dict
     return tagline
 endfunction
 
-" s:BaseTag.isFoldable() 
+" s:BaseTag.isFoldable()
 function! s:BaseTag.isFoldable() dict
     return has_key(self, 'children') && !empty(self.children)
 endfunction
 
-" s:BaseTag.isFolded() 
+" s:BaseTag.isFolded()
 function! s:BaseTag.isFolded() dict
     return self.fileinfo.tagfolds[self.fields.kind][self.fullpath]
 endfunction
 
-" s:BaseTag.openFold() 
+" s:BaseTag.openFold()
 function! s:BaseTag.openFold() dict
     if self.isFoldable()
         let self.fileinfo.tagfolds[self.fields.kind][self.fullpath] = 0
     endif
 endfunction
 
-" s:BaseTag.closeFold() 
+" s:BaseTag.closeFold()
 function! s:BaseTag.closeFold() dict
     let newline = line('.')
 
@@ -1272,12 +1272,12 @@ function! s:BaseTag.closeFold() dict
     return newline
 endfunction
 
-" s:BaseTag.setFolded() 
+" s:BaseTag.setFolded()
 function! s:BaseTag.setFolded(folded) dict
     let self.fileinfo.tagfolds[self.fields.kind][self.fullpath] = a:folded
 endfunction
 
-" s:BaseTag.openParents() 
+" s:BaseTag.openParents()
 function! s:BaseTag.openParents() dict
     let parent = self.parent
 
@@ -1287,15 +1287,15 @@ function! s:BaseTag.openParents() dict
     endwhile
 endfunction
 
-" Normal tag 
+" Normal tag
 let s:NormalTag = copy(s:BaseTag)
 
-" s:NormalTag.isNormalTag() 
+" s:NormalTag.isNormalTag()
 function! s:NormalTag.isNormalTag() dict
     return 1
 endfunction
 
-" s:NormalTag.strfmt() 
+" s:NormalTag.strfmt()
 function! s:NormalTag.strfmt() dict
     let fileinfo = self.fileinfo
     let typeinfo = self.typeinfo
@@ -1311,7 +1311,7 @@ function! s:NormalTag.strfmt() dict
     return self._getPrefix() . self.name . suffix . "\n"
 endfunction
 
-" s:NormalTag.str() 
+" s:NormalTag.str()
 function! s:NormalTag.str(longsig, full) dict
     if a:full && self.path != ''
         let str = self.path . self.typeinfo.sro . self.name
@@ -1330,20 +1330,20 @@ function! s:NormalTag.str(longsig, full) dict
     return str
 endfunction
 
-" s:NormalTag.getPrototype() 
+" s:NormalTag.getPrototype()
 function! s:NormalTag.getPrototype() dict
     return self.prototype
 endfunction
 
-" Pseudo tag 
+" Pseudo tag
 let s:PseudoTag = copy(s:BaseTag)
 
-" s:PseudoTag.isPseudoTag() 
+" s:PseudoTag.isPseudoTag()
 function! s:PseudoTag.isPseudoTag() dict
     return 1
 endfunction
 
-" s:PseudoTag.strfmt() 
+" s:PseudoTag.strfmt()
 function! s:PseudoTag.strfmt() dict
     let fileinfo = self.fileinfo
     let typeinfo = self.typeinfo
@@ -1356,52 +1356,52 @@ function! s:PseudoTag.strfmt() dict
     return self._getPrefix() . self.name . '*' . suffix
 endfunction
 
-" Kind header 
+" Kind header
 let s:KindheaderTag = copy(s:BaseTag)
 
-" s:KindheaderTag.isKindheader() 
+" s:KindheaderTag.isKindheader()
 function! s:KindheaderTag.isKindheader() dict
     return 1
 endfunction
 
-" s:KindheaderTag.getPrototype() 
+" s:KindheaderTag.getPrototype()
 function! s:KindheaderTag.getPrototype() dict
     return self.name . ': ' .
          \ self.numtags . ' ' . (self.numtags > 1 ? 'tags' : 'tag')
 endfunction
 
-" s:KindheaderTag.isFoldable() 
+" s:KindheaderTag.isFoldable()
 function! s:KindheaderTag.isFoldable() dict
     return 1
 endfunction
 
-" s:KindheaderTag.isFolded() 
+" s:KindheaderTag.isFolded()
 function! s:KindheaderTag.isFolded() dict
     return self.fileinfo.kindfolds[self.short]
 endfunction
 
-" s:KindheaderTag.openFold() 
+" s:KindheaderTag.openFold()
 function! s:KindheaderTag.openFold() dict
     let self.fileinfo.kindfolds[self.short] = 0
 endfunction
 
-" s:KindheaderTag.closeFold() 
+" s:KindheaderTag.closeFold()
 function! s:KindheaderTag.closeFold() dict
     let self.fileinfo.kindfolds[self.short] = 1
     return line('.')
 endfunction
 
-" s:KindheaderTag.toggleFold() 
+" s:KindheaderTag.toggleFold()
 function! s:KindheaderTag.toggleFold() dict
     let fileinfo = s:known_files.getCurrent()
 
     let fileinfo.kindfolds[self.short] = !fileinfo.kindfolds[self.short]
 endfunction
 
-" Type info 
+" Type info
 let s:TypeInfo = {}
 
-" s:TypeInfo.New() 
+" s:TypeInfo.New()
 function! s:TypeInfo.New(...) dict
     let newobj = copy(self)
 
@@ -1414,16 +1414,16 @@ function! s:TypeInfo.New(...) dict
     return newobj
 endfunction
 
-" s:TypeInfo.getKind() 
+" s:TypeInfo.getKind()
 function! s:TypeInfo.getKind(kind) dict
     let idx = self.kinddict[a:kind]
     return self.kinds[idx]
 endfunction
 
-" File info 
+" File info
 let s:FileInfo = {}
 
-" s:FileInfo.New() 
+" s:FileInfo.New()
 function! s:FileInfo.New(fname, ftype) dict
     let newobj = copy(self)
 
@@ -1469,7 +1469,7 @@ function! s:FileInfo.New(fname, ftype) dict
     return newobj
 endfunction
 
-" s:FileInfo.reset() 
+" s:FileInfo.reset()
 " Reset stuff that gets regenerated while processing a file and save the old
 " tag folds
 function! s:FileInfo.reset() dict
@@ -1487,14 +1487,14 @@ function! s:FileInfo.reset() dict
     endfor
 endfunction
 
-" s:FileInfo.clearOldFolds() 
+" s:FileInfo.clearOldFolds()
 function! s:FileInfo.clearOldFolds() dict
     if exists('self._tagfolds_old')
         unlet self._tagfolds_old
     endif
 endfunction
 
-" s:FileInfo.sortTags() 
+" s:FileInfo.sortTags()
 function! s:FileInfo.sortTags() dict
     if has_key(s:compare_typeinfo, 'sort')
         if s:compare_typeinfo.sort
@@ -1509,38 +1509,38 @@ function! s:FileInfo.sortTags() dict
     endif
 endfunction
 
-" s:FileInfo.openKindFold() 
+" s:FileInfo.openKindFold()
 function! s:FileInfo.openKindFold(kind) dict
     let self.kindfolds[a:kind.short] = 0
 endfunction
 
-" s:FileInfo.closeKindFold() 
+" s:FileInfo.closeKindFold()
 function! s:FileInfo.closeKindFold(kind) dict
     let self.kindfolds[a:kind.short] = 1
 endfunction
 
-" Known files 
+" Known files
 let s:known_files = {
     \ '_current' : {},
     \ '_files'   : {}
 \ }
 
-" s:known_files.getCurrent() 
+" s:known_files.getCurrent()
 function! s:known_files.getCurrent() dict
     return self._current
 endfunction
 
-" s:known_files.setCurrent() 
+" s:known_files.setCurrent()
 function! s:known_files.setCurrent(fileinfo) dict
     let self._current = a:fileinfo
 endfunction
 
-" s:known_files.get() 
+" s:known_files.get()
 function! s:known_files.get(fname) dict
     return get(self._files, a:fname, {})
 endfunction
 
-" s:known_files.put() 
+" s:known_files.put()
 " Optional second argument is the filename
 function! s:known_files.put(fileinfo, ...) dict
     if a:0 == 1
@@ -1551,19 +1551,19 @@ function! s:known_files.put(fileinfo, ...) dict
     endif
 endfunction
 
-" s:known_files.has() 
+" s:known_files.has()
 function! s:known_files.has(fname) dict
     return has_key(self._files, a:fname)
 endfunction
 
-" s:known_files.rm() 
+" s:known_files.rm()
 function! s:known_files.rm(fname) dict
     if s:known_files.has(a:fname)
         call remove(self._files, a:fname)
     endif
 endfunction
 
-" Window management 
+" Window management
 " s:ToggleWindow()  <<<
 function! s:ToggleWindow()
     let tagbarwinnr = bufwinnr("__Tagbar__")
@@ -1633,7 +1633,7 @@ function! s:OpenWindow(flags)
     call s:LogDebugMessage('OpenWindow finished')
 endfunction
 
-" s:InitWindow() 
+" s:InitWindow()
 function! s:InitWindow(autoclose)
     call s:LogDebugMessage('InitWindow called with autoclose: ' . a:autoclose)
 
@@ -1700,7 +1700,7 @@ function! s:InitWindow(autoclose)
     call s:LogDebugMessage('InitWindow finished')
 endfunction
 
-" s:CloseWindow() 
+" s:CloseWindow()
 function! s:CloseWindow()
     call s:LogDebugMessage('CloseWindow called')
 
@@ -1764,7 +1764,7 @@ function! s:CloseWindow()
     call s:LogDebugMessage('CloseWindow finished')
 endfunction
 
-" s:ZoomWindow() 
+" s:ZoomWindow()
 function! s:ZoomWindow()
     if s:is_maximized
         execute 'vert resize ' . g:tagbar_width
@@ -1775,7 +1775,7 @@ function! s:ZoomWindow()
     endif
 endfunction
 
-" s:CorrectFocusOnStartup() 
+" s:CorrectFocusOnStartup()
 " For whatever reason the focus will be on the Tagbar window if
 " tagbar#autoopen is used with a FileType autocommand on startup and
 " g:tagbar_left is set. This should work around it by jumping to the window of
@@ -1792,8 +1792,8 @@ function! s:CorrectFocusOnStartup()
     endif
 endfunction
 
-" Tag processing 
-" s:ProcessFile() 
+" Tag processing
+" s:ProcessFile()
 " Execute ctags and put the information into a 'FileInfo' object
 function! s:ProcessFile(fname, ftype)
     call s:LogDebugMessage('ProcessFile called on ' . a:fname)
@@ -1905,7 +1905,7 @@ function! s:ProcessFile(fname, ftype)
     call s:known_files.put(fileinfo)
 endfunction
 
-" s:ExecuteCtagsOnFile() 
+" s:ExecuteCtagsOnFile()
 function! s:ExecuteCtagsOnFile(fname, ftype)
     call s:LogDebugMessage('ExecuteCtagsOnFile called on ' . a:fname)
 
@@ -1972,7 +1972,7 @@ function! s:ExecuteCtagsOnFile(fname, ftype)
     return ctags_output
 endfunction
 
-" s:ParseTagline() 
+" s:ParseTagline()
 " Structure of a tag line:
 " tagname<TAB>filename<TAB>expattern;"fields
 " fields: <TAB>name:value
@@ -2046,7 +2046,7 @@ function! s:ParseTagline(part1, part2, typeinfo, fileinfo)
     return taginfo
 endfunction
 
-" s:AddScopedTags() 
+" s:AddScopedTags()
 " Recursively process tags. Unfortunately there is a problem: not all tags in
 " a hierarchy are actually there. For example, in C++ a class can be defined
 " in a header file and implemented in a .cpp file (so the class itself doesn't
@@ -2143,7 +2143,7 @@ function! s:AddScopedTags(tags, processedtags, parent, depth,
     endif
 endfunction
 
-" s:ProcessPseudoTag() 
+" s:ProcessPseudoTag()
 function! s:ProcessPseudoTag(curtags, tag, parent, typeinfo, fileinfo)
     let curpath = !empty(a:parent) ? a:parent.fullpath : ''
 
@@ -2164,7 +2164,7 @@ function! s:ProcessPseudoTag(curtags, tag, parent, typeinfo, fileinfo)
     return pseudotag
 endfunction
 
-" s:ProcessPseudoChildren() 
+" s:ProcessPseudoChildren()
 function! s:ProcessPseudoChildren(tags, tag, depth, typeinfo, fileinfo)
     for childtag in a:tag.children
         let childtag.parent = a:tag
@@ -2190,7 +2190,7 @@ function! s:ProcessPseudoChildren(tags, tag, depth, typeinfo, fileinfo)
     endif
 endfunction
 
-" s:CreatePseudoTag() 
+" s:CreatePseudoTag()
 function! s:CreatePseudoTag(name, parent, scope, typeinfo, fileinfo)
     if !empty(a:parent)
         let curpath = a:parent.fullpath
@@ -2226,8 +2226,8 @@ function! s:CreatePseudoTag(name, parent, scope, typeinfo, fileinfo)
     return pseudotag
 endfunction
 
-" Sorting 
-" s:SortTags() 
+" Sorting
+" s:SortTags()
 function! s:SortTags(tags, comparemethod)
     call sort(a:tags, a:comparemethod)
 
@@ -2238,7 +2238,7 @@ function! s:SortTags(tags, comparemethod)
     endfor
 endfunction
 
-" s:CompareByKind() 
+" s:CompareByKind()
 function! s:CompareByKind(tag1, tag2)
     let typeinfo = s:compare_typeinfo
 
@@ -2270,12 +2270,12 @@ function! s:CompareByKind(tag1, tag2)
     endif
 endfunction
 
-" s:CompareByLine() 
+" s:CompareByLine()
 function! s:CompareByLine(tag1, tag2)
     return a:tag1.fields.line - a:tag2.fields.line
 endfunction
 
-" s:ToggleSort() 
+" s:ToggleSort()
 function! s:ToggleSort()
     let fileinfo = s:known_files.getCurrent()
     if empty(fileinfo)
@@ -2301,8 +2301,8 @@ function! s:ToggleSort()
     execute curline
 endfunction
 
-" Display 
-" s:RenderContent() 
+" Display
+" s:RenderContent()
 function! s:RenderContent(...)
     call s:LogDebugMessage('RenderContent called')
     let s:new_window = 0
@@ -2392,7 +2392,7 @@ function! s:RenderContent(...)
     endif
 endfunction
 
-" s:PrintKinds() 
+" s:PrintKinds()
 function! s:PrintKinds(typeinfo, fileinfo)
     call s:LogDebugMessage('PrintKinds called')
 
@@ -2499,7 +2499,7 @@ function! s:PrintKinds(typeinfo, fileinfo)
     endfor
 endfunction
 
-" s:PrintTag() 
+" s:PrintTag()
 function! s:PrintTag(tag, depth, fileinfo, typeinfo)
     " Print tag indented according to depth
     silent put =repeat(' ', a:depth * 2) . a:tag.strfmt()
@@ -2537,7 +2537,7 @@ function! s:PrintTag(tag, depth, fileinfo, typeinfo)
     endif
 endfunction
 
-" s:PrintHelp() 
+" s:PrintHelp()
 function! s:PrintHelp()
     if !g:tagbar_compact && s:short_help
         silent 0put ='\" Press <F1> for help'
@@ -2569,7 +2569,7 @@ function! s:PrintHelp()
     endif
 endfunction
 
-" s:RenderKeepView() 
+" s:RenderKeepView()
 " The gist of this function was taken from NERDTree by Martin Grenfell.
 function! s:RenderKeepView(...)
     if a:0 == 1
@@ -2595,8 +2595,8 @@ function! s:RenderKeepView(...)
     redraw
 endfunction
 
-" User actions 
-" s:HighlightTag() 
+" User actions
+" s:HighlightTag()
 function! s:HighlightTag(openfolds, ...)
     let tagline = 0
 
@@ -2660,7 +2660,7 @@ function! s:HighlightTag(openfolds, ...)
     redraw
 endfunction
 
-" s:JumpToTag() 
+" s:JumpToTag()
 function! s:JumpToTag(stay_in_tagbar)
     let taginfo = s:GetTagInfo(line('.'), 1)
 
@@ -2754,7 +2754,7 @@ function! s:JumpToTag(stay_in_tagbar)
     endif
 endfunction
 
-" s:ShowPrototype() 
+" s:ShowPrototype()
 function! s:ShowPrototype()
     let taginfo = s:GetTagInfo(line('.'), 1)
 
@@ -2765,7 +2765,7 @@ function! s:ShowPrototype()
     echo taginfo.getPrototype()
 endfunction
 
-" s:ToggleHelp() 
+" s:ToggleHelp()
 function! s:ToggleHelp()
     let s:short_help = !s:short_help
 
@@ -2778,7 +2778,7 @@ function! s:ToggleHelp()
     redraw
 endfunction
 
-" s:GotoNextToplevelTag() 
+" s:GotoNextToplevelTag()
 function! s:GotoNextToplevelTag(direction)
     let curlinenr = line('.')
     let newlinenr = line('.')
@@ -2808,8 +2808,8 @@ function! s:GotoNextToplevelTag(direction)
     redraw
 endfunction
 
-" Folding 
-" s:OpenFold() 
+" Folding
+" s:OpenFold()
 function! s:OpenFold()
     let fileinfo = s:known_files.getCurrent()
     if empty(fileinfo)
@@ -2828,7 +2828,7 @@ function! s:OpenFold()
     call s:RenderKeepView()
 endfunction
 
-" s:CloseFold() 
+" s:CloseFold()
 function! s:CloseFold()
     let fileinfo = s:known_files.getCurrent()
     if empty(fileinfo)
@@ -2849,7 +2849,7 @@ function! s:CloseFold()
     call s:RenderKeepView(newline)
 endfunction
 
-" s:ToggleFold() 
+" s:ToggleFold()
 function! s:ToggleFold()
     let fileinfo = s:known_files.getCurrent()
     if empty(fileinfo)
@@ -2880,7 +2880,7 @@ function! s:ToggleFold()
     call s:RenderKeepView(newline)
 endfunction
 
-" s:SetFoldLevel() 
+" s:SetFoldLevel()
 function! s:SetFoldLevel(level, force)
     if a:level < 0
         echoerr 'Foldlevel can''t be negative'
@@ -2914,7 +2914,7 @@ function! s:SetFoldLevel(level, force)
     call s:RenderContent()
 endfunction
 
-" s:SetFoldLevelRecursive() 
+" s:SetFoldLevelRecursive()
 " Apply foldlevel to normal tags
 function! s:SetFoldLevelRecursive(fileinfo, tags, level)
     for tag in a:tags
@@ -2930,7 +2930,7 @@ function! s:SetFoldLevelRecursive(fileinfo, tags, level)
     endfor
 endfunction
 
-" s:OpenParents() 
+" s:OpenParents()
 function! s:OpenParents(...)
     let tagline = 0
 
@@ -2945,8 +2945,8 @@ function! s:OpenParents(...)
     call s:RenderKeepView()
 endfunction
 
-" Helper functions 
-" s:AutoUpdate() 
+" Helper functions
+" s:AutoUpdate()
 function! s:AutoUpdate(fname)
     call s:LogDebugMessage('AutoUpdate called on ' . a:fname)
 
@@ -3015,7 +3015,7 @@ function! s:AutoUpdate(fname)
     call s:LogDebugMessage('AutoUpdate finished successfully')
 endfunction
 
-" s:CheckMouseClick() 
+" s:CheckMouseClick()
 function! s:CheckMouseClick()
     let line   = getline('.')
     let curcol = col('.')
@@ -3029,7 +3029,7 @@ function! s:CheckMouseClick()
     endif
 endfunction
 
-" s:DetectFiletype() 
+" s:DetectFiletype()
 function! s:DetectFiletype(bufnr)
     " Filetype has already been detected for loaded buffers, but not
     " necessarily for unloaded ones
@@ -3060,7 +3060,7 @@ function! s:DetectFiletype(bufnr)
     return ftype
 endfunction
 
-" s:EscapeCtagsCmd() 
+" s:EscapeCtagsCmd()
 " Assemble the ctags command line in a way that all problematic characters are
 " properly escaped and converted to the system's encoding
 " Optional third parameter is a file name to run ctags on
@@ -3110,7 +3110,7 @@ function! s:EscapeCtagsCmd(ctags_bin, args, ...)
     return ctags_cmd
 endfunction
 
-" s:ExecuteCtags() 
+" s:ExecuteCtags()
 " Execute ctags with necessary shell settings
 " Partially based on the discussion at
 " http://vim.1045645.n5.nabble.com/bad-default-shellxquote-in-Widows-td1208284.html
@@ -3141,7 +3141,7 @@ function! s:ExecuteCtags(ctags_cmd)
     return ctags_output
 endfunction
 
-" s:GetNearbyTag() 
+" s:GetNearbyTag()
 " Get the tag info for a file near the cursor in the current file
 function! s:GetNearbyTag(all, ...)
     let fileinfo = s:known_files.getCurrent()
@@ -3175,7 +3175,7 @@ function! s:GetNearbyTag(all, ...)
     return tag
 endfunction
 
-" s:GetTagInfo() 
+" s:GetTagInfo()
 " Return the info dictionary of the tag on the specified line. If the line
 " does not contain a valid tag (for example because it is empty or only
 " contains a pseudo-tag) return an empty dictionary.
@@ -3207,7 +3207,7 @@ function! s:GetTagInfo(linenr, ignorepseudo)
     return taginfo
 endfunction
 
-" s:IsValidFile() 
+" s:IsValidFile()
 function! s:IsValidFile(fname, ftype)
     call s:LogDebugMessage('Checking if file is valid: ' . a:fname)
 
@@ -3235,7 +3235,7 @@ function! s:IsValidFile(fname, ftype)
     return 1
 endfunction
 
-" s:QuitIfOnlyWindow() 
+" s:QuitIfOnlyWindow()
 function! s:QuitIfOnlyWindow()
     " Check if there is more than window
     if winbufnr(2) == -1
@@ -3251,7 +3251,7 @@ function! s:QuitIfOnlyWindow()
     endif
 endfunction
 
-" s:winexec() 
+" s:winexec()
 function! s:winexec(cmd)
     call s:LogDebugMessage("Executing without autocommands: " . a:cmd)
 
@@ -3263,7 +3263,7 @@ function! s:winexec(cmd)
     let &eventignore = eventignore_save
 endfunction
 
-" TagbarBalloonExpr() 
+" TagbarBalloonExpr()
 function! TagbarBalloonExpr()
     let taginfo = s:GetTagInfo(v:beval_lnum, 1)
 
@@ -3274,7 +3274,7 @@ function! TagbarBalloonExpr()
     return taginfo.getPrototype()
 endfunction
 
-" TagbarGenerateStatusline() 
+" TagbarGenerateStatusline()
 function! TagbarGenerateStatusline()
     if g:tagbar_sort
         let text = '[Name]'
@@ -3290,8 +3290,8 @@ function! TagbarGenerateStatusline()
     return text
 endfunction
 
-" Debugging 
-" s:StartDebug() 
+" Debugging
+" s:StartDebug()
 function! s:StartDebug(filename)
     if empty(a:filename)
         let s:debug_file = 'tagbardebug.log'
@@ -3313,13 +3313,13 @@ function! s:StartDebug(filename)
     let s:debug = 1
 endfunction
 
-" s:StopDebug() 
+" s:StopDebug()
 function! s:StopDebug()
     let s:debug = 0
     let s:debug_file = ''
 endfunction
 
-" s:LogDebugMessage() 
+" s:LogDebugMessage()
 function! s:LogDebugMessage(msg)
     if s:debug
         exe 'redir >> ' . s:debug_file
@@ -3328,9 +3328,9 @@ function! s:LogDebugMessage(msg)
     endif
 endfunction
 
-" Autoload functions 
+" Autoload functions
 
-" Wrappers 
+" Wrappers
 function! tagbar#ToggleWindow()
     call s:ToggleWindow()
 endfunction
@@ -3364,9 +3364,9 @@ endfunction
 function! tagbar#RestoreSession()
     call s:RestoreSession()
 endfunction
-" 
+"
 
-" tagbar#getusertypes() 
+" tagbar#getusertypes()
 function! tagbar#getusertypes()
     redir => defs
     silent execute 'let g:'
@@ -3385,7 +3385,7 @@ function! tagbar#getusertypes()
     return defdict
 endfunction
 
-" tagbar#autoopen() 
+" tagbar#autoopen()
 " Automatically open Tagbar if one of the open buffers contains a supported
 " file
 function! tagbar#autoopen(...)
@@ -3410,7 +3410,7 @@ function! tagbar#autoopen(...)
                          \ 'without finding valid file')
 endfunction
 
-" tagbar#currenttag() 
+" tagbar#currenttag()
 function! tagbar#currenttag(fmt, default, ...)
     if a:0 > 0
         " also test for non-zero value for backwards compatibility
@@ -3434,7 +3434,7 @@ function! tagbar#currenttag(fmt, default, ...)
     endif
 endfunction
 
-" tagbar#gettypeconfig() 
+" tagbar#gettypeconfig()
 function! tagbar#gettypeconfig(type)
     if !s:Init(1)
         return ''
@@ -3471,5 +3471,5 @@ function! tagbar#gettypeconfig(type)
     silent put =output
 endfunction
 
-" Modeline 
+" Modeline
 " vim: ts=8 sw=4 sts=4 et foldenable foldmethod=marker foldmarker=<<<,>>>

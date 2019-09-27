@@ -1311,7 +1311,7 @@ function! s:IDE(filename) " {{{
         nmap     <buffer> <silent> <2-RightMouse> <space>
         nmap     <buffer> <silent> <3-RightMouse> <space>
         nmap     <buffer> <silent> <4-RightMouse> <space>
-        nnoremap <buffer> <silent> <space>  \|:silent exec 'vertical resize '.(match(g:ide_flags, '\Ct')!=-1 && winwidth('.') > g:ide_width?(g:ide_width):(winwidth('.') + g:ide_incre))<Bar>:nohlsearch<CR>
+        nnoremap <buffer> <silent> <space>  \|:silent exec 'vertical resize '.(match(g:ide_flags, '\Ct')!=-1 && winwidth('.') > g:ide_width?(g:ide_width):(winwidth('.') + g:ide_incre))\|:nohlsearch<CR>
         nnoremap <buffer> <silent> <C-Up>   \|:silent call <SID>MoveUp()<CR>
         nnoremap <buffer> <silent> <C-Down> \|:silent call <SID>MoveDown()<CR>
         nmap     <buffer> <silent> <LocalLeader><Up> <C-Up>
@@ -1386,8 +1386,10 @@ function! s:projwin() " {{{
     endif
 endfunction " }}}
 " change key mapping
-nmap <silent> F :call <SID>IDE('')<CR>
-nmap <silent> f :call <SID>projwin()<CR>
+" <Bar> == |
+nmap <silent> <Bar> :call <SID>IDE('')<CR>
+nmap <silent> & :call <SID>projwin()<CR>
+" nmap <silent> && :call <SID>projwin()<CR> " TODO
 
 finish
 " Modeline

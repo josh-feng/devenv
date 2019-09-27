@@ -1,7 +1,10 @@
+" plugin:
+"   NERDtree
+"   fugitive https://github.com/tpope/vim-fugitive  --> git tool
 " ----- " Color " ----- {{{
-" set background=light
-set background=dark
+set background=dark   " dark/light
 
+" ref: http://http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
 " set t_Co=256
 " if (&t_Co == 256 || &t_Co == 88) && !has('gui_running') &&
 "   \ filereadable(expand("$HOME/.vim/plugin/guicolorscheme.vim"))
@@ -10,11 +13,10 @@ set background=dark
 " else
 "   colorscheme rastafari
 " endif
-
-" info http://http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
 if (&t_Co == 256) " rxvt-unicode-256color
-    hi comment ctermfg=238 ctermbg=black guifg=darkgray gui=bold
     " hi comment ctermfg=238 ctermbg=black guifg=darkgray gui=bold
+    hi comment ctermfg=239 ctermbg=black guifg=darkgray gui=bold
+    " hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
 else
     " colorscheme evening
     " hi comment ctermfg=darkgrey ctermbg=none
@@ -45,29 +47,24 @@ endif
 
 highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
-
-" hi CursorLine   cterm=NONE ctermbg=darkgrey ctermfg=white guibg=darkred guifg=white
-" hi CursorColumn cterm=NONE ctermbg=darkgrey ctermfg=white guibg=darkred guifg=white
-" hi CursorLine   cterm=NONE ctermbg=grey ctermfg=none guibg=darkred guifg=white
-" hi CursorColumn cterm=NONE ctermbg=grey ctermfg=none guibg=darkred guifg=white
-" set cursorline
-" set cursorcolumn
 " }}}
 " =========================================================================
 " =======================  PLUGINS SETTINGS  ==============================
 " =========================================================================
 " --- " IDE " --- {{{
+" ref: https://blog.csdn.net/wooin/article/details/1858917
+"      https://www.cnblogs.com/zhangsf/archive/2013/06/13/3134409.html
 " ------------- " vtreeexplorer " -------------
 "map <F10> <Esc>:Tlist<CR><C-W>h<C-W>s:VTreeExplore<CR>:set nonu<CR><C-W>l
 
 " ------------------- " new-omni-completion " ------------------- {{{
 " insert mode:
-" c-x c-o --> ?
-" c-x c-i --> function/variable name
-" c-x c-f --> directory
-" ^X..... (^I:insert, ^L:library)
+"   c-x c-o --> ?
+"   c-x c-i --> function/variable name
+"   c-x c-f --> directory
+"   ^X..... (^I:insert, ^L:library)
 set completeopt=longest,menu
-" c-p ?
+"   c-p ?
 " }}}
 
 let g:ide_width = 24

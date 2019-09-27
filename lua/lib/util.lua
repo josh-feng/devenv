@@ -388,7 +388,7 @@ tun.xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
 end -- }}}
 tun.xnKey = function (doc, mode) -- {{{ mode: nil/dontcare, -/last, 0/only, +/first
     mode = tonumber(mode)
-    local xn = {}
+    local xn = {['.'] = doc['.'], ['@'] = doc['@']}
     repeat -- collect along the metatable (if mode is defined)
         for i = 1, #doc do -- no metatable
             local v = doc[i]
