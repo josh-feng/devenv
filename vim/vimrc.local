@@ -42,8 +42,11 @@ nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 set foldmethod=marker foldmarker={{{,}}} foldlevel=1
 
 " ------- clipboard --------
-" set clipboard=unnamed,exclude:cons\|linux
-set clipboard=exclude:cons\|linux
+if has('clipboard')
+    " set clipboard=unnamedplus,exclude:cons\|linux
+    set clipboard=unnamed,exclude:cons\|linux
+    " set clipboard=exclude:cons\|linux
+endif
 
 " ------- cursor line ------
 highlight CursorLine   ctermbg=grey
@@ -148,15 +151,14 @@ endif " }}}
 " =========================================================================
 " normal:
 "   " <-- put quote '/"
-"   `_ <--
-"   ,  <-- leader
+"   ` <--
 "   Z/ZZ/ZQ
 " nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert {{{
 " window / tabpage command: use 't' for windows, and 'T' for tabpages
-nmap t <C-w>
-nmap Tc :tabnew<CR>
-nmap Tn :tabnext<CR>
-nmap Tp :tabprev<CR>
+nmap <Tab>c :tabnew<CR>
+nmap <Tab>n :tabnext<CR>
+nmap <Tab>p :tabprev<CR>
+nmap , <C-w>
 
 " insert date and time
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>

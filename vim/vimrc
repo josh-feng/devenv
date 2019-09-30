@@ -1,6 +1,129 @@
-" plugin:
-"   NERDtree
-"   fugitive https://github.com/tpope/vim-fugitive  --> git tool
+" =======================  PLUGINS SETTINGS  ==============================
+" ----- " vundle " ---- {{{ plugin manager: need vim reload
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+" alternatively, pass a path where Vundle should install plugins
+"call vundle#begin('~/some/path/here')
+
+" let Vundle manage Vundle, required
+Plugin 'VundleVim/Vundle.vim'
+
+" The following are examples of different formats supported.
+" Keep Plugin commands between vundle#begin/end.
+" plugin on GitHub repo
+Plugin 'tpope/vim-fugitive'
+" plugin from http://vim-scripts.org/vim/scripts.html
+" Plugin 'L9'
+" Git plugin not hosted on GitHub
+" Plugin 'git://git.wincent.com/command-t.git'
+Plugin 'scrooloose/nerdtree'
+Plugin 'majutsushi/tagbar'
+" git repos on your local machine (i.e. when working on your own plugin)
+" Plugin 'file:///home/gmarik/path/to/plugin'
+
+" The sparkup vim script is in a subdirectory of this repo called vim.
+" Pass the path to set the runtimepath properly.
+" Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
+" Install L9 and avoid a Naming conflict if you've already installed a
+" different version somewhere else.
+" Plugin 'ascenator/L9', {'name': 'newL9'}
+
+" All of your Plugins must be added before the following line
+call vundle#end()            " required
+
+" --- " NERDTree " --- {{{
+" https://github.com/scrooloose/nerdtree
+" NERDTree config
+"  map <F2> :NERDTreeToggle<CR>
+"   autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType")
+"   &&b:NERDTreeType == "primary") | q | endif
+"第一条是说使用F2键快速调出和隐藏它；
+"第二条是关闭vim时，如果打开的文件除了NERDTree没有其他文件时，它自动关闭，减少多次按:q!。
+"如果想打开vim时自动打开NERDTree，可以如下设定
+" autocmd vimenter * NERDTree
+let NERDTreeShowBookmarks = 1
+" let NERDTreeMapQuit = '' " disable
+" }}}
+" --- " tagbar " --- {{{
+" 配置 tagbar 插件
+let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
+let g:tagbar_width = 30            "窗口宽度设置为 30
+let g:tagbar_left = 0              "设置在 vim 左边显示
+let g:tagbar_map_openfold = "zv"   "按 zv 组合键打开标签，默认 zc 关闭标签
+
+" 我设置 F2 为打开或者关闭的快捷键，根据你的习惯更改
+" nnoremap <silent> <F2> :TagbarToggle<CR>
+" }}}
+
+filetype plugin indent on    " required
+" To ignore plugin indent changes, instead use:
+"filetype plugin on
+"
+" Brief help
+" :PluginList       - lists configured plugins
+" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
+" :PluginSearch foo - searches for foo; append `!` to refresh local cache
+" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+"
+" see :h vundle for more details or wiki for FAQ
+" Put your non-Plugin stuff after this line
+"
+" plugins: NERDtree
+" Launch vim and run :PluginInstall
+" To install from command line: vim +PluginInstall +qall
+" }}}
+" =========================================================================
+" --- " IDE " --- {{{ vundle/nerdtree/tagbar
+" ref: https://blog.csdn.net/wooin/article/details/1858917
+"      https://www.cnblogs.com/zhangsf/archive/2013/06/13/3134409.html
+"
+function! ToggleSide() " {{{
+    TagbarClose
+    NERDTreeToggle
+    if g:NERDTree.IsOpen()
+        TagbarOpen
+    endif
+endfunction " }}}
+let g:ide_lastbn = bufwinnr('#')
+function! SwitchSide(w) " {{{
+    " echo bufwinnr('%') bufwinnr(a:w)
+    if bufwinnr('%') == bufwinnr(a:w)
+        exec 'silent! '.bufwinnr(g:ide_lastbn).'wincmd w'
+    else
+        let g:ide_lastbn = bufwinnr('#')
+        if !g:NERDTree.IsOpen()
+            call ToggleSide()
+        endif
+        exec 'silent! '.bufwinnr(a:w).'wincmd w'
+    endif
+endfunction " }}}
+let NERDTreeWinPos = 'right'
+let NERDTreeWinSizeMax = winwidth(0)*6/10
+let g:tagbar_vertical = winheight(0)/2
+nnoremap <silent> <Bar> :call ToggleSide()<CR>
+nnoremap <silent> & :call SwitchSide(t:NERDTreeBufName)<CR>
+nnoremap <silent> _ :call SwitchSide('__Tagbar__')<CR>
+autocmd StdinReadPre * let s:std_in = 1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+
+" ----- " ctags " -----
+let g:tagbar_ctags_bin = "/usr/bin/ctags"
+
+" ------------------- " new-omni-completion " ------------------- {{{
+" insert mode:
+"   c-x c-o --> ?
+"   c-x c-i --> function/variable name
+"   c-x c-f --> directory
+"   ^X..... (^I:insert, ^L:library)
+set completeopt=longest,menu
+"   c-p ?
+" }}}
+" }}}
+" =========================================================================
 " ----- " Color " ----- {{{
 set background=dark   " dark/light
 
@@ -15,7 +138,7 @@ set background=dark   " dark/light
 " endif
 if (&t_Co == 256) " rxvt-unicode-256color
     " hi comment ctermfg=238 ctermbg=black guifg=darkgray gui=bold
-    hi comment ctermfg=239 ctermbg=black guifg=darkgray gui=bold
+    hi comment ctermfg=240 ctermbg=black guifg=darkgray gui=bold
     " hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
 else
     " colorscheme evening
@@ -47,36 +170,6 @@ endif
 
 highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
-" }}}
-" =========================================================================
-" =======================  PLUGINS SETTINGS  ==============================
-" =========================================================================
-" --- " IDE " --- {{{
-" ref: https://blog.csdn.net/wooin/article/details/1858917
-"      https://www.cnblogs.com/zhangsf/archive/2013/06/13/3134409.html
-" ------------- " vtreeexplorer " -------------
-"map <F10> <Esc>:Tlist<CR><C-W>h<C-W>s:VTreeExplore<CR>:set nonu<CR><C-W>l
-
-" ------------------- " new-omni-completion " ------------------- {{{
-" insert mode:
-"   c-x c-o --> ?
-"   c-x c-i --> function/variable name
-"   c-x c-f --> directory
-"   ^X..... (^I:insert, ^L:library)
-set completeopt=longest,menu
-"   c-p ?
-" }}}
-
-let g:ide_width = 24
-let g:ide_incre = 50
-" floating project window F
-let g:ide_flags = "imsTtg"
-
-" ----- " ctags " -----
-let g:tagbar_ctags_bin = "/usr/bin/ctags"
-
-" use netrw to choose project in ide: vim ~/.vim/projects
-nmap <silent> <F12> :IDE %</<cfile><CR>:new +:only<CR>:IDE<CR>
 " }}}
 " =========================================================================
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

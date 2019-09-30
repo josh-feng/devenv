@@ -1374,22 +1374,22 @@ endfunction " }}}
 if exists(':IDE') != 2
     command -nargs=? -complete=file IDE call <SID>IDE('<args>')
 endif
-function! s:projwin() " {{{
+function! s:projwin(w) " {{{
     if exists("g:ide_running")
         if bufwinnr(g:ide_running) == -1
             IDE
-        elseif bufnr('') == g:ide_running
+        elseif bufnr('') == a:w || bufname('') == a:w
             exec 'silent! '.bufwinnr(g:ide_lastbn).'wincmd w'
         else
-            exec 'silent! '.bufwinnr(g:ide_running).'wincmd w'
+            exec 'silent! '.bufwinnr(a:w).'wincmd w'
         end
     endif
 endfunction " }}}
 " change key mapping
 " <Bar> == |
 nmap <silent> <Bar> :call <SID>IDE('')<CR>
-nmap <silent> & :call <SID>projwin()<CR>
-" nmap <silent> && :call <SID>projwin()<CR> " TODO
+nnoremap <silent> & :call <SID>projwin(g:ide_running)<CR>
+nnoremap <silent> _ :call <SID>projwin('__Tagbar__')<CR>
 
 finish
 " Modeline
