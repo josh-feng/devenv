@@ -19,7 +19,6 @@ let loaded_aide = 1
 if !exists('g:aide_bms')
     let g:aide_bms = $HOME.'/.vimaide' " bookmarks file
 endif
-if !exists('g:aide_wig') | let g:aide_wig = "\..*\.swp" | endif " setlocal wildignore=".*.swp"
 " }}}
 
 " setlocal statusline=%!TagbarGenerateStatusline()
@@ -40,14 +39,8 @@ if !exists('g:aide_wig') | let g:aide_wig = "\..*\.swp" | endif " setlocal wildi
 "       if !isdirectory(glob(home))
 "   if a:filespec =~ '[/\\]'  " if contains path separator (slash or backslash)
 "     let dir = fnamemodify(a:filespec, ':p:h')
-"     let fnm = fnamemodify(a:filespec, ':p:t')
-"   else
 "     let dir = expand('%:p:h')  " directory of current file
-"     let fnm = a:filespec
-"   endif
 "   if !empty(a:bang)
-"     let fnm = '**/' . fnm
-"   endif
 "   let files = filter(split(globpath(dir, fnm), '\n'), '!isdirectory(v:val)')
 "   call append(line('$'), files)
 
@@ -154,17 +147,20 @@ function! s:AideUpdateRootPath(path) " {{{
     let l:title = ['.. up ('.t:rootpath.')', '']
     silent! put =l:title
     unlet l:title
-    silent call s:AideTree()
+    silent! call s:AideTree()
+    normal! k
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideAddBookmark(path) " {{{ i/I
-    if exists('a:path')
-        let l:title = input("bookmark title? ")
+    if strlen(a:path) > 0
+        let l:title = input("bookmark(".a:path.") title? ")
+        echo
         let l:path = a:path
     else
         let l:line = input("bookmark title:/path/to/folder? ")
-        let l:title = matchstr(l:line, "^[^:]\+")
-        let l:path = substitute(l:line, "^[^:]\+:", "", "")
+        echo
+        let l:title = matchstr(l:line, "^[^:]*")
+        let l:path = substitute(l:line, "^[^:]*:", "", "")
     endif
     if strlen(l:title) > 0 && strlen(l:path) > 0
         call add(t:aidebookmark, '> '.l:title.': '.l:path)
@@ -177,12 +173,27 @@ function! s:AideUpdate(case) " {{{ u/U
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
     if l:z == 1
-        if a:case == 0
-        else
+        if a:case == 0 " from bms
+            silent! call s:AideUpdateBookmark(t:aide_bms)
+        else " to bms
+            if strlen(t:aide_bms) <= 0
+            endif
+            silent! writefile(t:aidebookmark, t:aide_bms)
         endif
     elseif l:z >= 3
-        if a:case == 0
-        else
+        let l:ind = match(l:line, '\S')
+        call search('^'.(l:ind > 0 ? repeat(' ', l:ind - 2).'▼' : '\.\.'), 'bW')
+        if a:case == 1 " to refresh subfolder
+            if l:ind > 0
+                setlocal modifiable
+                silent! call s:AideRemoveTree(l:ind)
+                " NB: nomofifiable by the above call
+                setlocal modifiable
+                silent! call s:AideTree()
+                setlocal nomodifiable
+            else
+                silent! call s:AideUpdateRootPath(t:rootpath)
+            endif
         endif
     endif
 endfunction " }}}
@@ -190,9 +201,7 @@ function! s:AideAdd(case) " {{{ a/A
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
     if l:z == 1
-        if a:case == 0
-        else
-        endif
+        call s:AideAddBookmark('')
     elseif l:z >= 2
         if a:case == 0
         else
@@ -203,9 +212,8 @@ function! s:AideDelete(case) " {{{ d/D
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
     if l:z == 1
-        if a:case == 0
-        else
-        endif
+        silent! call remove(t:aidebookmark, index(t:aidebookmark, l:line))
+        call s:AideUpdateBookmark('')
     elseif l:z >= 2
         if a:case == 0
         else
@@ -217,9 +225,14 @@ function! s:AideOpenTab(case) " {{{ o/O
     let l:z = s:AideZone(l:line)
     if l:z == 1 && match(l:line, ':') > 0 " bookmark
         let l:rootpath = substitute(l:line, '.*: ', '', '')
+        let l:aidebookmark = t:aidebookmark
+        set lazyredraw
         exec 'silent! tabnew'
-        let t:rootpath = l:rootpath " TODO
+        let t:rootpath = l:rootpath
+        let t:aidebookmark = deepcopy(l:aidebookmark)
+        call ToggleAide()
         if a:case == 0 | silent! tabp | endif
+        set nolazyredraw
     elseif l:z == 5 " file
         exec 'silent! tabedit '.s:AideGetAbsPath(l:line, '^\s*')
         if a:case == 0 | silent! tabp | endif
@@ -234,12 +247,14 @@ endfunction " }}}
 function! s:AideBookmarkChangeFile() " {{{ R load bookmark
     let l:line = getline('.')
     if s:AideZone(l:line) != 1 | return | endif
-    call s:AideUpdateBookmark(input("bookmark file? "))
+    let l:line = input("bookmark file? ")
+    echo
+    call s:AideUpdateBookmark(l:line)
 endfunction " }}}
 function! s:AideBookmarkSortCompare(x, y) " {{{
     let l:x = substitute(a:x, '.*: ', '', '')
     let l:y = substitute(a:y, '.*: ', '', '')
-    return (l:x == l:y) ? 0 : (l:x > l:y) ? 1 : -1
+    return (l:x == l:y) ? 0 : (l:x > l:y) ? -1 : 1
 endfunction " }}}
 function! s:AideBookmarkSort(case) " {{{ s/S
     let l:line = getline('.')
@@ -261,9 +276,13 @@ endfunction " }}}
 function! s:AideTreeRootPathBookmark(case) " {{{ c/C
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
-    if l:z == 2
-        " .. up (/path/) -->
-        call s:AideAddBookmark(strpart(l:line, 7, strlen(l:line) - 8))
+    if l:z == 2 " .. up (/path/) -->
+        let l:line = strpart(l:line, 7, strlen(l:line) - 8)
+        if a:case == 0 " update rootpath
+            chd l:line
+        else
+            call s:AideAddBookmark(l:line)
+        endif
         return
     elseif l:z != 3 && l:z != 4
         return
@@ -281,7 +300,7 @@ function! s:AideCRAction() " {{{
     let l:z = s:AideZone(l:line)
     if l:z == 1 " bookmark
         if match(l:line, '[:alpha:]*:') > 0
-            call s:AideUpdateRootPath(substitute(l:line, '^.-: ', '', ''))
+            call s:AideUpdateRootPath(substitute(l:line, '^.*: ', '', ''))
         endif
     elseif l:z == 2 " up-directory
         call s:AideUpdateRootPath(substitute(t:rootpath, '/[^/]*/$', '/', ''))
@@ -292,13 +311,10 @@ function! s:AideCRAction() " {{{
     elseif l:z > 0 " directory
         setlocal modifiable
         if l:z == 3
-            " let l:ind = match(l:line, '▶ ')
             silent! substitute/▶/▼/
-            " silent! call s:AideTree(l:ind + 2, substitute(l:line, '^.*▶ ', '', ''))
-            silent call s:AideTree()
+            silent! call s:AideTree()
         else "l:z == 4
             let l:ind = match(l:line, '▼ ')
-            setlocal modifiable
             silent! substitute/▼/▶/
             silent! call s:AideRemoveTree(l:ind + 2)
         endif
@@ -310,8 +326,13 @@ function! s:AideUpdateBookmark(bms) " {{{
     if strlen(a:bms) > 0
         let t:aide_bms = a:bms
         silent! let t:aidebookmark = readfile(t:aide_bms)
+    elseif !exists('t:aidebookmark')
+        let t:aidebookmark = []
     endif
     silent! global/^>/delete
+    if match(getline('.'), '"') < 0
+        normal! k
+    endif
     let l:title =strpart(s:bookmarkbound, 0, strlen(s:bookmarkbound) - 3).'{{{ '
     silent! put =l:title
     call uniq(t:aidebookmark)
@@ -328,12 +349,13 @@ endfunction "}}}
 function! s:InitAide() " {{{ Buffer Initialization
     let t:showhelp = 0
     silent! 0put =s:aidehelp[0]
-    let t:aidebookmark = []
-    call s:AideUpdateBookmark(g:aide_bms)
+    if !exists('t:aide_bms') | let t:aide_bms = g:aide_bms | endif
+    call s:AideUpdateBookmark('')
 
     let t:hid = -1
-    setlocal wig=s:wig
-    call s:AideUpdateRootPath(getcwd().'/')
+    setlocal wig=.*.swp
+    " setlocal wildignore=".*.swp"
+    call s:AideUpdateRootPath(t:rootpath)
 
     setlocal filetype=aide
     setlocal nomodeline
@@ -402,6 +424,9 @@ function! s:InitAide() " {{{ Buffer Initialization
     nnoremap <buffer> <silent> C  \|:call <SID>AideTreeRootPathBookmark(1)<CR>
     "
     nnoremap <buffer> <silent> <Return>   \|:call <SID>AideCRAction()<CR>
+    if exists(':Tagbar') == 2
+        nnoremap <silent> _ :call SwitchAide(bufnr(t:tagbar_buf_name))<CR>
+    endif
     " }}}
     " Autocommands {{{
     let l:bufname = bufname('')
@@ -433,6 +458,7 @@ function! s:AIDE(lastwn) " {{{
         else
             let t:aide_bname = '__AIDE__'.tabpagenr()
             exec 'silent! edit 't:aide_bname
+            if !exists('t:rootpath') | let t:rootpath = getcwd().'/' | endif " default
             call s:InitAide()
         endif
     endif
@@ -463,9 +489,6 @@ endfunction " }}}
 " <Bar> == |
 nnoremap <silent> <Bar> :call ToggleAide()<CR>
 nnoremap <silent> & :call SwitchAide(t:aide_bn)<CR>
-if exists(':Tagbar')
-    nnoremap <silent> _ :call SwitchAide(bufnr(t:tagbar_buf_name))<CR>
-endif
 
 if exists(':AIDE') != 2
     command -nargs=? AIDE call <SID>AIDE('<args>')
