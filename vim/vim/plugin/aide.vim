@@ -1,14 +1,10 @@
-"=============================================================================
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <jui-hsuan.feng@globalfoundries.com>
 " Last Change: Sat Oct 26 21:12:34 EDT 2019
-" Version:     0.90
-" Description: Bookmarks
-"              t:bookmarks
-"              t:roopath <-- from bookmarks
-" Development: desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
-" call confirm('l:path'.l:path, "&OK", 1)
-"=============================================================================
+" Version:     0.95
+" Description:
+" Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
+"              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
 
 scriptencoding utf-8
 
@@ -23,26 +19,21 @@ endif
 
 " setlocal statusline=%!TagbarGenerateStatusline()
 " if filereadable(glob('~/.vimide_mappings')) | source ~/.vimide_mappings | endif
-" call confirm('IDE/Vim error. Please Enter :AIDE again and report this bug.', "&OK", 1)
 " let bufname=escape(substitute(expand('%:p', 0), '\\', '/', 'g'), ' ')
-"       call setline(line(".")+1, "")
-"       call cursor(line(".")+1, col("."))
-"       call setline(line(".")+1, i.str())
-"       call cursor(line(".")+1, col("."))
-"   call setline(line(".")+1, header)
-"   call cursor(line(".")+1, col("."))
-"       let l:globList = globpath(l:pathSpec, a:pattern, !g:NERDTreeRespectWildIgnore, 1, 0)
-"           call remove(l:globList, index(l:globList, l:file))
-"   if foldlevel('.') == 0 | return | endif
-"       if line('.') == line('$')
-"               if foldclosed('.') == -1
-"       if !isdirectory(glob(home))
-"   if a:filespec =~ '[/\\]'  " if contains path separator (slash or backslash)
-"     let dir = fnamemodify(a:filespec, ':p:h')
-"     let dir = expand('%:p:h')  " directory of current file
-"   if !empty(a:bang)
-"   let files = filter(split(globpath(dir, fnm), '\n'), '!isdirectory(v:val)')
-"   call append(line('$'), files)
+" call setline(line(".")+1, "")
+" call cursor(line(".")+1, col("."))
+" let l:globList = globpath(l:pathSpec, a:pattern, !g:NERDTreeRespectWildIgnore, 1, 0)
+" call remove(l:globList, index(l:globList, l:file))
+" if foldlevel('.') == 0 | return | endif
+" if line('.') == line('$')
+" if foldclosed('.') == -1
+" if !isdirectory(glob(home))
+" if a:filespec =~ '[/\\]'  " if contains path separator (slash or backslash)
+" let dir = fnamemodify(a:filespec, ':p:h')
+" let dir = expand('%:p:h')  " directory of current file
+" if !empty(a:bang)
+" let files = filter(split(globpath(dir, fnm), '\n'), '!isdirectory(v:val)')
+" call append(line('$'), files)
 
 " {{{ Help message
 let s:aidehelp = [
@@ -75,8 +66,8 @@ function! s:AideToggleHelp() " {{{
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideZone(line) " {{{ desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
-    if match(a:line, '^"') == 0       | return 0 | endif " description
-    if match(a:line, '^>') == 0       | return 1 | endif " bookmark
+    if match(a:line, '^"') == 0 | return 0 | endif " description
+    if match(a:line, '^>') == 0 | return 1 | endif " bookmark
     if match(a:line, '^\.\. up') == 0 | return 2 | endif " up-directory
     if match(a:line, '/$') >= 0 | return match(a:line, '▶ ') >= 0 ? 3 : 4 | endif " directory
     return 5
@@ -97,7 +88,7 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
             let l:path = strpart(substitute(getline('.'), ' ->.*$', '/', ''), l:ind + 4).l:path
         endif
     endwhile
-    silent! call setpos('.', l:pos)
+    call setpos('.', l:pos)
     let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*$', '/', '')
     return substitute(t:rootpath.l:path.l:line, ' ', '\\ ','g')
 endfunction "}}}
@@ -151,34 +142,31 @@ function! s:AideUpdateRootPath(path) " {{{
     normal! k
     setlocal nomodifiable
 endfunction "}}}
-function! s:AideAddBookmark(path) " {{{ i/I
+function! s:AideAddBookmark(path) " {{{
     if strlen(a:path) > 0
         let l:title = input("bookmark(".a:path.") title? ")
-        echo
         let l:path = a:path
     else
-        let l:line = input("bookmark title:/path/to/folder? ")
-        echo
-        let l:title = matchstr(l:line, "^[^:]*")
-        let l:path = substitute(l:line, "^[^:]*:", "", "")
+        let l:line = input("bookmark title|/path/to/folder? ")
+        let l:title = matchstr(l:line, "^[^|]*")
+        let l:path = substitute(l:line, "^[^|]*|\s?", "", "")
     endif
     if strlen(l:title) > 0 && strlen(l:path) > 0
-        call add(t:aidebookmark, '> '.l:title.': '.l:path)
+        call add(t:aidebookmark, '> '.l:title.'| '.l:path)
         call s:AideUpdateBookmark('')
     endif
-    call s:AideUpdateRootPath(l:path)
 endfunction " }}}
-" KEYs: {{{ TODO
+" KEYs: {{{
 function! s:AideUpdate(case) " {{{ u/U
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
     if l:z == 1
         if a:case == 0 " from bms
-            silent! call s:AideUpdateBookmark(t:aide_bms)
+            call s:AideUpdateBookmark(t:aide_bms)
         else " to bms
-            if strlen(t:aide_bms) <= 0
+            if strlen(t:aide_bms) > 0
+                silent! writefile(t:aidebookmark, t:aide_bms)
             endif
-            silent! writefile(t:aidebookmark, t:aide_bms)
         endif
     elseif l:z >= 3
         let l:ind = match(l:line, '\S')
@@ -186,13 +174,13 @@ function! s:AideUpdate(case) " {{{ u/U
         if a:case == 1 " to refresh subfolder
             if l:ind > 0
                 setlocal modifiable
-                silent! call s:AideRemoveTree(l:ind)
+                call s:AideRemoveTree(l:ind)
                 " NB: nomofifiable by the above call
                 setlocal modifiable
                 silent! call s:AideTree()
                 setlocal nomodifiable
             else
-                silent! call s:AideUpdateRootPath(t:rootpath)
+                call s:AideUpdateRootPath(t:rootpath)
             endif
         endif
     endif
@@ -202,9 +190,9 @@ function! s:AideAdd(case) " {{{ a/A
     let l:z = s:AideZone(l:line)
     if l:z == 1
         call s:AideAddBookmark('')
-    elseif l:z >= 2
-        if a:case == 0
-        else
+    elseif l:z >= 3 " TODO
+        if a:case == 0 " file
+        else " folder
         endif
     endif
 endfunction " }}}
@@ -214,27 +202,29 @@ function! s:AideDelete(case) " {{{ d/D
     if l:z == 1
         silent! call remove(t:aidebookmark, index(t:aidebookmark, l:line))
         call s:AideUpdateBookmark('')
-    elseif l:z >= 2
-        if a:case == 0
-        else
+    elseif l:z >= 3 " TODO
+        if a:case == 0 " file
+        else " folder
         endif
     endif
 endfunction " }}}
 function! s:AideOpenTab(case) " {{{ o/O
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
-    if l:z == 1 && match(l:line, ':') > 0 " bookmark
-        let l:rootpath = substitute(l:line, '.*: ', '', '')
+    if l:z == 1 && match(l:line, '|') > 0 " bookmark
+        let l:title = substitute(l:line, '|.*', '', '')
+        let l:rootpath = substitute(l:line, '.*| ', '', '')
         let l:aidebookmark = t:aidebookmark
         set lazyredraw
         exec 'silent! tabnew'
         let t:rootpath = l:rootpath
         let t:aidebookmark = deepcopy(l:aidebookmark)
         call ToggleAide()
+        exec 'file '.strpart(l:title, 2)
         if a:case == 0 | silent! tabp | endif
         set nolazyredraw
     elseif l:z == 5 " file
-        exec 'silent! tabedit '.s:AideGetAbsPath(l:line, '^\s*')
+        exec 'tabedit '.s:AideGetAbsPath(l:line, '^\s*')
         if a:case == 0 | silent! tabp | endif
     endif
 endfunction " }}}
@@ -243,12 +233,17 @@ endfunction " }}}
 function! s:AideBookmarkRename() " {{{ r rename
     let l:line = getline('.')
     if s:AideZone(l:line) != 1 | return | endif
+    let l:i = index(t:aidebookmark, l:line))
+    if l:i < 0 | return | endif
+    let l:path = substitute(l:line, "^[^|]*|\s?", "", "")
+    let l:title = input("bookmark title? ")
+    let t:aidebookmark[l:i] = '> '.l:title.'| '.l:path
+    call s:AideUpdateBookmark('')
 endfunction " }}}
 function! s:AideBookmarkChangeFile() " {{{ R load bookmark
     let l:line = getline('.')
     if s:AideZone(l:line) != 1 | return | endif
     let l:line = input("bookmark file? ")
-    echo
     call s:AideUpdateBookmark(l:line)
 endfunction " }}}
 function! s:AideBookmarkSortCompare(x, y) " {{{
@@ -270,7 +265,7 @@ function! s:AideOpenFile(case) " {{{ i/I
     let l:line = getline('.')
     if s:AideZone(l:line) != 5 | return | endif
     let l:path = s:AideGetAbsPath(l:line, '^\s*')
-    exec 'silent! '.t:aide_lastwn.'wincmd w | new '.l:path
+    exec t:aide_lastwn.'wincmd w | new '.l:path
     if a:case == 0 | exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w' | endif " jump back
 endfunction " }}}
 function! s:AideTreeRootPathBookmark(case) " {{{ c/C
@@ -279,7 +274,7 @@ function! s:AideTreeRootPathBookmark(case) " {{{ c/C
     if l:z == 2 " .. up (/path/) -->
         let l:line = strpart(l:line, 7, strlen(l:line) - 8)
         if a:case == 0 " update rootpath
-            chd l:line
+            exec 'chd '.l:line
         else
             call s:AideAddBookmark(l:line)
         endif
@@ -299,15 +294,17 @@ function! s:AideCRAction() " {{{
     let l:line = getline('.') " echo line('.').'-'.col('.')
     let l:z = s:AideZone(l:line)
     if l:z == 1 " bookmark
-        if match(l:line, '[:alpha:]*:') > 0
-            call s:AideUpdateRootPath(substitute(l:line, '^.*: ', '', ''))
+        let l:i = match(l:line, '|')
+        if l:i > 0
+            exec 'file '.strpart(l:line, 2, l:i - 3)
+            call s:AideUpdateRootPath(substitute(l:line, '^.*| ', '', ''))
         endif
     elseif l:z == 2 " up-directory
         call s:AideUpdateRootPath(substitute(t:rootpath, '/[^/]*/$', '/', ''))
     elseif l:z == 5 " file
         let l:path = s:AideGetAbsPath(l:line, '^\s*')
         exec 'silent! '.t:aide_lastwn.'wincmd w'
-        exec 'silent! edit '.l:path
+        exec 'edit '.l:path
     elseif l:z > 0 " directory
         setlocal modifiable
         if l:z == 3
@@ -316,7 +313,7 @@ function! s:AideCRAction() " {{{
         else "l:z == 4
             let l:ind = match(l:line, '▼ ')
             silent! substitute/▼/▶/
-            silent! call s:AideRemoveTree(l:ind + 2)
+            call s:AideRemoveTree(l:ind + 2)
         endif
         setlocal nomodifiable
     endif
@@ -327,7 +324,7 @@ function! s:AideUpdateBookmark(bms) " {{{
         let t:aide_bms = a:bms
         silent! let t:aidebookmark = readfile(t:aide_bms)
     elseif !exists('t:aidebookmark')
-        let t:aidebookmark = []
+        silent! let t:aidebookmark = readfile(t:aide_bms)
     endif
     silent! global/^>/delete
     if match(getline('.'), '"') < 0
@@ -340,7 +337,7 @@ function! s:AideUpdateBookmark(bms) " {{{
     silent! put =s:bookmarkbound
     silent! foldclose
     unlet l:title
-    " status t:aide_bms TODO
+    setlocal statusline=%{t:aide_bms}
     setlocal nomodifiable
 endfunction "}}}
 let s:bookmarkbound ='> ------ bookmark ------ }}}'
@@ -353,8 +350,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     call s:AideUpdateBookmark('')
 
     let t:hid = -1
-    setlocal wig=.*.swp
-    " setlocal wildignore=".*.swp"
+    setlocal wig=*\\~,.*.swp
     call s:AideUpdateRootPath(t:rootpath)
 
     setlocal filetype=aide
@@ -374,7 +370,6 @@ function! s:InitAide() " {{{ Buffer Initialization
         setlocal norelativenumber
     endif
 
-    setlocal statusline="[AIDE]"
     setlocal buflisted
     let t:aide_bn = bufnr('')
     if t:aide_bn == -1 | unlet t:aide_bn | endif
@@ -385,15 +380,15 @@ function! s:InitAide() " {{{ Buffer Initialization
     syntax match aideArrow        '\(▶\|▼\)'
     syntax match aideTree         '^.*/$' contains=aideArrow
     syntax match aideKey          '\S\+:'he=e-1 contained containedin=aideDescription
-    syntax match aideBookmarkName '> \S\+:'hs=s+1 contained containedin=aideBookmarkZone
+    syntax match aideBookmarkName '> \S\+|'hs=s+2,he=e-1 contained containedin=aideBookmarkZone
     syntax match aideDescription  '^".*$' contains=aideKey
     syntax match aideBookmarkZone '^>.*$' contains=aideBookmarkName
     syntax match aideUpdir        '^\.\..*$'
     highlight def link aideDescription  Comment
     highlight def link aideBookmarkZone Statement
     highlight def link aideBookmarkName Identifier
-    highlight def link aideTree         Include
-    highlight def link aideUpdir        Identifier
+    highlight def link aideTree         Identifier
+    highlight def link aideUpdir        TODO
     highlight def link aideArrow        Statement
     highlight def link aideKey          Constant
     "}}}
@@ -448,16 +443,18 @@ function! s:AIDE(lastwn) " {{{
         if exists(':Tagbar') == 2
             let g:aide_wid = g:tagbar_width
             TagbarOpen 'f'
-            silent! split
+            silent! new
         else
             if !exists('g:aide_wid') | let g:aide_wid = 24 | endif
-            silent! vsplit
+            silent! vnew
         endif
         if exists('t:aide_bn') && (t:aide_bn != -1)
             exec 'silent! b'.t:aide_bn
         else
             let t:aide_bname = '__AIDE__'.tabpagenr()
-            exec 'silent! edit 't:aide_bname
+            silent! edit
+            " change buf name
+            exec 'silent! file '.t:aide_bname
             if !exists('t:rootpath') | let t:rootpath = getcwd().'/' | endif " default
             call s:InitAide()
         endif
@@ -487,8 +484,8 @@ function! SwitchAide(b) " {{{
     unlet l:ssb
 endfunction " }}}
 " <Bar> == |
-nnoremap <silent> <Bar> :call ToggleAide()<CR>
-nnoremap <silent> & :call SwitchAide(t:aide_bn)<CR>
+nnoremap <silent> <Tab> :call ToggleAide()<CR>
+nnoremap <silent> <Bar> :call SwitchAide(t:aide_bn)<CR>
 
 if exists(':AIDE') != 2
     command -nargs=? AIDE call <SID>AIDE('<args>')
