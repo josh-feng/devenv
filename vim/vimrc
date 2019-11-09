@@ -1,118 +1,102 @@
 " =======================  PLUGINS SETTINGS  ==============================
-" ----- " vundle " ---- {{{ plugin manager: need vim reload
+" ----- " vundle " ----- {{{ plugin manager: need vim reload
+" https://github.com/VundleVim/Vundle.vim
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
+call vundle#begin() " {{{
 " alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
-
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
-
-" The following are examples of different formats supported.
+" call vundle#begin('~/some/path/here')
 " Keep Plugin commands between vundle#begin/end.
-" plugin on GitHub repo
+
+" plugin on GitHub repo " let Vundle manage Vundle, required
+Plugin 'VundleVim/Vundle.vim'
 Plugin 'tpope/vim-fugitive'
+" Plugin 'scrooloose/nerdtree'
+Plugin 'majutsushi/tagbar'
+
 " plugin from http://vim-scripts.org/vim/scripts.html
 " Plugin 'L9'
-" Git plugin not hosted on GitHub
+" Plugin 'rstacruz/sparkup', {'rtp': 'vim/'} " sparkup script is in a subdirectory
+" Plugin 'ascenator/L9', {'name': 'newL9'} " Install L9 and avoid a Naming conflict
+
 " Plugin 'git://git.wincent.com/command-t.git'
-Plugin 'scrooloose/nerdtree'
-Plugin 'majutsushi/tagbar'
-" git repos on your local machine (i.e. when working on your own plugin)
-" Plugin 'file:///home/gmarik/path/to/plugin'
+" Plugin 'file:///home/gmarik/path/to/plugin' " git repos on local machine
+call vundle#end() " }}}
 
-" The sparkup vim script is in a subdirectory of this repo called vim.
-" Pass the path to set the runtimepath properly.
-" Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
-" Install L9 and avoid a Naming conflict if you've already installed a
-" different version somewhere else.
-" Plugin 'ascenator/L9', {'name': 'newL9'}
-
-" All of your Plugins must be added before the following line
-call vundle#end()            " required
-
-" --- " NERDTree " --- {{{
-" https://github.com/scrooloose/nerdtree
-" NERDTree config
-"  map <F2> :NERDTreeToggle<CR>
-"   autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType")
-"   &&b:NERDTreeType == "primary") | q | endif
-"第一条是说使用F2键快速调出和隐藏它；
-"第二条是关闭vim时，如果打开的文件除了NERDTree没有其他文件时，它自动关闭，减少多次按:q!。
-"如果想打开vim时自动打开NERDTree，可以如下设定
-" autocmd vimenter * NERDTree
-let NERDTreeShowBookmarks = 1
+" --- " NERDTree " --- {{{ https://github.com/scrooloose/nerdtree
+" let NERDTreeShowBookmarks = 1
 " let NERDTreeMapQuit = '' " disable
+" let NERDTreeWinPos = 'right'
+" let NERDTreeWinSizeMax = winwidth(0)*6/10
 " }}}
 " --- " tagbar " --- {{{
-" 配置 tagbar 插件
-let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
-let g:tagbar_width = 30            "窗口宽度设置为 30
+" let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
+" let g:tagbar_width = 30            "窗口宽度设置为 30
 let g:tagbar_left = 0              "设置在 vim 左边显示
-let g:tagbar_map_openfold = "zv"   "按 zv 组合键打开标签，默认 zc 关闭标签
-
-" 我设置 F2 为打开或者关闭的快捷键，根据你的习惯更改
-" nnoremap <silent> <F2> :TagbarToggle<CR>
+" let g:tagbar_map_openfold = "zv"   "按 zv 组合键打开标签，默认 zc 关闭标签
+" let g:tagbar_zoomwidth = NERDTreeWinSizeMax
+" let g:tagbar_vertical = winheight(0)/2
+" ---
+" let g:tagbar_autofocus = 0
+" let g:tagbar_autoclose = 0
+" let g:tagbar_sort = 1
+" let g:tagbar_compact = 0
+" let g:tagbar_expand = 0
+" let g:tagbar_singleclick = 0
+" let g:tagbar_foldlevel = 99
+" let g:tagbar_autoshowtag = 0
+" let g:tagbar_updateonsave_maxlines = 5000
+" let g:tagbar_systemenc = &encoding
+" if !exists('g:tagbar_iconchars')
+"     if has('multi_byte') && has('unix') && &encoding == 'utf-8' &&
+"         \ (empty(&termencoding) || &termencoding == 'utf-8')
+"         let g:tagbar_iconchars = ['▶', '▼']
+"     else
+"         let g:tagbar_iconchars = ['+', '-']
+"     endif
+" endif
+" augroup TagbarSession
+"     autocmd!
+"     autocmd SessionLoadPost * nested call tagbar#RestoreSession()
+" augroup END
+" " Commands
+" command! -nargs=0 TagbarToggle              call tagbar#ToggleWindow()
+" command! -nargs=? TagbarOpen                call tagbar#OpenWindow(<f-args>)
+" command! -nargs=0 TagbarOpenAutoClose       call tagbar#OpenWindow('fc')
+" command! -nargs=0 TagbarClose               call tagbar#CloseWindow()
+" command! -nargs=1 -bang TagbarSetFoldlevel  call tagbar#SetFoldLevel(<args>, <bang>0)
+" command! -nargs=0 TagbarShowTag             call tagbar#OpenParents()
+" command! -nargs=1 TagbarGetTypeConfig       call tagbar#gettypeconfig(<f-args>)
+" command! -nargs=? TagbarDebug               call tagbar#StartDebug(<f-args>)
+" command! -nargs=0 TagbarDebugEnd            call tagbar#StopDebug()
 " }}}
 
-filetype plugin indent on    " required
-" To ignore plugin indent changes, instead use:
-"filetype plugin on
-"
-" Brief help
+filetype plugin indent on    " or 'filetype plugin on'
+" --- Brief help ---
 " :PluginList       - lists configured plugins
 " :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
 " :PluginSearch foo - searches for foo; append `!` to refresh local cache
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
-"
 " see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
-"
-" plugins: NERDtree
-" Launch vim and run :PluginInstall
-" To install from command line: vim +PluginInstall +qall
 " }}}
 " =========================================================================
-" --- " IDE " --- {{{ vundle/nerdtree/tagbar
-" ref: https://blog.csdn.net/wooin/article/details/1858917
-"      https://www.cnblogs.com/zhangsf/archive/2013/06/13/3134409.html
-"
-function! ToggleSide() " {{{
-    TagbarClose
-    NERDTreeToggle
-    if g:NERDTree.IsOpen()
-        TagbarOpen
-    endif
-endfunction " }}}
-let g:ide_lastbn = bufwinnr('#')
-function! SwitchSide(w) " {{{
-    " echo bufwinnr('%') bufwinnr(a:w)
-    if bufwinnr('%') == bufwinnr(a:w)
-        exec 'silent! '.bufwinnr(g:ide_lastbn).'wincmd w'
-    else
-        let g:ide_lastbn = bufwinnr('#')
-        if !g:NERDTree.IsOpen()
-            call ToggleSide()
-        endif
-        exec 'silent! '.bufwinnr(a:w).'wincmd w'
-    endif
-endfunction " }}}
-let NERDTreeWinPos = 'right'
-let NERDTreeWinSizeMax = winwidth(0)*6/10
-let g:tagbar_vertical = winheight(0)/2
-nnoremap <silent> <Bar> :call ToggleSide()<CR>
-nnoremap <silent> & :call SwitchSide(t:NERDTreeBufName)<CR>
-nnoremap <silent> _ :call SwitchSide('__Tagbar__')<CR>
+" ----- " IDE " ----- {{{ vundle/nerdtree/tagbar
+
+" ----- "netrw" -----
+" let g:netrw_altv = 0
+" let g:netrw_banner = 0
+" let g:netrw_browse_split = 2
+" let g:netrw_liststyle = 1
+" let g:netrw_winsize = 24
+" let g:netrw_list_hide = '.*\.swp$'
+
 autocmd StdinReadPre * let s:std_in = 1
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " ----- " ctags " -----
 let g:tagbar_ctags_bin = "/usr/bin/ctags"
-
 " ------------------- " new-omni-completion " ------------------- {{{
 " insert mode:
 "   c-x c-o --> ?
@@ -170,6 +154,8 @@ endif
 
 highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
+
+" http://tnerual.eriogerg.free.fr/vimqrc.html
 " }}}
 " =========================================================================
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

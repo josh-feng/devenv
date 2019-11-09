@@ -6,13 +6,6 @@
 
 " source /usr/share/vim/vimcurrent/syntax/syntax.vim
 " source /usr/share/vim/vimcurrent/ftplugin/man.vim
-
-"set fileencodings=utf-8,big5,euc-jp,gbk,euc-kr,utf-bom,iso8859-1
-"set encoding=utf8
-"set tenc=utf8
-"將文字編碼轉換成 Big5
-"set tenc=big5<cr>
-" %!iconv -f big5 -t utf8
 " =========================================================================
 " ---- basic settings ---- {{{
 filetype plugin on
@@ -29,22 +22,28 @@ set ruler           " show the cursor position all the time
 " set ignorecase
 " set showcmd
 " set nowrap
+
+" auto indenting step (# of space)
+":verbose set ai? cin? cink? cino? si? inde? indk?
+"setlocal noautoindent
+"setlocal nocindent
+"setlocal nosmartindent
+"setlocal indentexpr=
 set ai              " auto indent
+" set rnu!          " relativenumber
 
 set showmode
 set hlsearch
-" disable hilight of searching using <Space>
+" disable hilight of searching using <Space> & clean command-line
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
-" nnoremap <silent> <Space> :nohlsearch<CR>
 
 " ------- " folding " -------
-" vim600: set foldmethod=marker foldmarker={{{,}}} foldlevel=1:
 set foldmethod=marker foldmarker={{{,}}} foldlevel=1
 
 " ------- clipboard --------
 if has('clipboard')
-    " set clipboard=unnamedplus,exclude:cons\|linux
     set clipboard=unnamed,exclude:cons\|linux
+    " set clipboard=unnamedplus,exclude:cons\|linux
     " set clipboard=exclude:cons\|linux
 endif
 
@@ -101,9 +100,14 @@ augroup END
 " more file type
 au BufNewFile,BufRead *.txt                     setf text
 
+" -----------------------
+" set up the help manuals
+" -----------------------
 au FileType vim,help let&l:kp=':help'
 au FileType python   set kp=pydoc
-au FileType c,cpp    set kp=man\ -S\ 3c:3
+au FileType tcl      set kp=man\ n             " GF DE tcl man is in 'n' section
+au FileType c,cpp,h  set kp=man\ -S\ 3p:2:3    " programming manual pages 2, 3p, and 3 (3c:3)
+au FileType perl     set kp=perldoc
 
 au FileType text,tex,bib,mail,rml set kp=sdcv "dict
 
@@ -112,20 +116,12 @@ au FileType text,tex,bib,mail,rml set kp=sdcv "dict
 " ------------------------------------
 au FileType c,cpp    set ts=2 sw=2
 
-" -----------------------
-" set up the help manuals
-" -----------------------
-au FileType vim,help let&l:kp=':help'
-au FileType tcl      set kp=man\ n             " GF DE tcl man is in 'n' section
-au FileType c,cpp,h  set kp=man\ -S\ 3p:2:3    " programming manual pages 2, 3p, and 3
-au FileType perl     set kp=perldoc
-
 " Ignore these files when completing names and in Explorer
 set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.png,*.xpm,*.gif
 
-autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
-autocmd Syntax xml syn match OotclComment "//.*"
-autocmd Syntax xml hi def link OotclComment Comment
+autocmd Syntax c,cpp,tcl,xml    set foldmethod=marker
+autocmd Syntax xml              syn match OotclComment "//.*"
+autocmd Syntax xml              hi def link OotclComment Comment
 
 " FORMAT
 ":e ++ff=dos
@@ -149,57 +145,51 @@ endif " }}}
 " =========================================================================
 " =========================  KEYBINDING  ==================================
 " =========================================================================
-" normal:
-"   " <-- put quote '/"
-"   ` <--
-"   Z/ZZ/ZQ
 " nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert {{{
-" window / tabpage command: use 't' for windows, and 'T' for tabpages
-nmap <Tab>c :tabnew<CR>
-nmap <Tab>n :tabnext<CR>
-nmap <Tab>p :tabprev<CR>
-nmap , <C-w>
+nmap Tc :tabnew<CR>
+nmap Tn :tabnext<CR>
+nmap Tp :tabprev<CR>
+nmap t <C-w>
+
+"nmap `
 
 " insert date and time
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
 " map <F2> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
-" copy to "
-" map <F3> :let @@=expand('<cword>')<CR>
-" copy to selection
-" map <F4> :let @+=expand('<cword>')<CR>
+" map <F3> :let @@=expand('<cword>')<CR> " copy to "
+" map <F4> :let @+=expand('<cword>')<CR> " copy to selection
 
-"nnoremap <F2> :set cursorcolumn! cursorline!<CR>
 nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
-"nnoremap <F3> :set wrap! wrap?<CR>
 
-" -- paste mode -- for wierd files, no indent
 " nnoremap <F8> :setl noai nocin nosi inde=<CR>
 nnoremap <F8> :set invpaste paste?<CR>
 set pastetoggle=<F8>
 
-" set nopaste
-" set paste
 " Useful bubble text normal mapping for arrow keys.
 "nnoremap <UP> ddkP
 "nnoremap <DOWN> ddp
 
-vnoremap <DOWN> xjP`[<C-V>`]
-vnoremap <UP> xkP`[<C-V>`]
-vnoremap <LEFT> xhP`[<C-V>`]
-vnoremap <RIGHT> xlP`[<C-V>`]
+" vnoremap <DOWN> xjP`[<C-V>`]
+" vnoremap <UP> xkP`[<C-V>`]
+" vnoremap <LEFT> xhP`[<C-V>`]
+" vnoremap <RIGHT> xlP`[<C-V>`]
 
-nnoremap <LEFT>  I
-nnoremap <RIGHT> A
-vnoremap <LEFT>  I
-vnoremap <RIGHT> A
+" nnoremap <LEFT>  I
+" nnoremap <RIGHT> A
+" vnoremap <LEFT>  I
+" vnoremap <RIGHT> A
 
-" auto indenting step (# of space)
-":verbose set ai? cin? cink? cino? si? inde? indk?
-"setlocal noautoindent
-"setlocal nocindent
-"setlocal nosmartindent
-"setlocal indentexpr=
-" nnoremap <F7> :setl noai nocin nosi inde=<CR>
+" set fileencodings=big5,euc-jp,gbk,gb18030,utf-8,euc-kr,utf-bom,iso8859-1,default
+" set encoding=utf8
+" set tenc=utf8
+" set tenc=big5<cr>
+" http://linux-wiki.cn/wiki/zh-hant/%E7%AE%80%E7%B9%81%E8%BD%AC%E6%8D%A2 "將文字編碼轉換"
+" %!iconv -f big5 -t utf8
+" %!cconv -f big5 -t utf8
+vnoremap m :!cconv -f big5 -t utf8<CR>
+vnoremap M :!cconv -f gb18030 -t utf8<CR>
+" vnoremap H
+" vnoremap L
 
 " set shell ?       check the external command
 " run the command in default shell (v-i) :'<,'>w !sh
@@ -208,7 +198,8 @@ vnoremap t !column -t<CR>
 vnoremap <silent> , :s/\s\+$//g<CR>
 vnoremap f :s/\(\S\)\s\+/\1:/g<CR>
 vnoremap F :s/:/ /g<CR>
-" index (v-i) :'<,'>!nl -n rz
+" vnoremap a
+" vnoremap i
 vnoremap o :!/usr/bin/nl -n rz<CR>
 
 nmap ; :!
@@ -255,7 +246,10 @@ set foldtext=CustomFoldText() " }}}
 " c-wf  open a new window for the file under cursor
 " va{   visual selection {
 " di"   delete in "
-" "*    system clipboard
+"
+" environment variables start w/ $ : ex. $HOME
+" ab -- general abbreviation; ca -- command line mode abbreviation
+" ca mkix   !makeindex
 "
 " =======================  PATTERN REGX  ==================================
 " :g/\<condition\>\%(\s\+number\>\)\@!/p
@@ -287,27 +281,9 @@ set foldtext=CustomFoldText() " }}}
 "
 " ========================  REGISTERS  ====================================
 " NB:
-" In the normal mode: " <--- mark start
-"                     * <--- system clipboard, i,e. the * register
-" "* <-- system clipboard block
-" gg"*yG <-- from start the system clipboard block yank to the end of file
-" "*p <-- paste the system clipboard block
-"
-" NB: :set clipboard=unnamedplus (vim 7.3.74 and later)
-"                     + <--- X window clipboard
+" : help marks
 " : help clipboard
 " : help registers
-" : '<,'>w !sh        " run shell commands
-"
-" '"'   the unnamed register, containing the text of the last delete or yank
-" '%'   the current file name
-" '#'   the alternate file name
-" '*'   the clipboard contents (X11: primary selection)
-" '+'   the clipboard contents
-" '/'   the last search pattern
-" ':'   the last command-line
-" '.'   the last inserted text
-" '-'   the last small (less than a line) delete
 " '='   the expression register: you are prompted to
 "       enter an expression (see |expression|)
 "       Note that 0x80 (128 decimal) is used for
@@ -320,15 +296,5 @@ set foldtext=CustomFoldText() " }}}
 "       too.
 "       When the result is a Float it's automatically
 "       converted to a String.
-"
-" vim: ft=vim ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1:
-" }}}
-" =========================================================================
-" VIM QUICK REFERENCE CARD {{{
-" environment variables start w/ $ : ex. $HOME
-" ab -- general abbreviation; ca -- command line mode abbreviation
-" ca mkix   !makeindex
-"
-" http://tnerual.eriogerg.free.fr/vimqrc.html
 " =========================================================================
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
