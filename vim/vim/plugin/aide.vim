@@ -1,8 +1,8 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <jui-hsuan.feng@globalfoundries.com>
 " Last Change: Sat Oct 26 21:12:34 EDT 2019
-" Version:     0.95
-" Description:
+" Version:     0.95 (need mac/m$ env test
+" Description: An IDE supporting Tagbar
 " Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
 
@@ -12,29 +12,14 @@ if exists('loaded_aide') || &cp | finish | endif
 let loaded_aide = 1
 
 " Initialize {{{ AIDE
+if exists('g:aide_force') && g:aide_force == 1
+    autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | call ToggleAide() | endif
+endif
 if !exists('g:aide_bms')
     let g:aide_bms = $HOME.'/.vimaide' " bookmarks file
 endif
+if !exists('g:aide_bmafld') | let g:aide_bmafld = 0 | endif " bookmarks auto-folding
 " }}}
-
-" setlocal statusline=%!TagbarGenerateStatusline()
-" if filereadable(glob('~/.vimide_mappings')) | source ~/.vimide_mappings | endif
-" let bufname=escape(substitute(expand('%:p', 0), '\\', '/', 'g'), ' ')
-" call setline(line(".")+1, "")
-" call cursor(line(".")+1, col("."))
-" let l:globList = globpath(l:pathSpec, a:pattern, !g:NERDTreeRespectWildIgnore, 1, 0)
-" call remove(l:globList, index(l:globList, l:file))
-" if foldlevel('.') == 0 | return | endif
-" if line('.') == line('$')
-" if foldclosed('.') == -1
-" if !isdirectory(glob(home))
-" if a:filespec =~ '[/\\]'  " if contains path separator (slash or backslash)
-" let dir = fnamemodify(a:filespec, ':p:h')
-" let dir = expand('%:p:h')  " directory of current file
-" if !empty(a:bang)
-" let files = filter(split(globpath(dir, fnm), '\n'), '!isdirectory(v:val)')
-" call append(line('$'), files)
-
 " {{{ Help message
 let s:aidehelp = [
     \ '" p: toggle help for keybindings',
@@ -164,8 +149,8 @@ function! s:AideUpdate(case) " {{{ u/U
         if a:case == 0 " from bms
             call s:AideUpdateBookmark(t:aide_bms)
         else " to bms
-            if strlen(t:aide_bms) > 0
-                silent! writefile(t:aidebookmark, t:aide_bms)
+            if strlen(t:aide_bms) > 0 && 1 == confirm("Overwrite ".t:aide_bms."?", "&Yes\n&No", 1)
+                call writefile(t:aidebookmark, t:aide_bms)
             endif
         endif
     elseif l:z >= 3
@@ -190,7 +175,8 @@ function! s:AideAdd(case) " {{{ a/A
     let l:z = s:AideZone(l:line)
     if l:z == 1
         call s:AideAddBookmark('')
-    elseif l:z >= 3 " TODO
+    elseif l:z >= 3
+        " if exist already TODO
         if a:case == 0 " file
         else " folder
         endif
@@ -202,7 +188,8 @@ function! s:AideDelete(case) " {{{ d/D
     if l:z == 1
         silent! call remove(t:aidebookmark, index(t:aidebookmark, l:line))
         call s:AideUpdateBookmark('')
-    elseif l:z >= 3 " TODO
+    elseif l:z >= 3
+        " checking writable TODO
         if a:case == 0 " file
         else " folder
         endif
@@ -228,8 +215,7 @@ function! s:AideOpenTab(case) " {{{ o/O
         if a:case == 0 | silent! tabp | endif
     endif
 endfunction " }}}
-" }}}
-" KEYs: {{{ specific zones
+" ---------- specific zones ---------------
 function! s:AideBookmarkRename() " {{{ r rename
     let l:line = getline('.')
     if s:AideZone(l:line) != 1 | return | endif
@@ -273,8 +259,8 @@ function! s:AideTreeRootPathBookmark(case) " {{{ c/C
     let l:z = s:AideZone(l:line)
     if l:z == 2 " .. up (/path/) -->
         let l:line = strpart(l:line, 7, strlen(l:line) - 8)
-        if a:case == 0 " update rootpath
-            exec 'chd '.l:line
+        if a:case == 0 " update rootpath exec 'chd '.l:line
+            exec 'cd '.l:line
         else
             call s:AideAddBookmark(l:line)
         endif
@@ -335,13 +321,16 @@ function! s:AideUpdateBookmark(bms) " {{{
     call uniq(t:aidebookmark)
     if len(t:aidebookmark) > 0 | silent! put =t:aidebookmark | endif
     silent! put =s:bookmarkbound
-    silent! foldclose
+    if g:aide_bmafld == 1
+        silent! foldclose
+    endif
     unlet l:title
     setlocal statusline=%{t:aide_bms}
     setlocal nomodifiable
 endfunction "}}}
 let s:bookmarkbound ='> ------ bookmark ------ }}}'
 function! s:AideEnterBuffer() " {{{ Buffer Initialization TODO
+    " let bufname=escape(substitute(expand('%:p', 0), '\\', '/', 'g'), ' ')
 endfunction "}}}
 function! s:InitAide() " {{{ Buffer Initialization
     let t:showhelp = 0
@@ -424,8 +413,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     endif
     " }}}
     " Autocommands {{{
-    let l:bufname = bufname('')
-    exec 'au BufWipeout '.bufname.' unlet t:aide_bn'
+    exec 'au BufWipeout '.bufname('').' unlet t:aide_bn t:aide_bms t:aidebookmark'
     exec 'au BufEnter '.t:aide_bn.' call s:AideEnterBuffer()'
     " }}}
 
@@ -492,6 +480,5 @@ if exists(':AIDE') != 2
     if !exists('g:aide_mx') | let g:aide_mx = winwidth(0)*6/10 | endif
     if !exists('g:aide_h2') | let g:aide_h2 = winheight(0)/2 | endif
 endif " }}}
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | call ToggleAide() | endif
 finish
-" vim: ts=8 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1:
+" vim: ts=8 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
