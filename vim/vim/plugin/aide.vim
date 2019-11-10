@@ -207,7 +207,7 @@ function! s:AideOpenTab(case) " {{{ o/O
         let t:rootpath = l:rootpath
         let t:aidebookmark = deepcopy(l:aidebookmark)
         call ToggleAide()
-        exec 'file '.strpart(l:title, 2)
+        exec 'file '.strpart(l:title, 2).'.'.tabpagenr()
         if a:case == 0 | silent! tabp | endif
         set nolazyredraw
     elseif l:z == 5 " file
@@ -313,9 +313,8 @@ function! s:AideUpdateBookmark(bms) " {{{
         silent! let t:aidebookmark = readfile(t:aide_bms)
     endif
     silent! global/^>/delete
-    if match(getline('.'), '"') < 0
-        normal! k
-    endif
+    silent! $
+    silent! call search('"', 'bW')
     let l:title =strpart(s:bookmarkbound, 0, strlen(s:bookmarkbound) - 3).'{{{ '
     silent! put =l:title
     call uniq(t:aidebookmark)
