@@ -27,17 +27,23 @@ lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of da
 
     local lomcallbacks = {
         StartElement = function (parser, name, attr) -- {{{
-            local xn = {['.'] = node} -- record parent node
+            local xn = {['.'] = node, ['*'] = {}} -- record parent node
             if #attr > 0 then xn['@'] = attr end
             tinsert(node, xn)
             node = xn
         end; -- }}}
         EndElement = function (parser, name) -- {{{
+            node['*'] = tconcat(node['*'], '\n')
+            if trim == 1 then
+                node['*'] = strgsub(strgsub(node['*'], '%s*\n', '\n'), '^%s*\n', '')
+            end
             node, node['.'] =  node['.'], name -- record the tag/node name
         end; -- }}}
         CharacterData = function (parser, s) -- {{{
-            if trim ~= 1 or strmatch(s, '%S') then
-                tinsert(node, trim and strmatch(s, '^(.-)%s*$') or s)
+            if strmatch(s, '%S') then
+                if trim ~= 1 then
+                    tinsert(node['*'], trim and strmatch(s, '^(.-)%s*$') or s)
+                end
             end
         end; -- }}}
     }
@@ -147,7 +153,6 @@ end -- }}}
 lom.Dump = function (doc, fxml) -- {{{ dump
     return type(doc) ~= 'table' and '' or (fxml and '<?xml version="1.0"?>\n'..dumpLom(doc) or tun.dumpVar(0, doc))
 end -- }}}
-
 return lom
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
 -- ======================================================================== --
