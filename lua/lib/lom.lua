@@ -4,9 +4,7 @@
 -- Usage example:
 --      lom = require('lom')
 --      doc = lom.ParseXml(file)
---      print(doc.Flow.LayoutWriter[1]['@name'])
 --      xml = lom.Dump(doc, true)
---      subxml = lom.Dump(doc.Flow.LayoutWriter, 'TestTag')
 -- ======================================================================== --
 local lom = {id = ''} -- version control
 
@@ -22,6 +20,7 @@ local indent = strrep(' ', 4)
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
+-- node == token == tag == table
 lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of data 0:end space, 1:blank line
     local node = {} -- working variable: doc == root node (node == token == tag == table)
 
@@ -34,9 +33,13 @@ lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of da
         end; -- }}}
         EndElement = function (parser, name) -- {{{
             node['*'] = tconcat(node['*'], '\n')
-            if trim == 1 then
-                node['*'] = strgsub(strgsub(node['*'], '%s*\n', '\n'), '^%s*\n', '')
+            if trim then
+                if trim == 1 then
+                    node['*'] = strgsub(strgsub(node['*'], '%s*\n', '\n'), '^%s*\n', '')
+                end
+                node['*'] = strmatch(node['*'], '^(.-)%s*$')
             end
+            if node['*'] == '' then node['*'] = nil end
             node, node['.'] =  node['.'], name -- record the tag/node name
         end; -- }}}
         CharacterData = function (parser, s) -- {{{
@@ -52,12 +55,12 @@ lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of da
     local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
     plom:parse()
     plom:close() -- seems destroy the lxp obj
-    node['?'] = status and {} or {msg..' @line '..line}
+    node['?'] = status and {} or {msg..' #'..line}
     return node
 end
 -- }}}
 -- ======================================================================== --
-lom.ParseXml = function (filename, doctree, mode) -- doc = lom.ParseXml(xmlfile, docfactory) -- {{{
+lom.ParseXml = function (filename, mode, doctree) -- doc = lom.ParseXml(xmlfile, docfactory) -- {{{
     filename = tun.normpath(filename)
     if type(doctree) == 'table' and doctree[filename] then return doctree[filename] end
 
@@ -72,7 +75,7 @@ end -- }}}
 lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfile) -- {{{ -- trace and meta
     local topxml, base = tun.normpath(xmlfile)
     local doctree = {}
-    local doc = lom.ParseXml(topxml, doctree, mode) -- doc table
+    local doc = lom.ParseXml(topxml, mode, doctree) -- doc table
 
     local function TraceTbl (xn, xml) -- {{{ lua table form
         local v = xn['@'] and xn['@']['xlink:href']
@@ -86,7 +89,7 @@ lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfi
                 link = tun.normpath(link)
             end -- }}}
 
-            if not doctree[link] then TraceTbl(lom.ParseXml(link, doctree, mode), link) end
+            if not doctree[link] then TraceTbl(lom.ParseXml(link, mode, doctree), link) end
             link, xpath = tun.xPath(doctree[link], strmatch(xpath or '', '#xpointer%((.*)%)'))
 
             if #link == 1 then -- the linked table
@@ -134,24 +137,29 @@ lom.xmlstr = function (s, fenc) -- {{{
             '"', '&quot;'), "'", '&apos;'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
     end
 end -- }}}
-local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@attr'] = value; ...}
+local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@'] = {}; ['*'] = ''; ...}
     if not node['.'] then return end
-    local res, subnode = {}, #node > 0
+    local res = {}
     if node['@'] then
-        for _, k in ipairs(node['@']) do
-            tinsert(res, k..'="'..strgsub(node['@'][k], '"', '\\"')..'"')
-        end -- table.sort(res)
+        for _, k in ipairs(node['@']) do tinsert(res, k..'="'..strgsub(node['@'][k], '"', '\\"')..'"') end
     end
     res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
-    if #node == 0 then return res..' />' end
-    for i = 1, #node do if type(node[i]) == 'table' then subnode = false ; break end end
-    if subnode then return res..'>'..lom.xmlstr(tconcat(node, ' '))..'</'..node['.']..'>' end
+    if #node == 0 then
+        return node['*'] and res..'>'..lom.xmlstr(node['*'])..'</'..node['.']..'>' or res..' />'
+    end
     res = {res..'>'}
     for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
     return strgsub(tconcat(res, '\n'), '\n', '\n'..indent)..'\n</'..node['.']..'>'
 end -- }}}
-lom.Dump = function (doc, fxml) -- {{{ dump
-    return type(doc) ~= 'table' and '' or (fxml and '<?xml version="1.0"?>\n'..dumpLom(doc) or tun.dumpVar(0, doc))
+lom.Dump = function (docs, fxml) -- {{{ dump
+    if type(docs) ~= 'table' then return '' end
+    if fxml then
+        local res = {}
+        for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
+        return '<?xml version="1.0"?>\n'..tconcat(res, '\n')
+    else
+        return tun.dumpVar(0, docs)
+    end
 end -- }}}
 return lom
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
