@@ -26,12 +26,6 @@ Plugin 'majutsushi/tagbar'
 " Plugin 'file:///home/gmarik/path/to/plugin' " git repos on local machine
 call vundle#end() " }}}
 
-" --- " NERDTree " --- {{{ https://github.com/scrooloose/nerdtree
-" let NERDTreeShowBookmarks = 1
-" let NERDTreeMapQuit = '' " disable
-" let NERDTreeWinPos = 'right'
-" let NERDTreeWinSizeMax = winwidth(0)*6/10
-" }}}
 " --- " tagbar " --- {{{
 " let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
 " let g:tagbar_width = 30            "窗口宽度设置为 30
@@ -83,7 +77,7 @@ filetype plugin indent on    " or 'filetype plugin on'
 " see :h vundle for more details or wiki for FAQ
 " }}}
 " =========================================================================
-" ----- " IDE " ----- {{{ vundle/nerdtree/tagbar
+" ----- " IDE " ----- {{{ vundle/tagbar
 
 " ----- "netrw" -----
 " let g:netrw_altv = 0
