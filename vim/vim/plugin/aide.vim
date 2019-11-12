@@ -15,10 +15,9 @@ let loaded_aide = 1
 if exists('g:aide_force') && g:aide_force == 1
     autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | call ToggleAide() | endif
 endif
-if !exists('g:aide_bms')
-    let g:aide_bms = $HOME.'/.vimaide' " bookmarks file
-endif
+if !exists('g:aide_bms') | let g:aide_bms = $HOME.'/.vimaide' | endif " bookmarks file
 if !exists('g:aide_bmafld') | let g:aide_bmafld = 0 | endif " bookmarks auto-folding
+if !exists('g:aide_wig') | let g:aide_wig = 'CVS/*,*\\~,.*.swp' | endif
 " }}}
 " {{{ Help message
 let s:aidehelp = [
@@ -27,17 +26,18 @@ let s:aidehelp = [
     \ '" x/X: toggle aide window horizontal/vertical',
     \ '" ------------ in bookmarks ------------',
     \ '" u/U: update from bookmark file/update to bookmark file',
-    \ '" a/A: add bookmark',
     \ '" d/D: delete bookmark',
+    \ '" a/A: add bookmark',
     \ '" o/O: open bookmark in a new tab/jump',
     \ '" r/R: rename bookmark/change bookmark file',
     \ '" s/S: toggle sort name/path',
     \ '" <CR>: change directory to the bookmark',
     \ '" -------- in files/directories --------',
     \ '" u/U: toggle folding/update',
-    \ '" a/A: add file/directory',
-    \ '" d/D: remove file/directory',
+    \ '" d/D: display/query file/directory abs path',
+    \ '" a/A: open file in a new vertical split window/jump',
     \ '" o/O: open file in a new tab/jump',
+    \ '" r/R: open the file in the previous window/jump',
     \ '" i/I: open file in a new window/jump',
     \ '" c/C: change root directory/create the directory as bookmark',
     \ '" <CR>: open file in the main window/toggle folding',
@@ -175,11 +175,12 @@ function! s:AideAdd(case) " {{{ a/A
     let l:z = s:AideZone(l:line)
     if l:z == 1
         call s:AideAddBookmark('')
-    elseif l:z >= 3
-        " if exist already TODO
-        if a:case == 0 " file
-        else " folder
-        endif
+    elseif l:z == 5 " vertical in last wn
+        let l:line = getline('.')
+        if s:AideZone(l:line) != 5 | return | endif
+        let l:path = s:AideGetAbsPath(l:line, '^\s*')
+        exec t:aide_lastwn.'wincmd w | vnew '.l:path
+        if a:case == 0 | exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w' | endif " jump back
     endif
 endfunction " }}}
 function! s:AideDelete(case) " {{{ d/D
@@ -189,17 +190,18 @@ function! s:AideDelete(case) " {{{ d/D
         silent! call remove(t:aidebookmark, index(t:aidebookmark, l:line))
         call s:AideUpdateBookmark('')
     elseif l:z >= 3
-        " checking writable TODO
-        if a:case == 0 " file
-        else " folder
-        endif
+        let l:path = s:AideGetAbsPath(l:line, l:z == 5 ? '^\s*' : '^.*\(▼\|▶\) ')
+        if a:case == 1 && l:z == 5
+            call system('file '.l:path)
+        else
+            echo l:path
+        end
     endif
 endfunction " }}}
 function! s:AideOpenTab(case) " {{{ o/O
     let l:line = getline('.')
     let l:z = s:AideZone(l:line)
     if l:z == 1 && match(l:line, '|') > 0 " bookmark
-        let l:title = substitute(l:line, '|.*', '', '')
         let l:rootpath = substitute(l:line, '.*| ', '', '')
         let l:aidebookmark = t:aidebookmark
         set lazyredraw
@@ -207,7 +209,7 @@ function! s:AideOpenTab(case) " {{{ o/O
         let t:rootpath = l:rootpath
         let t:aidebookmark = deepcopy(l:aidebookmark)
         call ToggleAide()
-        exec 'file '.strpart(l:title, 2).'.'.tabpagenr()
+        exec 'silent! file '.strpart(substitute(l:line, '|.*', '', ''), 2).'.'.tabpagenr()
         if a:case == 0 | silent! tabp | endif
         set nolazyredraw
     elseif l:z == 5 " file
@@ -215,23 +217,31 @@ function! s:AideOpenTab(case) " {{{ o/O
         if a:case == 0 | silent! tabp | endif
     endif
 endfunction " }}}
+function! s:AideReplaceOrChange(case) " {{{ r/R
+    let l:line = getline('.')
+    let l:z = s:AideZone(l:line)
+    if l:z == 1
+        if a:case == 0 " rename
+            let l:i = index(t:aidebookmark, l:line))
+            if l:i < 0 | return | endif
+            let l:path = substitute(l:line, "^[^|]*|\s?", "", "")
+            let l:title = input("bookmark title? ")
+            let t:aidebookmark[l:i] = '> '.l:title.'| '.l:path
+            call s:AideUpdateBookmark('')
+        else " R load bookmark
+            let l:line = getline('.')
+            if s:AideZone(l:line) != 1 | return | endif
+            let l:line = input("bookmark file? ")
+            call s:AideUpdateBookmark(l:line)
+        endif
+    elseif l:z == 5
+        let l:path = s:AideGetAbsPath(l:line, '^\s*')
+        exec 'silent! '.t:aide_lastwn.'wincmd w'
+        exec 'edit '.l:path
+        if a:case == 0 | exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w' | endif " jump back
+    endif
+endfunction " }}}
 " ---------- specific zones ---------------
-function! s:AideBookmarkRename() " {{{ r rename
-    let l:line = getline('.')
-    if s:AideZone(l:line) != 1 | return | endif
-    let l:i = index(t:aidebookmark, l:line))
-    if l:i < 0 | return | endif
-    let l:path = substitute(l:line, "^[^|]*|\s?", "", "")
-    let l:title = input("bookmark title? ")
-    let t:aidebookmark[l:i] = '> '.l:title.'| '.l:path
-    call s:AideUpdateBookmark('')
-endfunction " }}}
-function! s:AideBookmarkChangeFile() " {{{ R load bookmark
-    let l:line = getline('.')
-    if s:AideZone(l:line) != 1 | return | endif
-    let l:line = input("bookmark file? ")
-    call s:AideUpdateBookmark(l:line)
-endfunction " }}}
 function! s:AideBookmarkSortCompare(x, y) " {{{
     let l:x = substitute(a:x, '.*: ', '', '')
     let l:y = substitute(a:y, '.*: ', '', '')
@@ -282,7 +292,7 @@ function! s:AideCRAction() " {{{
     if l:z == 1 " bookmark
         let l:i = match(l:line, '|')
         if l:i > 0
-            exec 'file '.strpart(l:line, 2, l:i - 3)
+            exec 'file '.strpart(l:line, 2, l:i - 2).'.'.tabpagenr()
             call s:AideUpdateRootPath(substitute(l:line, '^.*| ', '', ''))
         endif
     elseif l:z == 2 " up-directory
@@ -338,7 +348,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     call s:AideUpdateBookmark('')
 
     let t:hid = -1
-    setlocal wig=*\\~,.*.swp
+    exec 'setlocal wig='.g:aide_wig
     call s:AideUpdateRootPath(t:rootpath)
 
     setlocal filetype=aide
@@ -395,9 +405,9 @@ function! s:InitAide() " {{{ Buffer Initialization
     nnoremap <buffer> <silent> D  \|:call <SID>AideDelete(1)<CR>
     nnoremap <buffer> <silent> o  \|:call <SID>AideOpenTab(0)<CR>
     nnoremap <buffer> <silent> O  \|:call <SID>AideOpenTab(1)<CR>
+    nnoremap <buffer> <silent> r  \|:call <SID>AideReplaceOrChange(0)<CR>
+    nnoremap <buffer> <silent> R  \|:call <SID>AideReplaceOrChange(1)<CR>
     " bookmark-part (zone 1)
-    nnoremap <buffer> <silent> r  \|:call <SID>AideBookmarkRename()<CR>
-    nnoremap <buffer> <silent> R  \|:call <SID>AideBookmarkChangeFile()<CR>
     nnoremap <buffer> <silent> s  \|:call <SID>AideBookmarkSort(0)<CR>
     nnoremap <buffer> <silent> S  \|:call <SID>AideBookmarkSort(1)<CR>
     " tree-part (zone 3 4 5)
