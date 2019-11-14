@@ -161,6 +161,13 @@ lom.Dump = function (docs, fxml) -- {{{ dump
         return tun.dumpVar(0, docs)
     end
 end -- }}}
+-- ======================================================================== --
+if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then -- service for checking object model -- {{{
+    local xml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
+    xml = lom.Parse(xml:read('a'), 0)
+    print(xml['?'][1] or lom.Dump(xml))
+end -- }}}
+
 return lom
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
 -- ======================================================================== --
