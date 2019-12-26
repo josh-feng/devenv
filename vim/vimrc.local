@@ -89,9 +89,6 @@ highlight CursorLine   ctermbg=grey
 
 " file support {{{
 augroup filetype
-    au BufRead,BufNewFile *.rules,*.rul set filetype=calibre
-    au BufRead,BufNewFile *.tech,*.svrf set filetype=calibre
-    au BufRead,BufNewFile *.job,*lua    set filetype=tachyon
     au BufRead,BufNewFile *akefile*     set filetype=make
     au BufRead,BufNewFile .*akefile*    set filetype=make
     au BufRead,BufNewFile *.rml         set filetype=rml
@@ -150,6 +147,10 @@ nmap Tc :tabnew<CR>
 nmap Tn :tabnext<CR>
 nmap Tp :tabprev<CR>
 nmap t <C-w>
+
+" for vim-instant-markdown
+nmap TV :InstantMarkdownPreview<CR>
+nmap Tv :InstantMarkdownStop<CR>
 
 "nmap `
 

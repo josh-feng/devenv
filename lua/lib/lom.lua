@@ -52,7 +52,9 @@ lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of da
     }
 
     local plom = lxp.new(lomcallbacks)
+    if trim then plom:parse('<?xml version="1.0"?><html>\n') end
     local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
+    if trim then plom:parse('\n</html>') end
     plom:parse()
     plom:close() -- seems destroy the lxp obj
     node['?'] = status and {} or {msg..' #'..line}

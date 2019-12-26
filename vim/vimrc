@@ -1,3 +1,11 @@
+" =========================================================================
+set encoding=utf-8
+" set shellcmdflag=-c
+" neocomlete https://github.com/Shougo/neocomplete.vim
+let g:neocomplete#enable_at_startup = 1
+au WinLeave * hi StatusLine ctermfg=darkgrey
+au WinEnter * hi StatusLine ctermfg=green
+" au WinEnter * hi StatusLine ctermfg=cyan
 " =======================  PLUGINS SETTINGS  ==============================
 " ----- " vundle " ----- {{{ plugin manager: need vim reload
 " https://github.com/VundleVim/Vundle.vim
@@ -17,6 +25,8 @@ Plugin 'tpope/vim-fugitive'
 " Plugin 'scrooloose/nerdtree'
 Plugin 'majutsushi/tagbar'
 
+Plugin 'suan/vim-instant-markdown', {'rtp': 'after'}
+
 " plugin from http://vim-scripts.org/vim/scripts.html
 " Plugin 'L9'
 " Plugin 'rstacruz/sparkup', {'rtp': 'vim/'} " sparkup script is in a subdirectory
@@ -25,6 +35,21 @@ Plugin 'majutsushi/tagbar'
 " Plugin 'git://git.wincent.com/command-t.git'
 " Plugin 'file:///home/gmarik/path/to/plugin' " git repos on local machine
 call vundle#end() " }}}
+
+" --- " instant-markdown " --- {{{
+" InstantMarkdownPreview
+" InstantMarkdownStop
+"let g:instant_markdown_slow = 1
+let g:instant_markdown_autostart = 0
+"let g:instant_markdown_open_to_the_world = 1
+"let g:instant_markdown_allow_unsafe_content = 1
+"let g:instant_markdown_allow_external_content = 0
+let g:instant_markdown_mathjax = 1
+"let g:instant_markdown_logfile = '/tmp/instant_markdown.log'
+let g:instant_markdown_autoscroll = 0
+"let g:instant_markdown_port = 8090
+"let g:instant_markdown_python = 1
+" }}}
 
 " --- " tagbar " --- {{{
 " let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
@@ -88,6 +113,9 @@ filetype plugin indent on    " or 'filetype plugin on'
 " let g:netrw_list_hide = '.*\.swp$'
 
 autocmd StdinReadPre * let s:std_in = 1
+
+" ----- "deoplete" -----
+" let g:deoplete#enable_at_startup = 1
 
 " ----- " ctags " -----
 let g:tagbar_ctags_bin = "/usr/bin/ctags"

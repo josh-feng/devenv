@@ -456,7 +456,7 @@ function! s:AIDE(lastwn) " {{{
             call s:InitAide()
         endif
     endif
-endfunction
+endfunction " }}}
 function! ToggleAide() " {{{
     set lazyredraw
     if !exists('t:aide_bn') || (bufwinnr(t:aide_bn) == -1)
@@ -488,6 +488,6 @@ if exists(':AIDE') != 2
     command -nargs=? AIDE call <SID>AIDE('<args>')
     if !exists('g:aide_mx') | let g:aide_mx = winwidth(0)*6/10 | endif
     if !exists('g:aide_h2') | let g:aide_h2 = winheight(0)/2 | endif
-endif " }}}
+endif
 finish
 " vim: ts=8 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
