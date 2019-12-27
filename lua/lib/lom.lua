@@ -21,7 +21,9 @@ local indent = strrep(' ', 4)
 -- LOM (Lua Object Model)
 -- ======================================================================== --
 -- node == token == tag == table
-lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of data 0:end space, 1:blank line
+lom.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of data 1:end space, 2:blank line
+    mode = tonumber(mode) or 0
+    local trim = mode % 3 -- trim: 0/1/2 (html:+3)
     local node = {} -- working variable: doc == root node (node == token == tag == table)
 
     local lomcallbacks = {
@@ -33,8 +35,8 @@ lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of da
         end; -- }}}
         EndElement = function (parser, name) -- {{{
             node['*'] = tconcat(node['*'], '\n')
-            if trim then
-                if trim == 1 then
+            if trim > 0 then
+                if trim == 2 then
                     node['*'] = strgsub(strgsub(node['*'], '%s*\n', '\n'), '^%s*\n', '')
                 end
                 node['*'] = strmatch(node['*'], '^(.-)%s*$')
@@ -43,18 +45,16 @@ lom.Parse = function (txt, trim) -- {{{ trim the leading and tailing space of da
             node, node['.'] =  node['.'], name -- record the tag/node name
         end; -- }}}
         CharacterData = function (parser, s) -- {{{
-            if strmatch(s, '%S') then
-                if trim ~= 1 then
-                    tinsert(node['*'], trim and strmatch(s, '^(.-)%s*$') or s)
-                end
+            if strmatch(s, '%S') or trim ~= 2 then
+                tinsert(node['*'], trim > 0 and strmatch(s, '^(.-)%s*$') or s)
             end
         end; -- }}}
     }
 
     local plom = lxp.new(lomcallbacks)
-    if trim then plom:parse('<?xml version="1.0"?><html>\n') end
+    if mode > 2 then plom:parse('<?xml version="1.0"?><html>\n') end
     local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
-    if trim then plom:parse('\n</html>') end
+    if mode > 2 then plom:parse('\n</html>') end
     plom:parse()
     plom:close() -- seems destroy the lxp obj
     node['?'] = status and {} or {msg..' #'..line}
@@ -68,7 +68,7 @@ lom.ParseXml = function (filename, mode, doctree) -- doc = lom.ParseXml(xmlfile,
 
     local file, msg = io.open(filename, 'r')
     if not file then return {['?'] = {msg}} end
-    local doc = lom.Parse(file:read('*all'), mode)
+    local doc = lom.Parse(file:read('*all'), mode) -- mode +3 for html
     file:close()
 
     if type(doctree) == 'table' then doctree[filename] = doc end
