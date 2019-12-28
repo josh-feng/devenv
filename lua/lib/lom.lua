@@ -153,12 +153,12 @@ local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@'] = {};
     for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
     return strgsub(tconcat(res, '\n'), '\n', '\n'..indent)..'\n</'..node['.']..'>'
 end -- }}}
-lom.Dump = function (docs, fxml) -- {{{ dump
+lom.Dump = function (docs, fxml) -- {{{ dump fxml=1/html
     if type(docs) ~= 'table' then return '' end
     if fxml then
         local res = {}
         for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-        return '<?xml version="1.0"?>\n'..tconcat(res, '\n')
+        return (fxml == 1 and '' or '<?xml version="1.0"?>\n')..tconcat(res, '\n')
     else
         return tun.dumpVar(0, docs)
     end
