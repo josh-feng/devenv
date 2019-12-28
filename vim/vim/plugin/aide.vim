@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
-" Author:      Josh Feng <jui-hsuan.feng@globalfoundries.com>
+" Author:      Josh Feng <joshfwisc@gmail.com>
 " Last Change: Sat Oct 26 21:12:34 EDT 2019
-" Version:     0.95 (need mac/m$ env test
+" Version:     0.99 (need mac/m$ env test
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -34,7 +34,7 @@ let s:aidehelp = [
     \ '" <CR>: change directory to the bookmark',
     \ '" -------- in files/directories --------',
     \ '" u/U: toggle folding/update',
-    \ '" d/D: display/query file/directory abs path',
+    \ '" d/D: display/query file/directory abs path and save to register',
     \ '" a/A: open file in a new vertical split window/jump',
     \ '" o/O: open file in a new tab/jump',
     \ '" r/R: open the file in the previous window/jump',
