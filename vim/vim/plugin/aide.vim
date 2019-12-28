@@ -194,6 +194,7 @@ function! s:AideDelete(case) " {{{ d/D
         if a:case == 1 && l:z == 5
             call system('file '.l:path)
         else
+            let @"=l:path
             echo l:path
         end
     endif
@@ -270,6 +271,7 @@ function! s:AideTreeRootPathBookmark(case) " {{{ c/C
     if l:z == 2 " .. up (/path/) -->
         let l:line = strpart(l:line, 7, strlen(l:line) - 8)
         if a:case == 0 " update rootpath exec 'chd '.l:line
+            let @"=l:line
             exec 'cd '.l:line
         else
             call s:AideAddBookmark(l:line)
