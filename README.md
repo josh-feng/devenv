@@ -6,9 +6,9 @@ Just copy invidual file to meet your need.
 
     ▼ lua/
       ▼ lib/
+        gem.lua
         lom.lua
         util.lua
-        utilsc.lua
         XmlObject.lua
     ▼ vim/
       ▼ vim/
@@ -34,7 +34,22 @@ This simple vim module create an IDE-like side panel, which supports `tagbar` mo
 
 ## lua
 
-Requirement
+### Requirement
+
 - lxp
 - posix
 - pool
+
+### Lua XML Table (LXT)
+
+lxt.lua provide a simple x/html parser to LXT format.
+
+**Example.1**
+
+    lxt = require('lxt')
+    lxt.ParseXml('file.xhtml', 0)
+    lxt.ParseXml('file.xhtml', 1) -- clean end space
+    lxt.ParseXml('file.xhtml', 2) -- clean space @ both ends
+    lxt.ParseXml('file.html', 3)
+    lxt.ParseXml('file.html', 4)  -- clean end space
+    lxt.ParseXml('file.html', 5)  -- clean space @ both ends

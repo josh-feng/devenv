@@ -16,7 +16,7 @@ local strlen, strsub, strmatch, strgmatch = string.len, string.sub, string.match
 local strrep, strgsub, strfind = string.rep, string.gsub, string.find
 local tinsert, tremove, tconcat = table.insert, table.remove, table.concat
 
-local indent = strrep(' ', 4)
+lom.indent = strrep(' ', 4)
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
@@ -52,7 +52,9 @@ lom.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of da
     }
 
     local plom = lxp.new(lomcallbacks)
-    if mode > 2 then plom:parse('<?xml version="1.0"?><html>\n') end
+    if mode > 2 then
+        plom:parse('<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml">\n')
+    end
     local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
     if mode > 2 then plom:parse('\n</html>') end
     plom:parse()
@@ -151,14 +153,14 @@ local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@'] = {};
     end
     res = {res..'>'}
     for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
-    return strgsub(tconcat(res, '\n'), '\n', '\n'..indent)..'\n</'..node['.']..'>'
+    return strgsub(tconcat(res, '\n'), '\n', '\n'..lom.indent)..'\n</'..node['.']..'>'
 end -- }}}
 lom.Dump = function (docs, fxml) -- {{{ dump fxml=1/html
     if type(docs) ~= 'table' then return '' end
     if fxml then
         local res = {}
         for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-        return (fxml == 1 and '' or '<?xml version="1.0"?>\n')..tconcat(res, '\n')
+        return (fxml == 1 and '' or '<?xml version="1.0" encoding="UTF-8"?>\n')..tconcat(res, '\n')
     else
         return tun.dumpVar(0, docs)
     end

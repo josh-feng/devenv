@@ -96,8 +96,8 @@ end -- }}}
 
 tun.Cmd = function (cmd, multi) -- {{{ the system should do as told quietly: Cmd('cd / ; ls', true)
     tun.Dbg(cmd)
-    if multi then cmd = string.gsub(cmd, ';', ' >& /dev/null;') end
-    return assert(os.execute(cmd..' >& /dev/null'))
+    if multi then cmd = string.gsub(cmd, ';', ' > /dev/null 2>&1 ;') end
+    return assert(os.execute(cmd..' > /dev/null 2>&1'))
 end -- }}}
 tun.Ask = function (cmd, multi) -- {{{ Est-ce-que (Alor, on veut savoir le resultat)
     tun.Dbg(cmd)
@@ -231,6 +231,8 @@ tun.strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
             if k and v and k ~= '' then
                 local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
                 res[k] = qo or v
+            elseif sep then -- also numbered
+                tinsert(res, token)
             else
                 order = token
             end
@@ -421,6 +423,18 @@ tun.xnVal = function (doc, ftop) -- {{{ ftop: []/all-sub-node 0/+/-:top
     if not ftop then return tconcat(res, '\n') end
     res = strgsub(strmatch(tconcat(res, ' '), '(%S.-)%s*$') or '', '%s+', ' ')
     return ftop == 0 and tun.Split(res, ' ') or res
+end -- }}}
+tun.genTag = function (name, text, attr) -- {{{
+    if type(text) == 'table' then text, attr = attr, text end
+    local res = {}
+    if type(attr) == 'table' then
+        if #attr > 0 then
+            for i = 1, #attr do tinsert(res, attr[i]) ; res[attr[i]] = attr[attr[i]] end
+        else
+            for k, v in pairs(attr) do tinsert(res, k) ; res[k] = v end
+        end
+    end
+    return {['.'] = name, ['*'] = text, ['@'] = res}
 end -- }}}
 
 -- ======================================================================== --
