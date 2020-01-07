@@ -1,5 +1,6 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
+-- TODO change to lxt
 local class = require("pool")
 local tun = require("util")
 
@@ -16,7 +17,7 @@ local tun = require("util")
 local XmlObject = class { -- class module paradigm
     id = "";
     engine = false; -- engine class
-    node = false;   -- lom xn-node
+    node = false;   -- lxt
 
     mode = false;   -- strict/checking mode
     skip = false;   -- (backward compatible)
@@ -24,7 +25,7 @@ local XmlObject = class { -- class module paradigm
     dtd = "";
 
     -- assign the xmlobject's engine and lom-node
-    -- create all class objects for the subnodes (non-recursively)
+    -- create all objects for the subnodes (non-recursively)
     ["<"] = function (o, engine, node) -- {{{ constructor
         o.engine = engine
         o.node = node   -- all attributes and elements (a tag/subnode is a table)
@@ -32,8 +33,8 @@ local XmlObject = class { -- class module paradigm
         for i = 1, #node do -- {{{
             local subn = node[i]
             local suba = type(subn) == 'table' and subn['@'] -- subnode attr
-            if suba and suba.class then -- skip node content/text: assign the object
-                subn['*'] = assert(require(suba.class), "fail loading "..suba.class)(engine, subn)
+            if suba and suba.obj then -- skip node content/text: assign the object
+                subn['*'] = assert(require(suba.obj), "fail loading "..suba.obj)(engine, subn)
                 if tun.check(suba.strict) then -- check unused-tag {{{ honor metatable
                     for j = 1, #subn do -- some of them are text/comments:
                         local v = subn[j]
@@ -64,7 +65,7 @@ local XmlObject = class { -- class module paradigm
             (ermsg and error("Missing attribute("..o.node['.']..'@'..attr..") "..tostring(errmsg), 2))
     end; -- }}}
 
-    XmlElement = function (o, elem, cls, errmsg) -- {{{ default class on element
+    XmlElement = function (o, elem, cls, errmsg) -- {{{ default class/object on element
         local tag, pos = string.match(elem, '([^/]+)(.*)$')
         if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
         elem, pos = string.match(tag, '([^%[]+)%[?([^%]]*)')
@@ -74,7 +75,7 @@ local XmlObject = class { -- class module paradigm
             for i = 1, #tag do -- {{{
                 local subn = tag[i] -- subnode
                 local suba = subn['@']
-                if not (suba and suba.class) then -- assign the object
+                if not (suba and suba.obj) then -- assign the object
                     subn['*'] = assert(require(cls), 'fail loading '..cls)(o.engine, subn)
                     if tun.check(suba.strict) then -- check unused-tag {{{ honor metatable
                         for j = 1, #subn do -- some of them are text/comments:
@@ -106,7 +107,7 @@ local XmlObject = class { -- class module paradigm
 
     Run = function (o, elem, ...) -- build the node element/subnode {{{
         if elem == '.' then error('Call .', 2) end --- error?
-        if type(elem) == 'string' then -- run all subnode class' Build if attr meets
+        if type(elem) == 'string' then -- run all subnode class/object' Build if attr meets
             local tag, pos = string.match(elem, '([^/]+)(.*)$')
             if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
             elem, pos = string.match(tag, '([^%[]+)%[?([^%]]*)')
@@ -144,7 +145,7 @@ local XmlObject = class { -- class module paradigm
 }
 
 -- {{{ ==================  demo and self-test (QA)  ==========================
-local q = XmlObject(nil, {{['.'] = 'T', ' Fab  '}, {['.'] = 'T', '8 '}}) -- nil engine
+local q = XmlObject(nil, {'T', ' Fab  '; 'T', '8 '}) -- nil engine
 if -- failing conditins:
     q:XmlValue('T[0]')[2] ~= '8'
     or q:XmlElement('T[1]')[1] ~= ' Fab  '
