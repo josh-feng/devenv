@@ -403,7 +403,7 @@ tun.xnKey = function (doc, mode) -- {{{ mode: nil/dontcare, -/last, 0/only, +/fi
             end
         end
         doc = mode and getmetatable(doc)
-        if doc then doc = doc.index end
+        if doc then doc = doc.__index end
     until not doc
     return xn
 end -- }}}
@@ -416,25 +416,13 @@ tun.xnVal = function (doc, ftop) -- {{{ ftop: []/all-sub-node 0/+/-:top
         repeat -- collect along the metatable -- only values
             for j = 1, #mt do if type(mt[j]) ~= 'table' then tinsert(res, mt[j]) end end
             mt = getmetatable(mt)
-            if mt then mt = mt.index end
+            if mt then mt = mt.__index end
         until not mt
         if not ftop then i = i + 1 end
     until ftop or i > #doc
     if not ftop then return tconcat(res, '\n') end
     res = strgsub(strmatch(tconcat(res, ' '), '(%S.-)%s*$') or '', '%s+', ' ')
     return ftop == 0 and tun.Split(res, ' ') or res
-end -- }}}
-tun.genTag = function (name, text, attr) -- {{{
-    if type(text) == 'table' then text, attr = attr, text end
-    local res = {}
-    if type(attr) == 'table' then
-        if #attr > 0 then
-            for i = 1, #attr do tinsert(res, attr[i]) ; res[attr[i]] = attr[attr[i]] end
-        else
-            for k, v in pairs(attr) do tinsert(res, k) ; res[k] = v end
-        end
-    end
-    return {['.'] = name, ['*'] = text, ['@'] = res}
 end -- }}}
 
 -- ======================================================================== --
