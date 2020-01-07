@@ -21,10 +21,11 @@ lxt.indent, lxt.cdata = strrep(' ', 2), 1024 -- zip threshold
 -- LXT (Lua XML Table)
 -- ======================================================================== --
 -- node == token == tag == table
-lxt.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of data 1:end space, 2:blank line
+lxt.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of data 1:blank line
     mode = tonumber(mode) or 0
-    local trim = mode % 3 -- trim: 0/1/2 (html:+3)
+    local trim = mode % 2 -- trim: 0/1 (html:+2)
     local node = {} -- working variable: doc == root node (node == token == tag == table)
+    local cdata = 0
 
     local lxtcallbacks = {
         StartElement = function (parser, name, attr) -- {{{
@@ -32,27 +33,27 @@ lxt.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of da
                 attr['@'] = tconcat(attr, ' ')
                 for i = 1, #attr do attr[i] = nil end
             end
-            attr['.'], attr[0] = node, {} -- record parent node
+            attr['.'] = node -- record parent node
             node = attr
         end; -- }}}
         EndElement = function (parser, name) -- {{{
-            local txt = tconcat(node[0], '\n')
-            if trim > 0 then
-                if trim == 2 then txt = strgsub(strgsub(txt, '%s*\n', '\n'), '^%s*\n', '') end
-                txt = strmatch(txt, '^(.-)%s*$')
-            end
-            node[0] = txt
-            local attr = (node['@'] or #node > 0) and node or txt
-            if not node['@'] then node[0] = nil end
+            node[0] = name
+            tinsert(node['.'], node)
             node, node['.'] = node['.'], nil -- record the tag/node name
-            tinsert(node, name)
-            tinsert(node, attr)
         end; -- }}}
         CharacterData = function (parser, s) -- {{{
-            if strmatch(s, '%S') or trim ~= 2 then
-                tinsert(node[0], trim > 0 and strmatch(s, '^(.-)%s*$') or s)
+            if strmatch(s, '%S') then
+                if cdata == 0 then
+                    s = strmatch(strgsub(s, '%s+', ' '), '^(.-)%s*$') -- space
+                else
+                    if trim > 0 then s = strgsub(s, '^%s*\n', '') end -- empty line CDATA
+                    s = strgsub(s, '%s*\n', '\n') -- clean end space
+                end
+                tinsert(node, strmatch(s, (cdata == 1 and '^(' or '(%S')..'.-)%s*$'))
             end
         end; -- }}}
+        StartCdataSection = function(parser) cdata = 1 end;
+        EndCdataSection = function(parser) cdata = 0 end;
     }
 
     local plxt = lxp.new(lxtcallbacks)
@@ -68,44 +69,67 @@ lxt.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of da
 end
 -- }}}
 -- ======================================================================== --
-lxt.xPath = function (docs, path) -- {{{ return doc/xml-node table, missingTag
-    if (not path) or path == '' or #docs == 0 then return docs, path end
+lxt.genDoc = function (doc) -- {{{
+    if type(doc) == 'table' and doc['@'] == nil then
+        local attr = {}
+        for k, v in pairs(doc) do
+            if type(k) == 'number' then
+                if type(v) == 'table' then lxt.genDoc(v) end
+            elseif string.find(k, '^[_%w]') then
+                tinsert(attr, k)
+            end
+        end
+        if #attr > 0 then doc['@'] = tconcat(table.sort(attr) or attr, ' ') end
+    end
+    return doc
+end -- }}}
+tun.xnVal = function (doc, ftop) -- {{{ ftop: []/all-sub-node 0/+/-:top
+    if type(doc) ~= 'table' then return doc end
+    local res, i = {}, 1
+    ftop = tonumber(ftop)
+    repeat -- collect along the metatable (if mode is defined)
+        local mt = ftop and doc or doc[i]
+        repeat -- collect along the metatable -- only values
+            for j = 1, #mt do if type(mt[j]) ~= 'table' then tinsert(res, mt[j]) end end
+            mt = getmetatable(mt)
+            if mt then mt = mt.__index end
+        until not mt
+        if not ftop then i = i + 1 end
+    until ftop or i > #doc
+    if not ftop then return tconcat(res, '\n') end
+    res = strgsub(strmatch(tconcat(res, ' '), '(%S.-)%s*$') or '', '%s+', ' ')
+    return ftop == 0 and tun.Split(res, ' ') or res
+end -- }}}
+lxt.xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
+    if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment -- A/B, /A/B[attr="val",bb='4']
     local tag, attr, idx
     tag, path = strmatch(path, '([^/]+)(.*)$')
     tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
     attr, idx = tun.strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
     local xn = {} -- xml-node (doc)
-    for _, doc in ipairs(docs) do
-        repeat -- collect along the metatable (if mode is defined)
-            for i = 1, #doc / 2 do -- no metatable
-                local mt = doc[2 * i]
-                if type(mt) == 'table' and doc[2 * i - 1] == tag and tun.match(mt, attr) then
-                    if idx and idx < 0 then xn[1] = nil end -- clean up
-                    if path ~= '' or idx == 0 then
-                        repeat -- collect along the metatable (NB: ipairs will dupe metatable)
-                            for j = 1, #mt / 2 do
-                                if type(mt[j * 2]) == 'table' or path == '' then
-                                    tinsert(xn, mt[j * 2 - 1])
-                                    tinsert(xn, mt[j * 2])
-                                end
-                            end
-                            mt = getmetatable(mt)
-                            if mt then mt = mt.__index end
-                        until not mt
-                    else
-                        tinsert(xn, mt)
-                    end
-                    if idx and idx > 0 then break end
+    repeat -- collect along the metatable (if mode is defined)
+        for i = 1, #doc do -- no metatable
+            local mt = doc[i]
+            if type(mt) == 'table' and mt[0] == tag and tun.match(mt, attr) then
+                if idx and idx < 0 then xn[1] = nil end -- clean up
+                if path ~= '' or idx == 0 then
+                    repeat -- collect along the metatable (NB: ipairs will dupe metatable)
+                        for j = 1, #mt do if type(mt[j]) == 'table' or path == '' then tinsert(xn, mt[j]) end end
+                        mt = getmetatable(mt)
+                        if mt then mt = mt.__index end
+                    until not mt
+                else
+                    tinsert(xn, mt)
                 end
+                if idx and idx > 0 then break end
             end
-            if idx and idx > 0 and #xn > 0 then break end
-            doc = getmetatable(doc)
-            if doc then doc = doc.index end
-        until not doc
-    end
-    if path == '' and idx == 0 then xn = {xn} end
-    return lxt.xPath(xn, path)
+        end
+        if idx and idx > 0 and #xn > 0 then break end
+        doc = getmetatable(doc)
+        if doc then doc = doc.index end
+    until not doc
+    return lxt.xPath((path == '' and idx == 0) and {[0] = tag; xn} or xn, path)
 end -- }}}
 lxt.ParseXml = function (filename, mode, doctree) -- doc = lxt.ParseXml(xmlfile, docfactory) -- {{{
     filename = tun.normpath(filename)
@@ -124,7 +148,7 @@ lxt.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lxt.XmlBuild(rootfi
     local doctree = {}
     local doc = lxt.ParseXml(topxml, mode, doctree) -- doc table
 
-    local function TraceTbl (xml, xn, tag) -- {{{ lua xml table
+    local function TraceTbl (xn, xml) -- {{{ lua xml table
         local v = xn['@'] and xn['xlink:href']
         if v then
             local link, xpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
@@ -135,8 +159,8 @@ lxt.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lxt.XmlBuild(rootfi
                 link = tun.normpath(link)
             end -- }}}
 
-            if not doctree[link] then TraceTbl(link, lxt.ParseXml(link, mode, doctree), tag) end
-            link, xpath = lxt.xPath({doctree[link]}, strmatch(xpath or '', '#xpointer%((.*)%)'))
+            if not doctree[link] then TraceTbl(lxt.ParseXml(link, mode, doctree), link) end
+            link, xpath = lxt.xPath(doctree[link], strmatch(xpath or '', '#xpointer%((.*)%)'))
 
             if #link == 1 then -- the linked table
                 local meta = link[1]
@@ -148,15 +172,13 @@ lxt.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lxt.XmlBuild(rootfi
                     tinsert(doctree[xml]['?'], 'loop '..v) -- error message
                 elseif xn ~= link[1] then
                     setmetatable(xn, {__index = link[1]})
-                    TraceTbl(xml, link[1], tag)
+                    TraceTbl(link[1], xml)
                 end
             else
-                tinsert(doctree[xml]['?'], 'broken <'..tag..'> '..xpath..':'..#link..':'..v) -- error message
+                tinsert(doctree[xml]['?'], 'broken <'..xn[0]..'> '..xpath..':'..#link..':'..v) -- error message
             end
         end
-        for i = 1, #xn / 2 do
-            if type(xn[2 * i]) == 'table' then TraceTbl(xml, xn[2 * i], xn[2 * i - 1]) end -- continuous override
-        end
+        for i = 1, #xn do if type(xn[i]) == 'table' then TraceTbl(xn[i], xml) end end -- continuous override
     end -- }}}
 
     if #doc['?'] == 0 then TraceTbl(doc, topxml) end -- no error msg
@@ -183,33 +205,29 @@ lxt.xmlstr = function (s, fenc) -- {{{
             '"', '&quot;'), "'", '&apos;'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
     end
 end -- }}}
-local function dumpLxt (node) -- {{{ xtm = { tag1, txt1; tag2, {['@'] = attrOrder; [0] = txt2; ...}; ...}
+local function dumpLxt (node) -- {{{ xtm = {[0] = tag; ['@'] = attrOrder; ['*'] = txt; ...;}
+    if not node[0] then return end
     local res = {}
-    for i = 1, #node / 2 do
-        local tag, attr = node[2 * i - 1], node[2 * i]
-        if type(attr) == 'table' then
-            local txt = attr['@'] and {} or ''
-            if attr['@'] then
-                for k in strgmatch(attr['@'], '%S+') do tinsert(txt, k..'="'..strgsub(attr[k], '"', '\\"')..'"') end
-                txt = ' '..tconcat(txt, ' ')
-            end
-            if #attr == 0 then
-                attr = attr[0] or ''
-                tinsert(res, '<'..tag..txt..(attr ~= '' and '>'..lxt.xmlstr(attr)..'</'..tag..'>' or ' />'))
-            else
-                tinsert(res, '<'..tag..txt..'>'..(attr[0] and lxt.xmlstr(attr[0]) or ''))
-                tinsert(res, lxt.indent..strgsub(dumpLxt(attr), '\n', '\n'..lxt.indent))
-                tinsert(res, '</'..tag..'>')
-            end
-        else
-            tinsert(res, '<'..tag..(attr == '' and ' />' or '>'..lxt.xmlstr(attr)..'</'..tag..'>'))
-        end
+    if node['@'] then
+        for k in strgmatch(node['@'], '%S+') do tinsert(res, k..'="'..strgsub(node[k], '"', '\\"')..'"') end
     end
-    return tconcat(res, '\n')
+    res = '<'..node[0]..(#res > 0 and ' '..tconcat(res, ' ') or '')
+    if #node == 0 then return res..' />' end
+    if #node == 1 and type(node[1]) == 'string' then
+        local s = lxt.xmlstr(node[1])
+        if strfind(s, '\n') then s = '\n'..s..'\n' end -- CDATA
+        return res..'>'..s..'</'..node[0]..'>'
+    end
+    res = {res..'>'}
+    for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLxt(node[i]) or lxt.xmlstr(node[i])) end
+    return strgsub(tconcat(res, '\n'), '\n', '\n'..lxt.indent)..'\n</'..node[0]..'>'
 end -- }}}
 lxt.Dump = function (docs, fxml) -- {{{ dump fxml=0/html, 1/xhtml
-    if not fxml then return type(docs) == 'table' and tun.dumpVar(0, docs) or '' end
-    return (fxml == 0 and '' or '<?xml version="1.0" encoding="UTF-8"?>\n')..dumpLxt(docs)
+    if type(docs) ~= 'table' then return '' end
+    if not fxml then return tun.dumpVar(0, docs) end
+    local res = {}
+    for _, doc in ipairs(docs) do tinsert(res, dumpLxt(doc)) end
+    return (fxml == 1 and '' or '<?xml version="1.0" encoding="UTF-8"?>\n')..tconcat(res, '\n')
 end -- }}}
 -- ======================================================================== --
 if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lxt.lua' then -- service for checking object model -- {{{
