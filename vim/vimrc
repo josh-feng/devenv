@@ -25,7 +25,13 @@ Plugin 'tpope/vim-fugitive'
 " Plugin 'scrooloose/nerdtree'
 Plugin 'majutsushi/tagbar'
 
+" https://github.com/vim-pandoc/vim-pandoc
+Plugin 'vim-pandoc/vim-pandoc'
+Plugin 'vim-pandoc/vim-pandoc-syntax'
+
+
 Plugin 'suan/vim-instant-markdown', {'rtp': 'after'}
+
 
 " plugin from http://vim-scripts.org/vim/scripts.html
 " Plugin 'L9'
@@ -49,6 +55,13 @@ let g:instant_markdown_mathjax = 1
 let g:instant_markdown_autoscroll = 0
 "let g:instant_markdown_port = 8090
 "let g:instant_markdown_python = 1
+" }}}
+
+" --- " pandoc " --- {{{
+" :Pandoc [option]*
+" let g:pad#dir = "~/documents/notes"
+" let g:pad#local_dir = "notes"
+" let g:pandoc#after#modules#enabled = ["nrrwrgn", "ultisnips"]
 " }}}
 
 " --- " tagbar " --- {{{
@@ -128,6 +141,14 @@ let g:tagbar_ctags_bin = "/usr/bin/ctags"
 set completeopt=longest,menu
 "   c-p ?
 " }}}
+" }}}
+" =========================================================================
+" ----- " Spell " ----- {{{
+" [s    search back
+" ]s    search forth
+" zg    add word under cursor
+" set spell spelllang=en_us
+set spellfile=~/.vim/spell/en.utf-8.add
 " }}}
 " =========================================================================
 " ----- " Color " ----- {{{
