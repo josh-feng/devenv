@@ -70,11 +70,11 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
     while l:ind > 0
         let l:ind -= 2
         if search('^'.repeat(' ', l:ind).'▼', 'bW') > 0
-            let l:path = strpart(substitute(getline('.'), ' ->.*$', '/', ''), l:ind + 4).l:path
+            let l:path = strpart(substitute(getline('.'), ' ->.*$', '', ''), l:ind + 4).l:path
         endif
     endwhile
     call setpos('.', l:pos)
-    let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*$', '/', '')
+    let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*$', '', '')
     return substitute(t:rootpath.l:path.l:line, ' ', '\\ ','g')
 endfunction "}}}
 function! s:AideRemoveTree(ind) " {{{
@@ -457,6 +457,7 @@ function! s:AIDE(lastwn) " {{{
             if !exists('t:rootpath') | let t:rootpath = getcwd().'/' | endif " default
             call s:InitAide()
         endif
+        exec 'cd '.t:rootpath
     endif
 endfunction " }}}
 function! ToggleAide() " {{{

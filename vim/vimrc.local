@@ -106,7 +106,7 @@ au FileType tcl      set kp=man\ n             " GF DE tcl man is in 'n' section
 au FileType c,cpp,h  set kp=man\ -S\ 3p:2:3    " programming manual pages 2, 3p, and 3 (3c:3)
 au FileType perl     set kp=perldoc
 
-au FileType text,tex,bib,mail,rml set kp=sdcv "dict
+au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv "dict
 
 " ------------------------------------
 " indentation/tabs for different files

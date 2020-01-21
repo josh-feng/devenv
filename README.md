@@ -2,14 +2,22 @@
 
 Personal settings, probably not for public consumption.\
 It is not necessary to git clone the whole repository.
-Just copy invidual file to meet your need.
+Just copy individual file to meet your need.
 
+    ▼ images/
+      vim-aide.png
     ▼ lua/
       ▼ lib/
-        gem.lua
         lom.lua
+        lxt.lua
         util.lua
         XmlObject.lua
+      ▼ lrm/
+        lrm.lua
+        lrp.cpp
+        lrp.hpp
+        lrps.lua
+        rml.rml
     ▼ vim/
       ▼ vim/
         ▼ autoload/
@@ -20,9 +28,14 @@ Just copy invidual file to meet your need.
           xml.vim
       vimrc
       vimrc.local
-    makefile
     README.md
     tmux.conf
+
+## Reduced Markup Language (RML)
+
+- lrps.lua
+- lrm.lua
+- rml.rml
 
 ## vim-aide project
 
