@@ -31,12 +31,6 @@ Just copy individual file to meet your need.
     README.md
     tmux.conf
 
-## Reduced Markup Language (RML)
-
-- lrps.lua
-- lrm.lua
-- rml.rml
-
 ## vim-aide project
 
 This simple vim module create an IDE-like side panel, which supports `tagbar` module in the same panel if `tagbar` is installed:
@@ -44,6 +38,36 @@ This simple vim module create an IDE-like side panel, which supports `tagbar` mo
 - In vim, press `Tab` to open the side window for vim-aide
 
 ![vim-aide](images/vim-aide.png)
+
+## Reduced Markup Language (RML)
+
+- lrps.lua
+- lrm.lua
+- rml.rml
+- rml.vim
+
+Several formats (xml, markdown, json, yaml, etc.) are not stable and/or have some limitations.
+We will develop our own. The goal is to have a succinct format to break a text into usable fields.
+
+    Syntax: RML works like punctutaions
+        rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+        hspace  := ' ' | '\t'
+        vspace  := '\r'
+        space   := hspace | vspace
+        comment := '#' [pdata] [hspace | ndata]* '\r'
+        assign  := [id] [prop1* | prop2] ':' [hspace+ [comment] [pdata | sdata]] [space+ (ndata | comment)]*
+        prop1   := '|' [attr0 | attr1]
+        prop2   := '|{' [comment+ [attr0 | attr2 ]]* vspace+ '}'
+        attr0   := [&|*] id
+        attr1   := id '=' ndata
+        attr2   := id hspace* '=' (hspace+ | comment) [pdata | sdata]
+        ndata   := [^space]+
+        sdata   := ['|"] .* ['|"]
+        pdata   := '<' [id] '[' id ']' .- '[' id ']>'
+
+lrps.lua provide a basic/simple lua script to parse an RML file,
+it can be coded to C/C++ lib for efficiency. In fact, lrp.so will be the C-module parser.
+With lrps.lua or lrp.so, the script lrm.lua provide a sample lua object model builder for RML file
 
 ## lua
 
