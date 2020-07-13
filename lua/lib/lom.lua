@@ -22,33 +22,27 @@ lom.indent = strrep(' ', 4)
 -- ======================================================================== --
 -- node == token == tag == table
 lom.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of data 1:end space, 2:blank line
-    mode = tonumber(mode) or 0
+    mode = tonumber(mode) or 1
     local trim = mode % 3 -- trim: 0/1/2 (html:+3)
     local node = {} -- working variable: doc == root node (node == token == tag == table)
 
     local lomcallbacks = {
         StartElement = function (parser, name, attr) -- {{{
-            local xn = {['.'] = node, ['*'] = {}} -- record parent node
-            if #attr > 0 then xn['@'] = attr end
+            local xn = {['.'] = node; ['@'] = #attr > 0 and attr or nil;}
             tinsert(node, xn)
             node = xn
         end; -- }}}
-        EndElement = function (parser, name) -- {{{
-            node['*'] = tconcat(node['*'], '\n')
-            if trim > 0 then
-                if trim == 2 then
-                    node['*'] = strgsub(strgsub(node['*'], '%s*\n', '\n'), '^%s*\n', '')
-                end
-                node['*'] = strmatch(node['*'], '^(.-)%s*$')
-            end
-            if node['*'] == '' then node['*'] = nil end
-            node, node['.'] =  node['.'], name -- record the tag/node name
-        end; -- }}}
+        EndElement = function (parser, name) node, node['.'] =  node['.'], name end;
         CharacterData = function (parser, s) -- {{{
-            if strmatch(s, '%S') or trim ~= 2 then
-                tinsert(node['*'], trim > 0 and strmatch(s, '^(.-)%s*$') or s)
+            if strmatch(s, '%S') or trim == 0 then
+                tinsert(node, trim > 0 and strmatch(s, '^(.-)%s*$') or s)
             end
         end; -- }}}
+        Comment = function (parser, s) -- TODO mode
+            if strmatch(s, '%S') or trim == 0 then
+                tinsert(node, {trim > 0 and strmatch(s, '^(.-)%s*$') or s})
+            end
+        end;
     }
 
     local plom = lxp.new(lomcallbacks)
@@ -138,21 +132,23 @@ lom.xmlstr = function (s, fenc) -- {{{
         end
     else -- escape characters
         return strgsub(strgsub(strgsub(strgsub(strgsub(s,
-            '"', '&quot;'), "'", '&apos;'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
+            '&', '&amp;'), '"', '&quot;'), "'", '&apos;'), '<', '&lt;'), '>', '&gt;')
     end
 end -- }}}
-local function dumpLom (node) -- {{{ XML format: tbm = {['.'] = tag; ['@'] = {}; ['*'] = ''; ...}
-    if not node['.'] then return end
+local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; ...}
+    if 'string' == type(node) then return node end
+    if not node['.'] then return node[1] and '<!--'..node[1]..'-->' end
     local res = {}
     if node['@'] then
         for _, k in ipairs(node['@']) do tinsert(res, k..'="'..strgsub(node['@'][k], '"', '\\"')..'"') end
     end
     res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
-    if #node == 0 then
-        return node['*'] and res..'>'..lom.xmlstr(node['*'])..'</'..node['.']..'>' or res..' />'
-    end
+    if #node == 0 then return res..' />' end
     res = {res..'>'}
     for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
+    if #res == 2 and #(res[2]) < 100 and not strfind(res[2], '\n') then
+        return res[1]..res[2]..'</'..node['.']..'>'
+    end
     return strgsub(tconcat(res, '\n'), '\n', '\n'..lom.indent)..'\n</'..node['.']..'>'
 end -- }}}
 lom.Dump = function (docs, fxml) -- {{{ dump fxml=1/html
