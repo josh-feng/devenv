@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
-" Last Change: Sat Oct 26 21:12:34 EDT 2019
-" Version:     0.99 (need mac/m$ env test
+" Last Change: Fri 07 Aug 2020 01:40:23 AM EDT
+" Version:     1.00 (need mac/m$ env test
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -19,6 +19,7 @@ if !exists('g:aide_bms') | let g:aide_bms = $HOME.'/.vimaide' | endif " bookmark
 if !exists('g:aide_bmafld') | let g:aide_bmafld = 0 | endif " bookmarks auto-folding
 if !exists('g:aide_wig') | let g:aide_wig = 'CVS/*,*\\~,.*.swp' | endif
 " }}}
+
 " {{{ Help message
 let s:aidehelp = [
     \ '" p: toggle help for keybindings',
@@ -375,6 +376,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     if t:aide_bn == -1 | unlet t:aide_bn | endif
     setlocal nobuflisted
     setlocal cursorline
+    setlocal fdm=marker fmr={{{,}}}
 
     " Syntax {{{
     syntax match aideArrow        '\(▶\|▼\)'
@@ -460,6 +462,7 @@ function! s:AIDE(lastwn) " {{{
         exec 'cd '.t:rootpath
     endif
 endfunction " }}}
+
 function! ToggleAide() " {{{
     set lazyredraw
     if !exists('t:aide_bn') || (bufwinnr(t:aide_bn) == -1)
@@ -484,8 +487,8 @@ function! SwitchAide(b) " {{{
     unlet l:ssb
 endfunction " }}}
 " <Bar> == |
-nnoremap <silent> <Tab> :call ToggleAide()<CR>
 nnoremap <silent> <Bar> :call SwitchAide(t:aide_bn)<CR>
+nnoremap <silent> <Leader><Tab> :call ToggleAide()<CR>
 
 if exists(':AIDE') != 2
     command -nargs=? AIDE call <SID>AIDE('<args>')
