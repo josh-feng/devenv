@@ -38,7 +38,7 @@ set hlsearch
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
 " ------- " folding " -------
-set foldmethod=marker foldmarker={{{,}}} foldlevel=1
+" set foldmethod=marker foldmarker={{{,}}} foldlevel=1
 
 " ------- clipboard --------
 if has('clipboard')
@@ -143,9 +143,9 @@ endif " }}}
 " =========================  KEYBINDING  ==================================
 " =========================================================================
 " nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert {{{
-nmap Tc :tabnew<CR>
-nmap Tn :tabnext<CR>
-nmap Tp :tabprev<CR>
+nmap <silent> Tc :tabnew<CR>
+nmap <silent> Tn :tabnext<CR>
+nmap <silent> Tp :tabprev<CR>
 nmap t <C-w>
 
 " for vim-instant-markdown
@@ -165,6 +165,9 @@ nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
 " nnoremap <F8> :setl noai nocin nosi inde=<CR>
 nnoremap <F8> :set invpaste paste?<CR>
 set pastetoggle=<F8>
+
+" search the link
+nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 
 " Useful bubble text normal mapping for arrow keys.
 "nnoremap <UP> ddkP
@@ -223,7 +226,8 @@ function! RidSpace() " clean space {{{
     silent! exec '%s/\s\+$//g'
     set foldlevel=0 foldenable
 endfunction
-nnoremap <silent> = :call RidSpace()<CR>
+" nnoremap <silent> = :call RidSpace()<CR>
+nnoremap <silent> , :call RidSpace()<CR>
 " }}}
 fu! CustomFoldText() " custom fold display {{{
     let line1 = getline(v:foldstart)
@@ -233,8 +237,8 @@ fu! CustomFoldText() " custom fold display {{{
     let fldStr = printf(" %d+%d %.1f%%", fldCnt, v:foldlevel, (fldCnt * 1.0) / lineCnt * 100)
     let expStr = repeat(".", w - strwidth(line1.fldStr))
     return strpart(line1, 0, w - strwidth(expStr.fldStr)).expStr.fldStr
-endf
-set foldtext=CustomFoldText() " }}}
+endf " }}}
+set foldtext=CustomFoldText()
 " =========================================================================
 " NOTE: {{{
 " =======================  GENERAL INFO  ==================================
