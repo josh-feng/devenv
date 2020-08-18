@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
 " Last Change: Fri 07 Aug 2020 01:40:23 AM EDT
-" Version:     1.00 (need mac/m$ env test
+" Version:     1.01 (need mac/m$ env test
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -44,6 +44,8 @@ let s:aidehelp = [
     \ '" <CR>: open file in the main window/toggle folding',
     \ ]
 " }}}
+let s:bookmarkbound0 = '> ------ bookmark ------ {{{'
+let s:bookmarkbound1 = '> ------ bookmark ------ }}}'
 function! s:AideToggleHelp() " {{{
     setlocal modifiable
     let t:showhelp = t:showhelp ? 0 : 1
@@ -116,8 +118,8 @@ endfunction "}}}
 function! s:AideUpdateRootPath(path) " {{{
     setlocal modifiable
     silent! global/^\.\. up/delete
-    silent! 1
-    silent! call search(s:bookmarkbound, 'W')
+    silent! $
+    silent! call search("^> ", 'bW')
     silent! put =a:path
     silent! ,$delete
     let t:rootpath = a:path
@@ -325,22 +327,21 @@ function! s:AideUpdateBookmark(bms) " {{{
     elseif !exists('t:aidebookmark')
         silent! let t:aidebookmark = readfile(t:aide_bms)
     endif
-    silent! global/^>/delete
-    silent! $
-    silent! call search('"', 'bW')
-    let l:title =strpart(s:bookmarkbound, 0, strlen(s:bookmarkbound) - 3).'{{{ '
-    silent! put =l:title
     call uniq(t:aidebookmark)
+    silent! 1
+    silent! global/^>/delete
+    silent! call search('^"', 'bW')
+    " silent! put =s:bookmarkbound0 " something interfered w/ folding
     if len(t:aidebookmark) > 0 | silent! put =t:aidebookmark | endif
-    silent! put =s:bookmarkbound
+    silent! put =s:bookmarkbound1
+    silent! call search('^"', 'bW')
+    silent! put =s:bookmarkbound0
     if g:aide_bmafld == 1
         silent! foldclose
     endif
-    unlet l:title
     setlocal statusline=%{t:aide_bms}
     setlocal nomodifiable
 endfunction "}}}
-let s:bookmarkbound ='> ------ bookmark ------ }}}'
 function! s:AideEnterBuffer() " {{{ Buffer Initialization TODO
     " let bufname=escape(substitute(expand('%:p', 0), '\\', '/', 'g'), ' ')
 endfunction "}}}
