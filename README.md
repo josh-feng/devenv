@@ -36,7 +36,7 @@ Just copy individual file to meet your need.
 This simple vim module create an IDE-like side panel, which supports `tagbar` module in the same panel if `tagbar` is installed:
 - Copy the file vim/vim/plugin/**aide.vim** to your vim folder **~/.vim/plugin/**
 - In vim, press `Leader` `Tab` to open the side window for vim-aide,
-    where default `Leader` is ` \\ `
+    where default `Leader` is ` \ `
 - press `|` to switch between the current file and the side window
 - press `_` to switch between the current file and the tagbar window
 
