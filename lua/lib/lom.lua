@@ -38,8 +38,8 @@ lom.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of da
                 tinsert(node, trim > 0 and strmatch(s, '^(.-)%s*$') or s)
             end
         end; -- }}}
-        Comment = function (parser, s) -- TODO mode
-            if strmatch(s, '%S') or trim == 0 then
+        Comment = function (parser, s)
+            if strmatch(s, '%S') and trim <= 1 then
                 tinsert(node, {trim > 0 and strmatch(s, '^(.-)%s*$') or s})
             end
         end;
@@ -135,7 +135,7 @@ lom.xmlstr = function (s, fenc) -- {{{
             '&', '&amp;'), '"', '&quot;'), "'", '&apos;'), '<', '&lt;'), '>', '&gt;')
     end
 end -- }}}
-local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; ...}
+local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; {'comment'}, ...}
     if 'string' == type(node) then return node end
     if not node['.'] then return node[1] and '<!--'..node[1]..'-->' end
     local res = {}
@@ -167,6 +167,8 @@ if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then -- service
     xml = lom.Parse(xml:read('a'), 0)
     print(xml['?'][1] or lom.Dump(xml))
 end -- }}}
+
+for k, v in pairs(lxp) do print(k, v) end
 
 return lom
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
