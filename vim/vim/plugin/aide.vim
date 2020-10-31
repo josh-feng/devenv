@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
 " Last Change: Fri 07 Aug 2020 01:40:23 AM EDT
-" Version:     1.01 (need mac/m$ env test
+" Version:     1.02 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -49,8 +49,10 @@ let s:bookmarkbound1 = '> ------ bookmark ------ }}}'
 function! s:AideToggleHelp() " {{{
     setlocal modifiable
     let t:showhelp = t:showhelp ? 0 : 1
+    call setreg('z', getreg('"'))
     silent! global/^"/delete
     silent! 0put =(t:showhelp ? s:aidehelp : s:aidehelp[0])
+    call setreg('"', getreg('z'))
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideZone(line) " {{{ desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -82,12 +84,14 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
 endfunction "}}}
 function! s:AideRemoveTree(ind) " {{{
     setlocal modifiable
+    call setreg('z', getreg('"'))
     let l:indent = repeat(' ', a:ind)
     normal! j
     while match(getline('.'), l:indent) == 0
         delete
     endwhile
     normal! k
+    call setreg('"', getreg('z'))
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideTree() " {{{
@@ -117,6 +121,7 @@ function! s:AideTree() " {{{
 endfunction "}}}
 function! s:AideUpdateRootPath(path) " {{{
     setlocal modifiable
+    call setreg('z', getreg('"'))
     silent! global/^\.\. up/delete
     silent! $
     silent! call search("^> ", 'bW')
@@ -128,6 +133,7 @@ function! s:AideUpdateRootPath(path) " {{{
     unlet l:title
     silent! call s:AideTree()
     normal! k
+    call setreg('"', getreg('z'))
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideAddBookmark(path) " {{{
@@ -321,6 +327,7 @@ function! s:AideCRAction() " {{{
 endfunction "}}}
 function! s:AideUpdateBookmark(bms) " {{{
     setlocal modifiable
+    call setreg('z', getreg('"'))
     if strlen(a:bms) > 0
         let t:aide_bms = a:bms
         silent! let t:aidebookmark = readfile(t:aide_bms)
@@ -340,6 +347,7 @@ function! s:AideUpdateBookmark(bms) " {{{
         silent! foldclose
     endif
     setlocal statusline=%{t:aide_bms}
+    call setreg('"', getreg('z'))
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideEnterBuffer() " {{{ Buffer Initialization TODO
