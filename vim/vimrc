@@ -79,7 +79,7 @@ let g:instant_markdown_autoscroll = 0
 " let g:pad#local_dir = "notes"
 " let g:pandoc#after#modules#enabled = ["nrrwrgn", "ultisnips"]
 " let g:pandoc#syntax#codeblocks#embeds#langs = ["ruby", "literatehaskell=lhaskell", "bash=sh"]
-let g:pandoc#syntax#codeblocks#embeds#langs = ["lua", "cpp", "bash=sh", "vim", "make", "html", "sql"]
+let g:pandoc#syntax#codeblocks#embeds#langs = ["lua", "cpp", "bash=sh", "vim", "make", "html", "sql", "java"]
 let g:pandoc#spell#enabled = 1
 " let g:pandoc#folding#mode = ["expr"]
 " let g:pandoc#folding#mode = "syntax"
@@ -94,6 +94,7 @@ let g:pandoc#modules#enabled = ["formatting", "folding"]
 " --- " tagbar " --- {{{
 " let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
 " let g:tagbar_width = 30            "窗口宽度设置为 30
+let g:tagbar_width = 36            "窗口宽度设置为 30
 let g:tagbar_left = 0              "设置在 vim 左边显示
 " let g:tagbar_map_openfold = "zv"   "按 zv 组合键打开标签，默认 zc 关闭标签
 " let g:tagbar_zoomwidth = NERDTreeWinSizeMax
