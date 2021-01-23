@@ -1,5 +1,6 @@
 " =========================================================================
 set encoding=utf-8
+set nocompatible              " be iMproved, required
 " set shellcmdflag=-c
 " neocomlete https://github.com/Shougo/neocomplete.vim
 let g:neocomplete#enable_at_startup = 1
@@ -9,8 +10,8 @@ au WinEnter * hi StatusLine ctermfg=green
 " =======================  PLUGINS SETTINGS  ==============================
 " ----- " vundle " ----- {{{ plugin manager: need vim reload
 " https://github.com/VundleVim/Vundle.vim
-set nocompatible              " be iMproved, required
 filetype off                  " required
+if filereadable('~/.vim/bundle/Vundle.vim')
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -134,6 +135,7 @@ let g:tagbar_left = 0              "设置在 vim 左边显示
 " command! -nargs=0 TagbarDebugEnd            call tagbar#StopDebug()
 " }}}
 
+endif
 filetype plugin indent on    " or 'filetype plugin on'
 " --- Brief help ---
 " :PluginList       - lists configured plugins

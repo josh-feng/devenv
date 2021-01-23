@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
 " Last Change: Fri 07 Aug 2020 01:40:23 AM EDT
-" Version:     1.02 (need mac/m$ env test)
+" Version:     1.03 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -22,8 +22,7 @@ if !exists('g:aide_wig') | let g:aide_wig = 'CVS/*,*\\~,.*.swp' | endif
 
 " {{{ Help message
 let s:aidehelp = [
-    \ '" p: toggle help for keybindings',
-    \ '" P: toggle hidden files',
+    \ '" p/P: toggle help/hidden-files',
     \ '" x/X: toggle aide window horizontal/vertical',
     \ '" ------------ in bookmarks ------------',
     \ '" u/U: update from bookmark file/update to bookmark file',
@@ -201,7 +200,7 @@ function! s:AideDelete(case) " {{{ d/D
     elseif l:z >= 3
         let l:path = s:AideGetAbsPath(l:line, l:z == 5 ? '^\s*' : '^.*\(▼\|▶\) ')
         if a:case == 1 && l:z == 5
-            call system('file '.l:path)
+            echo system('file '.l:path)
         else
             let @"=l:path
             echo l:path
@@ -457,6 +456,8 @@ function! s:AIDE(lastwn) " {{{
         else
             if !exists('g:aide_wid') | let g:aide_wid = 24 | endif
             silent! vnew
+            wincmd L
+            exec 'vertical res'.g:aide_wid
         endif
         if exists('t:aide_bn') && (t:aide_bn != -1)
             exec 'silent! b'.t:aide_bn
