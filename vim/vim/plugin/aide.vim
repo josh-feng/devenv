@@ -79,7 +79,11 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
     endwhile
     call setpos('.', l:pos)
     let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*$', '', '')
-    return substitute(t:rootpath.l:path.l:line, ' ', '\\ ','g')
+    " concat and handle special char
+    let l:path = substitute(t:rootpath.l:path.l:line, ' ', '\\ ','g')
+    let l:path = substitute(l:path, '(', '\\(','g')
+    let l:path = substitute(l:path, ')', '\\)','g')
+    return substitute(l:path, '&', '\\&','g')
 endfunction "}}}
 function! s:AideRemoveTree(ind) " {{{
     setlocal modifiable

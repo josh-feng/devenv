@@ -9,9 +9,10 @@ au WinEnter * hi StatusLine ctermfg=green
 " au WinEnter * hi StatusLine ctermfg=cyan
 " =======================  PLUGINS SETTINGS  ==============================
 " ----- " vundle " ----- {{{ plugin manager: need vim reload
-" https://github.com/VundleVim/Vundle.vim
-filetype off                  " required
-if filereadable('~/.vim/bundle/Vundle.vim')
+" https://github.com/VundleVim/Vundle.vim " create ~/.vim/bundle/ folder
+" git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+filetype off " required
+if filereadable($HOME."/.vim/bundle/Vundle.vim/README.md")
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -95,7 +96,7 @@ let g:pandoc#modules#enabled = ["formatting", "folding"]
 " --- " tagbar " --- {{{
 " let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
 " let g:tagbar_width = 30            "窗口宽度设置为 30
-let g:tagbar_width = 36            "窗口宽度设置为 30
+let g:tagbar_width = 28            "窗口宽度设置为 30
 let g:tagbar_left = 0              "设置在 vim 左边显示
 " let g:tagbar_map_openfold = "zv"   "按 zv 组合键打开标签，默认 zc 关闭标签
 " let g:tagbar_zoomwidth = NERDTreeWinSizeMax
