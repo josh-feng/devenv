@@ -1,10 +1,6 @@
-" =========================================================================
 " =======================  GLOBAL SETTINGS  ===============================
-" =========================================================================
-" system-wide default configuration Vim
-" set runtimepath=~/.vim,/usr/share/vim/@VIMCUR@,/usr/share/vim/vimfiles/after
-" source /usr/share/vim/vimcurrent/syntax/syntax.vim
-" ---- basic settings ---- {{{
+" set runtimepath=/usr/share/vim/@VIMCUR@,~/.vim
+" ----- basic settings ----- {{{
 filetype plugin indent on
 syntax on
 
@@ -13,32 +9,19 @@ set tabstop=4       " hard tab
 set shiftwidth=4    " shift width
 set softtabstop=4   " soft tab stop
 set expandtab       " use space instead
-" set smarttab      " make tab insert indents
-set ruler           " show the cursor position all the time
-" set ignorecase
-" set showcmd
-" set nowrap
 
-" auto indenting step (# of space)
 ":verbose set ai? cin? cink? cino? si? inde? indk?
-"setlocal noautoindent
-"setlocal nocindent
-"setlocal nosmartindent
-"setlocal indentexpr=
-set ai              " auto indent
-" set rnu!          " relativenumber
+" setlocal noautoindent
+" setlocal nocindent
+" setlocal nosmartindent
+" setlocal indentexpr=
 
+" set rnu!          " relativenumber
 set showmode
 set hlsearch
-" disable hilight of searching using <Space> & clean command-line
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
-" --------- folding --------
-" set foldmethod=marker foldmarker={{{,}}} foldlevel=1
-
-" ------- clipboard --------
 if has('clipboard')
-    " set clipboard=unnamed,exclude:cons\|linux
     set clipboard=unnamed
 endif
 
@@ -47,27 +30,19 @@ highlight CursorLine   ctermbg=grey
 " highlight CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
 
 " --------------------------
-" autocmd BufEnter * set mouse=
-" termcap: /etc/termcap (echo $TERMCAP)
 " if &term =~ "xterm\\|rxvt"
-" " use an orange cursor in insert mode
-" let &t_SI = "\<Esc>]12;orange\x7"
-" " use a red cursor otherwise
-" let &t_EI = "\<Esc>]12;red\x7"
+" let &t_SI = "\<Esc>]12;orange\x7" " use an orange cursor in insert mode
+" let &t_EI = "\<Esc>]12;red\x7" " use a red cursor otherwise
 " silent !echo -ne "\033]12;red\007"
-" " reset cursor when vim exits
-" autocmd VimLeave * silent !echo -ne "\033]112\007"
-" " use \003]12;gray\007 for gnome-terminal
 " endif
 " let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 " let &t_ve = "[34h[?25h"
 " let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 
 " word / filename under cursor <cfile> <cword>
-" -------- " The rest " --------
 " variable 'iskeyword' is for searching/selection
 " variable 'isfname' is for filename setting
-" include '.' in searching, should depend on file type
+" including '.' in searching should depend on file type
 " set iskeyword+=\.     " include .
 " set iskeyword-=\.     " disable it
 "
@@ -75,17 +50,12 @@ highlight CursorLine   ctermbg=grey
 " set isk=@,48-57,_,128-167,224-235
 " set isk=@,48-57,_,192-255
 " set isk=@,48-57,_,192-255,#       make
+" set isk=@,46-57,_,192-255         make (include /)
 " set isk=@,48-57,_
 " set isk=a-z,A-Z,48-57,_,.,-,>     C/C++
-"
-" set @,46-57,_,192-255             make (include /)
 
-" FORMAT
+" fileformat
 ":e ++ff=dos
-":e ++ff=mac
-":e ++ff=unix
-":w ++ff=dos
-":w ++ff=mac
 ":w ++ff=unix
 ":set fileformat=unix to convert from dos to unix
 " =========================  VIM DIFF MODE  ===============================
@@ -96,27 +66,18 @@ highlight CursorLine   ctermbg=grey
 " [c    prev diff
 if &diff
     set scrollbind
-else
 endif " }}}
-" }}}
 
 function! RidSpace() " clean space {{{
-    " Don't change tabs in Makefile
     if &filetype == 'make'
-        " retab does not work for makefile
-        " silent! exec '%s/\(.\)\t/\1    /g'
-        " take a look at \@<!, retab
-        " silent! exec '%s/\t/        /g'
         silent! exec '%s/\(^\)\@<!\t/    /g'
     else
-        " retab     convert
-        " retab!    convert them back
-        " silent! exec '%s/\t/    /g'
         retab
     end
     silent! exec '%s/\s\+$//g'
     set foldlevel=0 foldenable
 endfunction
+set foldenable
 " }}}
 fu! CustomFoldText() " custom fold display {{{
     let line1 = getline(v:foldstart)
@@ -128,32 +89,24 @@ fu! CustomFoldText() " custom fold display {{{
     return strpart(line1, 0, w - strwidth(expStr.fldStr)).expStr.fldStr
 endf " }}}
 set foldtext=CustomFoldText()
-
-" file support {{{
+" }}}
+" ----- file support ----- {{{
 augroup filetype
     au BufRead,BufNewFile *akefile*     set filetype=make
     au BufRead,BufNewFile .*akefile*    set filetype=make
     au BufRead,BufNewFile *.rml         set filetype=rml
 augroup END
 
-" more file type
-au BufNewFile,BufRead *.txt                     setf text
+au BufNewFile,BufRead *.txt             setf text
 
-" -----------------------
-" set up the help manuals
-" -----------------------
-au FileType vim,help let&l:kp=':help'
-au FileType python   set kp=pydoc
-au FileType tcl      set kp=man\ n             " GF DE tcl man is in 'n' section
-au FileType c,cpp,h  set kp=man\ -S\ 3p:2:3    " programming manual pages 2, 3p, and 3 (3c:3)
-au FileType perl     set kp=perldoc
+au FileType vim,help   let&l:kp=':help'
+au FileType python     set kp=pydoc
+au FileType c,cpp,h    set kp=man\ -S\ 3p:2:3
+au FileType perl       set kp=perldoc
 
-au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv "dict
+au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
 
-" ------------------------------------
-" indentation/tabs for different files
-" ------------------------------------
-au FileType c,cpp    set ts=2 sw=2
+au FileType c,cpp      set ts=2 sw=2
 
 " Ignore these files when completing names and in Explorer
 set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.png,*.xpm,*.gif
@@ -162,39 +115,28 @@ autocmd Syntax c,cpp,tcl,xml    set foldmethod=marker
 autocmd Syntax xml              syn match OotclComment "//.*"
 autocmd Syntax xml              hi def link OotclComment Comment
 " }}}
-" =========================================================================
-" =========================  KEYBINDING  ==================================
-" =========================================================================
-" nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert {{{
+" ----- keybinding ----- {{{
+" nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert
 nmap <silent> Tc :tabnew<CR>
 nmap <silent> Tn :tabnext<CR>
 nmap <silent> Tp :tabprev<CR>
 nmap t <C-w>
 
-" for vim-instant-markdown
-nmap TV :InstantMarkdownPreview<CR>
-nmap Tv :InstantMarkdownStop<CR>
-
-"nmap `
-
-" insert date and time
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
 " map <F2> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
 " map <F3> :let @@=expand('<cword>')<CR> " copy to "
 " map <F4> :let @+=expand('<cword>')<CR> " copy to selection
-
 nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
-
-" nnoremap <F8> :setl noai nocin nosi inde=<CR>
 nnoremap <F8> :set invpaste paste?<CR>
+
 set pastetoggle=<F8>
 
 " search the link
 nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 
 " Useful bubble text normal mapping for arrow keys.
-"nnoremap <UP> ddkP
-"nnoremap <DOWN> ddp
+" nnoremap <UP> ddkP
+" nnoremap <DOWN> ddp
 
 " vnoremap <DOWN> xjP`[<C-V>`]
 " vnoremap <UP> xkP`[<C-V>`]
@@ -206,47 +148,37 @@ nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 " vnoremap <LEFT>  I
 " vnoremap <RIGHT> A
 
-" set fileencodings=big5,euc-jp,gbk,gb18030,utf-8,euc-kr,utf-bom,iso8859-1,default
-" set encoding=utf8
-" set tenc=utf8
-" set tenc=big5<cr>
-" http://linux-wiki.cn/wiki/zh-hant/%E7%AE%80%E7%B9%81%E8%BD%AC%E6%8D%A2 "將文字編碼轉換"
-" %!iconv -f big5 -t utf8
-" %!cconv -f big5 -t utf8
-vnoremap m :!cconv -f big5 -t utf8<CR>
-vnoremap M :!cconv -f gb18030 -t utf8<CR>
+" vnoremap m :!cconv -f big5 -t utf8<CR>
+" vnoremap M :!cconv -f gb18030 -t utf8<CR>
 " vnoremap H
 " vnoremap L
+" vnoremap a
+" vnoremap i
 
-" set shell ?       check the external command
-" run the command in default shell (v-i) :'<,'>w !sh
 vnoremap ` :w !sh<CR>
 vnoremap t !column -t<CR>
 vnoremap <silent> , :s/\s\+$//g<CR>
 vnoremap f :s/\(\S\)\s\+/\1:/g<CR>
 vnoremap F :s/:/ /g<CR>
-" vnoremap a
-" vnoremap i
 vnoremap o :!/usr/bin/nl -n rz<CR>
 
 nmap ; :!
 
-" nnoremap <silent> = :call RidSpace()<CR>
 nnoremap <silent> , :call RidSpace()<CR>
 " }}}
-" =========================================================================
 " ========================  LOCAL SETTINGS  ===============================
-" =========================================================================
+" set fileencodings=big5,euc-jp,gbk,gb18030,utf-8,euc-kr,utf-bom,iso8859-1,default
 set encoding=utf-8
 set nocompatible              " be iMproved, required
-" set shellcmdflag=-c
+autocmd StdinReadPre * let s:std_in = 1
+
 " neocomlete https://github.com/Shougo/neocomplete.vim
 let g:neocomplete#enable_at_startup = 1
 au WinLeave * hi StatusLine ctermfg=darkgrey
 au WinEnter * hi StatusLine ctermfg=green
 " au WinEnter * hi StatusLine ctermfg=cyan
 " =======================  PLUGINS SETTINGS  ==============================
-" ----- " vundle " ----- {{{ plugin manager: need vim reload
+" ----- vundle ----- {{{ plugin manager: need vim reload
 if has('nvim')
     let g:VCFGHOME = $HOME."/.config/nvim/bundle/Vundle.vim"
 else
@@ -280,6 +212,7 @@ Plugin 'vim-pandoc/vim-pandoc-syntax'
 
 Plugin 'suan/vim-instant-markdown', {'rtp': 'after'}
 
+Plugin 'subnut/nvim-ghost.nvim', {'do': ':call nvim_ghost#installer#install()'}
 
 " vimwiki <-- markdown
 " Plugin 'vimwiki/vimwiki'
@@ -392,25 +325,18 @@ filetype plugin indent on    " or 'filetype plugin on'
 " see :h vundle for more details or wiki for FAQ
 " }}}
 " =========================================================================
-" ----- " IDE " ----- {{{ vundle/tagbar
+" ----- IDE ----- {{{
 
 " ----- "netrw" -----
 let g:netrw_dirhistmax = 0
-" let g:netrw_altv = 0
-" let g:netrw_banner = 0
-" let g:netrw_browse_split = 2
-" let g:netrw_liststyle = 1
-" let g:netrw_winsize = 24
-" let g:netrw_list_hide = '.*\.swp$'
-
-autocmd StdinReadPre * let s:std_in = 1
 
 " ----- "deoplete" -----
 " let g:deoplete#enable_at_startup = 1
 
 " ----- " ctags " -----
 let g:tagbar_ctags_bin = "/usr/bin/ctags"
-" ------------------- " new-omni-completion " ------------------- {{{
+
+" ----- " new-omni-completion " ----- {{{
 " insert mode:
 "   c-x c-o --> ?
 "   c-x c-i --> function/variable name
@@ -418,15 +344,11 @@ let g:tagbar_ctags_bin = "/usr/bin/ctags"
 "   ^X..... (^I:insert, ^L:library)
 set completeopt=longest,menu
 "   c-p ?
-" NeoCompleteToggle
 " }}}
-
-" markdown
-" au FileType md       :NeoCompleteDisable<CR>
 
 " }}}
 " =========================================================================
-" ----- " Spell " ----- {{{
+" ----- Spell ----- {{{
 " [s    search back
 " ]s    search forth
 " zg    add word under cursor
@@ -437,37 +359,24 @@ set spellfile=~/.vim/spell/en.utf-8.add
 " language setting en or fr
 " set spelllang=fr
 " }}}
-" =========================================================================
-" ----- " Color " ----- {{{
+" ----- Color ----- {{{
 set background=dark   " dark/light
-
-" ref: http://http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
-" set t_Co=256
-" if (&t_Co == 256 || &t_Co == 88) && !has('gui_running') &&
-"   \ filereadable(expand("$HOME/.vim/plugin/guicolorscheme.vim"))
-"   runtime! plugin/guicolorscheme.vim
-"   GuiColorScheme rastafari
-" else
-"   colorscheme rastafari
-" endif
 if (&t_Co == 256) " rxvt-unicode-256color
     hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
 else " colorscheme evening
     " hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
     hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
 endif
-
-" if &term =~ "xterm"
-" endif
-
 highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
 " }}}
 
-set foldenable
 " NOTE: {{{
 " =======================  GENERAL INFO  ==================================
 " vim --version      to check compiled feature
+"
+" %!iconv -f big5 -t utf8
+" %!cconv -f big5 -t utf8
 "
 " === TABLE MODE ===
 " col -b " to ignore the control characters
