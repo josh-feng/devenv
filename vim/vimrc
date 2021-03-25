@@ -1,4 +1,4 @@
-" =======================  GLOBAL SETTINGS  ===============================
+" ====================  GLOBAL SETTINGS  ============================
 " set runtimepath=/usr/share/vim/@VIMCUR@,~/.vim
 " ----- basic settings ----- {{{
 filetype plugin indent on
@@ -114,6 +114,8 @@ set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.
 autocmd Syntax c,cpp,tcl,xml    set foldmethod=marker
 autocmd Syntax xml              syn match OotclComment "//.*"
 autocmd Syntax xml              hi def link OotclComment Comment
+
+autocmd BufWritePost $MYVIMRC source $MYVIMRC
 " }}}
 " ----- keybinding ----- {{{
 " nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert
@@ -166,8 +168,8 @@ nmap ; :!
 
 nnoremap <silent> , :call RidSpace()<CR>
 " }}}
-" ========================  LOCAL SETTINGS  ===============================
-" set fileencodings=big5,euc-jp,gbk,gb18030,utf-8,euc-kr,utf-bom,iso8859-1,default
+" =====================  LOCAL SETTINGS  ============================
+" set fileencodings=big5,gbk,gb18030,utf-8,iso8859-1,default
 set encoding=utf-8
 set nocompatible              " be iMproved, required
 autocmd StdinReadPre * let s:std_in = 1
@@ -177,7 +179,7 @@ let g:neocomplete#enable_at_startup = 1
 au WinLeave * hi StatusLine ctermfg=darkgrey
 au WinEnter * hi StatusLine ctermfg=green
 " au WinEnter * hi StatusLine ctermfg=cyan
-" =======================  PLUGINS SETTINGS  ==============================
+" ====================  PLUGINS SETTINGS  ===========================
 " ----- vundle ----- {{{ plugin manager: need vim reload
 if has('nvim')
     let g:VCFGHOME = $HOME."/.config/nvim/bundle/Vundle.vim"
@@ -209,13 +211,7 @@ Plugin 'majutsushi/tagbar'
 Plugin 'vim-pandoc/vim-pandoc'
 Plugin 'vim-pandoc/vim-pandoc-syntax'
 
-
-Plugin 'suan/vim-instant-markdown', {'rtp': 'after'}
-
-Plugin 'subnut/nvim-ghost.nvim', {'do': ':call nvim_ghost#installer#install()'}
-
-" vimwiki <-- markdown
-" Plugin 'vimwiki/vimwiki'
+Plugin 'nathanaelkane/vim-indent-guides'
 
 " plugin from http://vim-scripts.org/vim/scripts.html
 " Plugin 'L9'
@@ -226,34 +222,12 @@ Plugin 'subnut/nvim-ghost.nvim', {'do': ':call nvim_ghost#installer#install()'}
 " Plugin 'file:///home/gmarik/path/to/plugin' " git repos on local machine
 call vundle#end() " }}}
 
-" --- " vimwiki " --- {{{
-" default file @ ~/vimwiki/index.wiki
-" markdown '='
-" let g:vimwiki_key_mappings =
-" \ {
-" \ 'headers': 0,
-" \ }
-" folding expr is better than syntax
-" let g:vimwiki_folding = 'syntax'
-" let g:vimwiki_folding = 'expr'
-" au FileType vimwiki set filetype=vimwiki.markdown
-"  }}}
-
-" --- " instant-markdown " --- {{{
-" InstantMarkdownPreview
-" InstantMarkdownStop
-"let g:instant_markdown_slow = 1
-let g:instant_markdown_autostart = 0
-"let g:instant_markdown_open_to_the_world = 1
-"let g:instant_markdown_allow_unsafe_content = 1
-"let g:instant_markdown_allow_external_content = 0
-let g:instant_markdown_mathjax = 1
-"let g:instant_markdown_logfile = '/tmp/instant_markdown.log'
-let g:instant_markdown_autoscroll = 0
-"let g:instant_markdown_port = 8090
-"let g:instant_markdown_python = 1
+" --- " vim-indent-guides " --- {{{
+let g:indent_guides_enable_on_vim_startup=0
+let g:indent_guides_start_level=2
+let g:indent_guides_guide_size=1
+nmap <silent> <Leader>i <Plug>IndentGuidesToggle
 " }}}
-
 " --- " pandoc " --- {{{
 " :Pandoc [option]*
 " let g:pad#dir = "~/documents/notes"
@@ -271,7 +245,6 @@ let g:pandoc#folding#fold_fenced_codeblocks = 1
 let g:pandoc#modules#enabled = ["formatting", "folding"]
 " let g:pandoc#formatting#mode = "h"
 " }}}
-
 " --- " tagbar " --- {{{
 " let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
 " let g:tagbar_width = 30            "窗口宽度设置为 30
@@ -324,30 +297,8 @@ filetype plugin indent on    " or 'filetype plugin on'
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
 " see :h vundle for more details or wiki for FAQ
 " }}}
-" =========================================================================
-" ----- IDE ----- {{{
-
-" ----- "netrw" -----
-let g:netrw_dirhistmax = 0
-
-" ----- "deoplete" -----
-" let g:deoplete#enable_at_startup = 1
-
-" ----- " ctags " -----
-let g:tagbar_ctags_bin = "/usr/bin/ctags"
-
-" ----- " new-omni-completion " ----- {{{
-" insert mode:
-"   c-x c-o --> ?
-"   c-x c-i --> function/variable name
-"   c-x c-f --> directory
-"   ^X..... (^I:insert, ^L:library)
-set completeopt=longest,menu
-"   c-p ?
-" }}}
-
-" }}}
-" =========================================================================
+" ===================================================================
+" ===================================================================
 " ----- Spell ----- {{{
 " [s    search back
 " ]s    search forth
@@ -372,7 +323,7 @@ highlight FoldColumn guibg=darkgrey guifg=white
 " }}}
 
 " NOTE: {{{
-" =======================  GENERAL INFO  ==================================
+" ====================  GENERAL INFO  ===============================
 " vim --version      to check compiled feature
 "
 " %!iconv -f big5 -t utf8
@@ -436,5 +387,5 @@ highlight FoldColumn guibg=darkgrey guifg=white
 "       When the result is a Float it's automatically
 "       converted to a String.
 " ========================================================================= }}}
-" =========================================================================
+" ===================================================================
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
