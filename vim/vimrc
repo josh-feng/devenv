@@ -195,31 +195,52 @@ if has('nvim')
     set rtp+=~/.config/nvim/bundle/Vundle.vim
 else
     set rtp+=~/.vim/bundle/Vundle.vim
-end
+endif
 call vundle#begin() " {{{
-" alternatively, pass a path where Vundle should install plugins
-" call vundle#begin('~/some/path/here')
-" Keep Plugin commands between vundle#begin/end.
-
-" plugin on GitHub repo " let Vundle manage Vundle, required
+" plugin on GitHub repo https://github.com/
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'tpope/vim-fugitive'
-" Plugin 'scrooloose/nerdtree'
 Plugin 'majutsushi/tagbar'
 
-" https://github.com/vim-pandoc/vim-pandoc
 Plugin 'vim-pandoc/vim-pandoc'
 Plugin 'vim-pandoc/vim-pandoc-syntax'
 
 Plugin 'nathanaelkane/vim-indent-guides'
+Plugin 'roxma/nvim-yarp'
 
-" plugin from http://vim-scripts.org/vim/scripts.html
-" Plugin 'L9'
-" Plugin 'rstacruz/sparkup', {'rtp': 'vim/'} " sparkup script is in a subdirectory
-" Plugin 'ascenator/L9', {'name': 'newL9'} " Install L9 and avoid a Naming conflict
+Plugin 'artur-shaik/vim-javacomplete2', {'for': ['java', 'jsp']}
+autocmd FileType java setlocal omnifunc=javacomplete#Complete
+
+" --- " ncm2 " --- {{{
+if has('nvim')
+Plugin 'ncm2/ncm2'
+Plugin 'ncm2/ncm2-bufword'
+Plugin 'ncm2/ncm2-path'
+" language sources
+Plugin 'ObserverOfTime/ncm2-jc2', {'for': ['java', 'jsp']}
+" --- options
+autocmd BufEnter * call ncm2#enable_for_buffer()
+set shortmess+=c
+au User Ncm2Plugin call ncm2#register_source({
+        \ 'name' : 'css',
+        \ 'priority': 9,
+        \ 'subscope_enable': 1,
+        \ 'scope': ['css','scss'],
+        \ 'mark': 'css',
+        \ 'word_pattern': '[\w\-]+',
+        \ 'complete_pattern': ':\s*',
+        \ 'on_complete': ['ncm2#on_complete#omni', 'csscomplete#CompleteCSS'],
+        \ })
+endif
+" }}}
+set completeopt=noinsert,menuone,noselect
+inoremap <c-c> <ESC>
+inoremap <expr> <CR> (pumvisible() ? "\<c-y>\<cr>" : "\<CR>")
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
 " Plugin 'git://git.wincent.com/command-t.git'
-" Plugin 'file:///home/gmarik/path/to/plugin' " git repos on local machine
+" Plugin 'file:///path/to/plugin' " git repos on local machine
 call vundle#end() " }}}
 
 " --- " vim-indent-guides " --- {{{
@@ -234,7 +255,7 @@ nmap <silent> <Leader>i <Plug>IndentGuidesToggle
 " let g:pad#local_dir = "notes"
 " let g:pandoc#after#modules#enabled = ["nrrwrgn", "ultisnips"]
 " let g:pandoc#syntax#codeblocks#embeds#langs = ["ruby", "literatehaskell=lhaskell", "bash=sh"]
-let g:pandoc#syntax#codeblocks#embeds#langs = ["lua", "cpp", "bash=sh", "vim", "make", "html", "sql", "java"]
+let g:pandoc#syntax#codeblocks#embeds#langs = ["lua", "cpp", "bash=sh", "vim", "make", "html", "sql", "java", "javascript"]
 let g:pandoc#spell#enabled = 1
 " let g:pandoc#folding#mode = ["expr"]
 " let g:pandoc#folding#mode = "syntax"
@@ -287,7 +308,6 @@ let g:tagbar_left = 0              "设置在 vim 左边显示
 " command! -nargs=? TagbarDebug               call tagbar#StartDebug(<f-args>)
 " command! -nargs=0 TagbarDebugEnd            call tagbar#StopDebug()
 " }}}
-
 endif
 filetype plugin indent on    " or 'filetype plugin on'
 " --- Brief help ---
@@ -297,7 +317,6 @@ filetype plugin indent on    " or 'filetype plugin on'
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
 " see :h vundle for more details or wiki for FAQ
 " }}}
-" ===================================================================
 " ===================================================================
 " ----- Spell ----- {{{
 " [s    search back
@@ -341,7 +360,7 @@ highlight FoldColumn guibg=darkgrey guifg=white
 " ab -- general abbreviation; ca -- command line mode abbreviation
 " ca mkix   !makeindex
 "
-" =======================  PATTERN REGX  ==================================
+" ======================  PATTERN REGX  =============================
 " :g/\<condition\>\%(\s\+number\>\)\@!/p
 "
 " Explanation of the pattern
@@ -363,16 +382,11 @@ highlight FoldColumn guibg=darkgrey guifg=white
 " insert <CR> after pattern example: s/\(\S\+\s\+\)\{76}/\0\r/g
 " :s/  / /g
 " :s/\([.0-9]* \)\{76}/&\r/g    " after matching 76 times
-"
-" =========================================================================
+" ===================================================================
 " use \r to insert linebreak
 "   /[(,)]
 "   :s//\r&/g
-"
-" ========================  REGISTERS  ====================================
-" NB:
-" : help marks
-" : help clipboard
+" =======================  REGISTERS  ===============================
 " : help registers
 " '='   the expression register: you are prompted to
 "       enter an expression (see |expression|)
@@ -386,6 +400,5 @@ highlight FoldColumn guibg=darkgrey guifg=white
 "       too.
 "       When the result is a Float it's automatically
 "       converted to a String.
-" ========================================================================= }}}
-" ===================================================================
+" =================================================================== }}}
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
