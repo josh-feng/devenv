@@ -1,9 +1,9 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
-" Last Change: Fri 07 Aug 2020 01:40:23 AM EDT
-" Version:     1.03 (need mac/m$ env test)
+" Last Change: Wed 07 Apr 2021 07:18:17 PM CST
+" Version:     1.04 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
-" Development: Bookmarks (t:aide_bms/t:bookmarks/t:roopath )
+" Development: Bookmarks (g:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
 
 scriptencoding utf-8
@@ -150,7 +150,7 @@ function! s:AideAddBookmark(path) " {{{
     endif
     if strlen(l:title) > 0 && strlen(l:path) > 0
         call add(t:aidebookmark, '> '.l:title.'| '.l:path)
-        call s:AideUpdateBookmark('')
+        call s:AideUpdateBookmark()
     endif
 endfunction " }}}
 " KEYs: {{{
@@ -159,10 +159,10 @@ function! s:AideUpdate(case) " {{{ u/U
     let l:z = s:AideZone(l:line)
     if l:z == 1
         if a:case == 0 " from bms
-            call s:AideUpdateBookmark(t:aide_bms)
+            call s:AideUpdateBookmark()
         else " to bms
-            if strlen(t:aide_bms) > 0 && 1 == confirm("Overwrite ".t:aide_bms."?", "&Yes\n&No", 1)
-                call writefile(t:aidebookmark, t:aide_bms)
+            if strlen(g:aide_bms) > 0 && 1 == confirm("Overwrite ".g:aide_bms."?", "&Yes\n&No", 1)
+                call writefile(t:aidebookmark, g:aide_bms)
             endif
         endif
     elseif l:z >= 3
@@ -200,7 +200,7 @@ function! s:AideDelete(case) " {{{ d/D
     let l:z = s:AideZone(l:line)
     if l:z == 1
         silent! call remove(t:aidebookmark, index(t:aidebookmark, l:line))
-        call s:AideUpdateBookmark('')
+        call s:AideUpdateBookmark()
     elseif l:z >= 3
         let l:path = s:AideGetAbsPath(l:line, l:z == 5 ? '^\s*' : '^.*\(▼\|▶\) ')
         if a:case == 1 && l:z == 5
@@ -240,12 +240,13 @@ function! s:AideReplaceOrChange(case) " {{{ r/R
             let l:path = substitute(l:line, "^[^|]*|\s?", "", "")
             let l:title = input("bookmark title? ")
             let t:aidebookmark[l:i] = '> '.l:title.'| '.l:path
-            call s:AideUpdateBookmark('')
+            call s:AideUpdateBookmark()
         else " R load bookmark
             let l:line = getline('.')
             if s:AideZone(l:line) != 1 | return | endif
             let l:line = input("bookmark file? ")
-            call s:AideUpdateBookmark(l:line)
+            let g:aide_bms = l:line
+            call s:AideUpdateBookmark()
         endif
     elseif l:z == 5
         let l:path = s:AideGetAbsPath(l:line, '^\s*')
@@ -285,6 +286,7 @@ function! s:AideTreeRootPathBookmark(case) " {{{ c/C
         if a:case == 0 " update rootpath exec 'chd '.l:line
             let @"=l:line
             exec 'cd '.l:line
+            setlocal statusline=%!getcwd()
         else
             call s:AideAddBookmark(l:line)
         endif
@@ -315,6 +317,8 @@ function! s:AideCRAction() " {{{
         let l:path = s:AideGetAbsPath(l:line, '^\s*')
         exec 'silent! '.t:aide_lastwn.'wincmd w'
         exec 'edit '.l:path
+        " jump back to aide window
+        exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w'
     elseif l:z > 0 " directory
         setlocal modifiable
         if l:z == 3
@@ -332,10 +336,9 @@ function! s:AideUpdateBookmark(bms) " {{{
     setlocal modifiable
     call setreg('z', getreg('"'))
     if strlen(a:bms) > 0
-        let t:aide_bms = a:bms
-        silent! let t:aidebookmark = readfile(t:aide_bms)
+        silent! let t:aidebookmark = readfile(g:aide_bms)
     elseif !exists('t:aidebookmark')
-        silent! let t:aidebookmark = readfile(t:aide_bms)
+        silent! let t:aidebookmark = readfile(g:aide_bms)
     endif
     call uniq(t:aidebookmark)
     silent! 1
@@ -345,11 +348,11 @@ function! s:AideUpdateBookmark(bms) " {{{
     if len(t:aidebookmark) > 0 | silent! put =t:aidebookmark | endif
     silent! put =s:bookmarkbound1
     silent! call search('^"', 'bW')
-    silent! put =s:bookmarkbound0
+    silent! put =s:bookmarkbound0.' '.g:aide_bms
     if g:aide_bmafld == 1
         silent! foldclose
     endif
-    setlocal statusline=%{t:aide_bms}
+    " setlocal statusline=%{g:aide_bms}
     call setreg('"', getreg('z'))
     setlocal nomodifiable
 endfunction "}}}
@@ -359,7 +362,6 @@ endfunction "}}}
 function! s:InitAide() " {{{ Buffer Initialization
     let t:showhelp = 0
     silent! 0put =s:aidehelp[0]
-    if !exists('t:aide_bms') | let t:aide_bms = g:aide_bms | endif
     call s:AideUpdateBookmark('')
 
     let t:hid = -1
@@ -394,6 +396,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     syntax match aideArrow        '\(▶\|▼\)'
     syntax match aideTree         '^.*/$' contains=aideArrow
     syntax match aideKey          '\S\+:'he=e-1 contained containedin=aideDescription
+    syntax match aideBookmarkFile '{ .*$'hs=s+2 contained containedin=aideBookmarkZone
     syntax match aideBookmarkName '> \S\+|'hs=s+2,he=e-1 contained containedin=aideBookmarkZone
     syntax match aideDescription  '^".*$' contains=aideKey
     syntax match aideBookmarkZone '^>.*$' contains=aideBookmarkName
@@ -401,6 +404,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     highlight def link aideDescription  Comment
     highlight def link aideBookmarkZone Statement
     highlight def link aideBookmarkName Identifier
+    highlight def link aideBookmarkFile String
     highlight def link aideTree         Identifier
     highlight def link aideUpdir        TODO
     highlight def link aideArrow        Statement
@@ -438,7 +442,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     endif
     " }}}
     " Autocommands {{{
-    exec 'au BufWipeout '.bufname('').' unlet t:aide_bn t:aide_bms t:aidebookmark'
+    exec 'au BufWipeout '.bufname('').' unlet t:aide_bn t:aidebookmark'
     exec 'au BufEnter '.t:aide_bn.' call s:AideEnterBuffer()'
     " }}}
 
@@ -474,6 +478,7 @@ function! s:AIDE(lastwn) " {{{
             call s:InitAide()
         endif
         exec 'cd '.t:rootpath
+        setlocal statusline=%!getcwd()
     endif
 endfunction " }}}
 
