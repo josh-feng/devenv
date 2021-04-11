@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
 " Last Change: Wed 07 Apr 2021 07:18:17 PM CST
-" Version:     1.04 (need mac/m$ env test)
+" Version:     1.05 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (g:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -309,7 +309,9 @@ function! s:AideCRAction() " {{{
         let l:i = match(l:line, '|')
         if l:i > 0
             exec 'file '.strpart(l:line, 2, l:i - 2).'.'.tabpagenr()
-            call s:AideUpdateRootPath(substitute(l:line, '^.*| ', '', ''))
+            let l:i = substitute(l:line, '^.*| ', '', '')
+            call s:AideUpdateRootPath(l:i)
+            exec 'cd '.l:i
         endif
     elseif l:z == 2 " up-directory
         call s:AideUpdateRootPath(substitute(t:rootpath, '/[^/]*/$', '/', ''))

@@ -119,17 +119,29 @@ autocmd BufWritePost $MYVIMRC source $MYVIMRC
 " }}}
 " ----- keybinding ----- {{{
 " nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert
+nmap ; :!
+nnoremap <silent> \ :call RidSpace()<CR>
+" nnoremap <silent> , :call RidSpace()<CR>
+let mapleader = ","
+
+" TODO www/lynx/links2/gitbook: gx: xdg-open
+" nnoremap w
+" nnoremap W
+
+nnoremap t <C-w>
 nmap <silent> Tc :tabnew<CR>
 nmap <silent> Tn :tabnext<CR>
 nmap <silent> Tp :tabprev<CR>
-nmap t <C-w>
 
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
-" map <F2> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
 " map <F3> :let @@=expand('<cword>')<CR> " copy to "
 " map <F4> :let @+=expand('<cword>')<CR> " copy to selection
+" nnoremap <F4> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
 nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
+nnoremap <F3> :set invcursorline<CR>
 nnoremap <F8> :set invpaste paste?<CR>
+
+inoremap <F2> <C-R>=strftime("%Y/%m%d")<CR>
 
 set pastetoggle=<F8>
 
@@ -164,9 +176,9 @@ vnoremap f :s/\(\S\)\s\+/\1:/g<CR>
 vnoremap F :s/:/ /g<CR>
 vnoremap o :!/usr/bin/nl -n rz<CR>
 
-nmap ; :!
-
-nnoremap <silent> , :call RidSpace()<CR>
+" &cms &com: comment block/comment lines
+" vnoremap <F2> :call ToggleCommentBlock()<CR>
+" vnoremap <F3> :call ToggleCommentLines()<CR>
 " }}}
 " =====================  LOCAL SETTINGS  ============================
 " set fileencodings=big5,gbk,gb18030,utf-8,iso8859-1,default
