@@ -208,60 +208,12 @@ if has('nvim')
 else
     set rtp+=~/.vim/bundle/Vundle.vim
 endif
-call vundle#begin() " {{{
-" plugin on GitHub repo https://github.com/
+call vundle#begin() " {{{ plugin on GitHub repo https://github.com/
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'tpope/vim-fugitive'
-Plugin 'majutsushi/tagbar'
-
+" --- " pandoc " --- {{{
 Plugin 'vim-pandoc/vim-pandoc'
 Plugin 'vim-pandoc/vim-pandoc-syntax'
-
-Plugin 'nathanaelkane/vim-indent-guides'
-Plugin 'roxma/nvim-yarp'
-
-Plugin 'artur-shaik/vim-javacomplete2', {'for': ['java', 'jsp']}
-autocmd FileType java setlocal omnifunc=javacomplete#Complete
-
-" --- " ncm2 " --- {{{
-if has('nvim')
-Plugin 'ncm2/ncm2'
-Plugin 'ncm2/ncm2-bufword'
-Plugin 'ncm2/ncm2-path'
-" language sources
-Plugin 'ObserverOfTime/ncm2-jc2', {'for': ['java', 'jsp']}
-" --- options
-autocmd BufEnter * call ncm2#enable_for_buffer()
-set shortmess+=c
-au User Ncm2Plugin call ncm2#register_source({
-        \ 'name' : 'css',
-        \ 'priority': 9,
-        \ 'subscope_enable': 1,
-        \ 'scope': ['css','scss'],
-        \ 'mark': 'css',
-        \ 'word_pattern': '[\w\-]+',
-        \ 'complete_pattern': ':\s*',
-        \ 'on_complete': ['ncm2#on_complete#omni', 'csscomplete#CompleteCSS'],
-        \ })
-endif
-" }}}
-set completeopt=noinsert,menuone,noselect
-inoremap <c-c> <ESC>
-inoremap <expr> <CR> (pumvisible() ? "\<c-y>\<cr>" : "\<CR>")
-inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-
-" Plugin 'git://git.wincent.com/command-t.git'
-" Plugin 'file:///path/to/plugin' " git repos on local machine
-call vundle#end() " }}}
-
-" --- " vim-indent-guides " --- {{{
-let g:indent_guides_enable_on_vim_startup=0
-let g:indent_guides_start_level=2
-let g:indent_guides_guide_size=1
-nmap <silent> <Leader>i <Plug>IndentGuidesToggle
-" }}}
-" --- " pandoc " --- {{{
 " :Pandoc [option]*
 " let g:pad#dir = "~/documents/notes"
 " let g:pad#local_dir = "notes"
@@ -279,6 +231,7 @@ let g:pandoc#modules#enabled = ["formatting", "folding"]
 " let g:pandoc#formatting#mode = "h"
 " }}}
 " --- " tagbar " --- {{{
+Plugin 'majutsushi/tagbar'
 " let g:tagbar_ctags_bin = 'ctags'   "ctags 程序的路径
 " let g:tagbar_width = 30            "窗口宽度设置为 30
 let g:tagbar_width = 28            "窗口宽度设置为 30
@@ -320,6 +273,67 @@ let g:tagbar_left = 0              "设置在 vim 左边显示
 " command! -nargs=? TagbarDebug               call tagbar#StartDebug(<f-args>)
 " command! -nargs=0 TagbarDebugEnd            call tagbar#StopDebug()
 " }}}
+" --- " vim-indent-guides " --- {{{
+Plugin 'nathanaelkane/vim-indent-guides'
+let g:indent_guides_enable_on_vim_startup = 0
+let g:indent_guides_start_level = 2
+let g:indent_guides_guide_size = 1
+nmap <silent> <Leader>i <Plug>IndentGuidesToggle
+" }}}
+
+" --- " coc " --- {{{
+" ~/.config/coc
+Plugin 'neoclide/coc.nvim', {'branch': 'release'}
+let g:coc_disable_startup_warning = 1
+" don't give |ins-comletion-menu| messages
+set shortmess+=c
+inoremap <silent><expr> <s-space> coc#refresh()
+" Use `[g` and `]g` to navigate diagnostics
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
+" Remap keys for gotos
+nmap <silent> gl <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gx <Plug>(coc-implementation)
+nmap <silent> gb <Plug>(coc-references)
+" }}}
+
+" Plugin 'roxma/nvim-yarp'
+" Plugin 'artur-shaik/vim-javacomplete2', {'for': ['java', 'jsp']}
+" autocmd FileType java setlocal omnifunc=javacomplete#Complete
+
+" --- " ncm2 " --- {{{
+" if has('nvim')
+" Plugin 'ncm2/ncm2'
+" Plugin 'ncm2/ncm2-bufword'
+" Plugin 'ncm2/ncm2-path'
+" " language sources
+" Plugin 'ObserverOfTime/ncm2-jc2', {'for': ['java', 'jsp']}
+" " --- options
+" autocmd BufEnter * call ncm2#enable_for_buffer()
+" set shortmess+=c
+" au User Ncm2Plugin call ncm2#register_source({
+"         \ 'name' : 'css',
+"         \ 'priority': 9,
+"         \ 'subscope_enable': 1,
+"         \ 'scope': ['css','scss'],
+"         \ 'mark': 'css',
+"         \ 'word_pattern': '[\w\-]+',
+"         \ 'complete_pattern': ':\s*',
+"         \ 'on_complete': ['ncm2#on_complete#omni', 'csscomplete#CompleteCSS'],
+"         \ })
+" endif
+" }}}
+set completeopt=noinsert,menuone,noselect
+inoremap <c-c> <ESC>
+inoremap <expr> <CR> (pumvisible() ? "\<c-y>\<cr>" : "\<CR>")
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+" Plugin 'git://git.wincent.com/command-t.git'
+" Plugin 'file:///path/to/plugin' " git repos on local machine
+call vundle#end() " }}}
+
 endif
 filetype plugin indent on    " or 'filetype plugin on'
 " --- Brief help ---
