@@ -1,7 +1,6 @@
 " ====================  GLOBAL SETTINGS  ============================
-" set runtimepath=/usr/share/vim/@VIMCUR@,~/.vim
-" TODO break into modules
 " ----- basic settings ----- {{{
+" set runtimepath=/usr/share/vim/@VIMCUR@,~/.vim
 filetype plugin indent on
 syntax on
 
@@ -12,10 +11,7 @@ set softtabstop=4   " soft tab stop
 set expandtab       " use space instead
 
 ":verbose set ai? cin? cink? cino? si? inde? indk?
-" setlocal noautoindent
-" setlocal nocindent
-" setlocal nosmartindent
-" setlocal indentexpr=
+" setlocal noautoindent nocindent nosmartindent indentexpr=
 
 " set rnu!          " relativenumber
 set showmode
@@ -32,13 +28,10 @@ highlight CursorLine   ctermbg=grey
 
 " --------------------------
 " if &term =~ "xterm\\|rxvt"
-" let &t_SI = "\<Esc>]12;orange\x7" " use an orange cursor in insert mode
 " let &t_EI = "\<Esc>]12;red\x7" " use a red cursor otherwise
-" silent !echo -ne "\033]12;red\007"
 " endif
 " let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 " let &t_ve = "[34h[?25h"
-" let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 
 " word / filename under cursor <cfile> <cword>
 " variable 'iskeyword' is for searching/selection
@@ -49,13 +42,11 @@ highlight CursorLine   ctermbg=grey
 "
 " iskeyword --> string : searching and reconizing --> \k (local to buffer)
 " set isk=@,48-57,_,128-167,224-235
-" set isk=@,48-57,_,192-255
 " set isk=@,48-57,_,192-255,#       make
 " set isk=@,46-57,_,192-255         make (include /)
 " set isk=@,48-57,_
 " set isk=a-z,A-Z,48-57,_,.,-,>     C/C++
 
-" fileformat
 ":e ++ff=dos
 ":w ++ff=unix
 ":set fileformat=unix to convert from dos to unix
@@ -77,9 +68,7 @@ function! RidSpace() " clean space {{{
     end
     silent! exec '%s/\s\+$//g'
     set foldlevel=0 foldenable
-endfunction
-set foldenable
-" }}}
+endfunction " }}}
 fu! CustomFoldText() " custom fold display {{{
     let line1 = getline(v:foldstart)
     let lineCnt = line("$")
@@ -89,6 +78,7 @@ fu! CustomFoldText() " custom fold display {{{
     let expStr = repeat(".", w - strwidth(line1.fldStr))
     return strpart(line1, 0, w - strwidth(expStr.fldStr)).expStr.fldStr
 endf " }}}
+set foldenable
 set foldtext=CustomFoldText()
 
 " set fileencodings=big5,gbk,gb18030,utf-8,iso8859-1,default
@@ -128,10 +118,8 @@ autocmd Syntax xml              hi def link OotclComment Comment
 autocmd BufWritePost $MYVIMRC source $MYVIMRC
 " }}}
 " ----- keybinding ----- {{{
-" nmap/normal, vmap/visual, smap/select, omap/operator-pending, imap/insert
 nmap ; :!
 nnoremap <silent> \ :call RidSpace()<CR>
-" nnoremap <silent> , :call RidSpace()<CR>
 let mapleader = ","
 
 " TODO www/lynx/links2/gitbook: gx: xdg-open
@@ -149,10 +137,10 @@ nmap <silent> Tp :tabprev<CR>
 " nnoremap <F4> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
 nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
 nnoremap <F3> :set invcursorline<CR>
-nnoremap <F8> :set invpaste paste?<CR>
 
 inoremap <F2> <C-R>=strftime("%Y/%m%d")<CR>
 
+" nnoremap <F8> :set invpaste paste?<CR>
 set pastetoggle=<F8>
 
 " search the link
@@ -166,11 +154,6 @@ nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 " vnoremap <UP> xkP`[<C-V>`]
 " vnoremap <LEFT> xhP`[<C-V>`]
 " vnoremap <RIGHT> xlP`[<C-V>`]
-
-" nnoremap <LEFT>  I
-" nnoremap <RIGHT> A
-" vnoremap <LEFT>  I
-" vnoremap <RIGHT> A
 
 " vnoremap m :!cconv -f big5 -t utf8<CR>
 " vnoremap M :!cconv -f gb18030 -t utf8<CR>
@@ -279,17 +262,21 @@ let g:indent_guides_start_level = 2
 let g:indent_guides_guide_size = 1
 nmap <silent> <Leader>i <Plug>IndentGuidesToggle
 " }}}
-
 " --- " coc " --- {{{
-" https://github.com/neoclide/coc.nvim
+" https://github.com/neoclide/coc.nvim (conquer of completion)
+" https://github.com/neoclide/coc.nvim/wiki/Language-servers
 " ~/.config/coc
+" ~/.vim/coc-settings.json
 Plugin 'neoclide/coc.nvim', {'branch': 'release'}
 let g:coc_global_extensions = [
     \ 'coc-snippets',
     \ 'coc-pairs',
     \ 'coc-json',
+    \ 'coc-tsserver',
+    \ 'coc-java',
     \ ]
 set hidden " from readme
+set nobackup nowritebackup
 let g:coc_disable_startup_warning = 1
 " don't give |ins-comletion-menu| messages
 set shortmess+=c
@@ -313,6 +300,12 @@ nmap <silent> gb <Plug>(coc-references)
 "         execute '!'.&keywordprg." ".expand('<cword>')
 "     endif
 " endfunction
+
+" snippets
+imap <C-i> <Plug>(coc-snippets-expand)
+vmap <C-o> <Plug>(coc-snippets-select)
+let g:coc_snippet_next = '<c-n>'
+let g:coc_snippet_prev = '<c-p>'
 " }}}
 
 " autocmd FileType java setlocal omnifunc=javacomplete#Complete
@@ -328,12 +321,11 @@ call vundle#end() " }}}
 
 endif
 filetype plugin indent on    " or 'filetype plugin on'
-" --- Brief help ---
+" --- Brief help --- see :h vundle for more details or wiki for FAQ
 " :PluginList       - lists configured plugins
 " :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
 " :PluginSearch foo - searches for foo; append `!` to refresh local cache
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
-" see :h vundle for more details or wiki for FAQ
 " }}}
 " ===================================================================
 " ----- Spell ----- {{{
@@ -358,19 +350,11 @@ endif
 highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
 highlight FoldColumn guibg=darkgrey guifg=white
 " }}}
-
 " NOTE: {{{
 " ====================  GENERAL INFO  ===============================
-" vim --version      to check compiled feature
-"
-" %!iconv -f big5 -t utf8
-" %!cconv -f big5 -t utf8
-"
-" === TABLE MODE ===
-" col -b " to ignore the control characters
+" :!col -b " to ignore the control characters
 "
 " gv    go back to previous visual selection
-" c-wf  open a new window for the file under cursor
 " va{   visual selection {
 " di"   delete in "
 "
