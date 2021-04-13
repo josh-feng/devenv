@@ -269,7 +269,7 @@ function! s:AideBookmarkSort(case) " {{{ s/S
     else " sort path
         call sort(t:aidebookmark, "s:AideBookmarkSortCompare")
     endif
-    call s:AideUpdateBookmark('')
+    call s:AideUpdateBookmark()
 endfunction " }}}
 function! s:AideOpenFile(case) " {{{ i/I
     let l:line = getline('.')
@@ -334,12 +334,10 @@ function! s:AideCRAction() " {{{
         setlocal nomodifiable
     endif
 endfunction "}}}
-function! s:AideUpdateBookmark(bms) " {{{
+function! s:AideUpdateBookmark() " {{{
     setlocal modifiable
     call setreg('z', getreg('"'))
-    if strlen(a:bms) > 0
-        silent! let t:aidebookmark = readfile(g:aide_bms)
-    elseif !exists('t:aidebookmark')
+    if !exists('t:aidebookmark')
         silent! let t:aidebookmark = readfile(g:aide_bms)
     endif
     call uniq(t:aidebookmark)
@@ -364,7 +362,7 @@ endfunction "}}}
 function! s:InitAide() " {{{ Buffer Initialization
     let t:showhelp = 0
     silent! 0put =s:aidehelp[0]
-    call s:AideUpdateBookmark('')
+    call s:AideUpdateBookmark()
 
     let t:hid = -1
     exec 'setlocal wig='.g:aide_wig
