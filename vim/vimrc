@@ -176,7 +176,7 @@ function! ToggleComment() " {{{
     let l:c = split(&cms, '%s')
     let l:s = l:c[0].' '
     let l:e = ''
-    if len(l:s) > 1
+    if len(l:c) > 1
         let l:e = ' '.l:c[1]
     endif
     if visualmode() == 'v'
