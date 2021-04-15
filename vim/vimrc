@@ -26,9 +26,7 @@ highlight CursorLine   ctermbg=grey
 " highlight CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
 
 " --------------------------
-" if &term =~ "xterm\\|rxvt"
 " let &t_EI = "\<Esc>]12;red\x7" " use a red cursor otherwise
-" endif
 " let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 " let &t_ve = "[34h[?25h"
 
@@ -127,8 +125,8 @@ let mapleader = ","
 
 nnoremap t <C-w>
 nmap <silent> Tc :tabnew<CR>
-" nmap <silent> Tn :tabnext<CR> gt
-" nmap <silent> Tp :tabprev<CR> gT
+nmap <silent> Tn :tabmove +1<CR>
+nmap <silent> Tp :tabmove -1<CR>
 
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
 " map <F3> :let @@=expand('<cword>')<CR> " copy to "
@@ -146,12 +144,9 @@ set pastetoggle=<F8>
 nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 
 " Useful bubble text normal mapping for arrow keys.
-" nnoremap <UP> ddkP
-" nnoremap <DOWN> ddp
-
-" vnoremap <DOWN> xjP`[<C-V>`]
-" vnoremap <UP> xkP`[<C-V>`]
-" vnoremap <LEFT> xhP`[<C-V>`]
+" vnoremap <DOWN>  xjP`[<C-V>`]
+" vnoremap <UP>    xkP`[<C-V>`]
+" vnoremap <LEFT>  xhP`[<C-V>`]
 " vnoremap <RIGHT> xlP`[<C-V>`]
 
 " vnoremap m :!cconv -f big5 -t utf8<CR>
@@ -163,55 +158,40 @@ nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 
 vnoremap ` :w !sh<CR>
 vnoremap t !column -t<CR>
-vnoremap <silent> , :s/\s\+$//g<CR>
+vnoremap <silent> \ :s/\s\+$//g<CR>
 vnoremap f :s/\(\S\)\s\+/\1:/g<CR>
 vnoremap F :s/:/ /g<CR>
 vnoremap o :!/usr/bin/nl -n rz<CR>
 
 " &cms &com: comment block/comment lines
-function! ToggleComment() " {{{
+function! AddComment() " {{{
     " register @"
     " echo mode() visualmode(): v/V/^V
     " echo split(&cms, '%s')[0]
     let l:c = split(&cms, '%s')
     let l:s = l:c[0].' '
     let l:e = ''
-    if len(l:c) > 1
-        let l:e = ' '.l:c[1]
-    endif
+    if len(l:c) > 1 | let l:e = ' '.l:c[1] | endif
     if visualmode() == 'v'
         let @" = l:s.@".l:e
-        normal P
     elseif visualmode() == "V"
         let @" = substitute(@", '[^\n]\+', l:s.'\0'.l:e, 'g')
-        normal P
-    else " not support
-        normal P
+    " else " ^V not support
     endif
+    normal P
     unlet l:c l:s l:e
-   " function! VisualSelection()
-   " if mode()=="v"
-   "     let [line_start, column_start] = getpos("v")[1:2]
-   "     let [line_end, column_end] = getpos(".")[1:2]
-   " else
-   "     let [line_start, column_start] = getpos("'<")[1:2]
-   "     let [line_end, column_end] = getpos("'>")[1:2]
-   " end
-   " if (line2byte(line_start)+column_start) > (line2byte(line_end)+column_end)
-   "     let [line_start, column_start, line_end, column_end] =
-   "     \   [line_end, column_end, line_start, column_start]
-   " end
-   " let lines = getline(line_start, line_end)
-   " if len(lines) == 0
-   "         return ''
-   " endif
-   " let lines[-1] = lines[-1][: column_end - 1]
-   " let lines[0] = lines[0][column_start - 1:]
-   " return join(lines, "\n")
-   " endfunction
+    " if mode()=="v"
+    "     let [line_start, column_start] = getpos("v")[1:2]
+    "     let [line_end, column_end] = getpos(".")[1:2]
+    " else
+    "     let [line_start, column_start] = getpos("'<")[1:2]
+    "     let [line_end, column_end] = getpos("'>")[1:2]
+    " end
+    " let lines = getline(line_start, line_end)
+    " if len(lines) == 0 | return '' | endif
+    " vnoremap <F2> :<C-u>for line in getline("'<", "'>") \| execute line \| endfor<CR>
 endfunction " }}}
-vnoremap <F2> x:call ToggleComment()<CR>
-"vnoremap <F2> :<C-u>for line in getline("'<", "'>") \| execute line \| endfor<CR>
+vnoremap <silent> <F2> x:call AddComment()<CR>
 " }}}
 " ====================  PLUGINS SETTINGS  ===========================
 " ----- vundle ----- {{{ plugin manager: need vim reload
