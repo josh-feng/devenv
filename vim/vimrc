@@ -87,6 +87,28 @@ au WinLeave * hi StatusLine ctermfg=darkgrey
 au WinEnter * hi StatusLine ctermfg=green
 " au WinEnter * hi StatusLine ctermfg=cyan
 " }}}
+" ----- Spell ----- {{{
+" [s    search back
+" ]s    search forth
+" zg    add word under cursor
+" set spell spelllang=en_us
+set spellfile=~/.vim/spell/en.utf-8.add
+
+" set nospell
+" language setting en or fr
+" set spelllang=fr
+" }}}
+" ----- Color ----- {{{
+set background=dark   " dark/light
+if (&t_Co == 256) " rxvt-unicode-256color
+    hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
+else " colorscheme evening
+    " hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
+    hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
+endif
+highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
+highlight FoldColumn guibg=darkgrey guifg=white
+" }}}
 " ----- file support ----- {{{
 augroup filetype
     au BufRead,BufNewFile *akefile*     set filetype=make
@@ -116,7 +138,7 @@ autocmd BufWritePost $MYVIMRC source $MYVIMRC
 " }}}
 " ----- keybinding ----- {{{
 nmap ; :!
-nnoremap <silent> \ :call RidSpace()<CR>
+nnoremap <silent> <Bslash><Bslash> :call RidSpace()<CR>
 let mapleader = ","
 
 " TODO www/lynx/links2/gitbook: gx: xdg-open
@@ -294,6 +316,10 @@ let g:coc_global_extensions = [
     \ 'coc-json',
     \ 'coc-tsserver',
     \ 'coc-java',
+    \ 'coc-html',
+    \ 'coc-css',
+    \ 'coc-pyright',
+    \ 'coc-clangd',
     \ ]
 set nobackup nowritebackup
 let g:coc_disable_startup_warning = 1
@@ -303,22 +329,25 @@ inoremap <silent><expr> <s-space> coc#refresh()
 " Use `[g` and `]g` to navigate diagnostics
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
-" Remap keys for gotos
+
+" Remap keys for goto/search gd/gy/gi/gr
 nmap <silent> gl <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gx <Plug>(coc-implementation)
 nmap <silent> gb <Plug>(coc-references)
 
-" nnoremap <silent> K :call Show_doc()<CR>
-" function! Show_doc ()
-"     if (index(['vim', 'help'], &filetype) >= 0)
-"         execute 'h '.expand('<cword>')
-"     elseif (coc#rpc#ready())
-"         call CocActionAsync('doHover')
-"     else
-"         execute '!'.&keywordprg." ".expand('<cword>')
-"     endif
-" endfunction
+nnoremap <silent> K :call Show_doc()<CR>
+function! Show_doc ()
+    if (index(['vim', 'help'], &filetype) >= 0)
+        execute 'h '.expand('<cword>')
+    elseif (coc#rpc#ready())
+        call CocActionAsync('doHover')
+    else
+        execute '!'.&keywordprg." ".expand('<cword>')
+    endif
+endfunction
+
+command! -nargs=0 Tsc    :CocCommand tsserver.watchBuild
 
 " snippets
 imap <C-i> <Plug>(coc-snippets-expand)
@@ -346,29 +375,6 @@ filetype plugin indent on    " or 'filetype plugin on'
 " :PluginSearch foo - searches for foo; append `!` to refresh local cache
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
 " }}}
-" ===================================================================
-" ----- Spell ----- {{{
-" [s    search back
-" ]s    search forth
-" zg    add word under cursor
-" set spell spelllang=en_us
-set spellfile=~/.vim/spell/en.utf-8.add
-
-" set nospell
-" language setting en or fr
-" set spelllang=fr
-" }}}
-" ----- Color ----- {{{
-set background=dark   " dark/light
-if (&t_Co == 256) " rxvt-unicode-256color
-    hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
-else " colorscheme evening
-    " hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
-    hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
-endif
-highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
-highlight FoldColumn guibg=darkgrey guifg=white
-" }}}
 " NOTE: {{{
 " ====================  GENERAL INFO  ===============================
 " :!col -b " to ignore the control characters
@@ -381,6 +387,7 @@ highlight FoldColumn guibg=darkgrey guifg=white
 " ab -- general abbreviation; ca -- command line mode abbreviation
 " ca mkix   !makeindex
 "
+" spacevim: https://github.com/SpaceVim/SpaceVim
 " ======================  PATTERN REGX  =============================
 " :g/\<condition\>\%(\s\+number\>\)\@!/p
 "

@@ -5,8 +5,7 @@
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (g:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
-" TODO: setlocal cd, path, include
-"       action (s/S)
+" TODO: setlocal path, include
 
 scriptencoding utf-8
 
@@ -225,6 +224,7 @@ function! s:AideOpenTab(case) " {{{ o/O
         let t:rootpath = l:rootpath
         let t:aidebookmark = deepcopy(l:aidebookmark)
         call ToggleAide()
+        exec 'cd '.l:rootpath
         exec 'silent! file '.strpart(substitute(l:line, '|.*', '', ''), 2).'.'.tabpagenr()
         if a:case == 0 | silent! tabp | endif
         set nolazyredraw
@@ -266,13 +266,21 @@ function! s:AideBookmarkSortCompare(x, y) " {{{
 endfunction " }}}
 function! s:AideBookmarkSort(case) " {{{ s/S
     let l:line = getline('.')
-    if s:AideZone(l:line) != 1 | return | endif
-    if a:case == 0
-        call sort(t:aidebookmark)
-    else " sort path
-        call sort(t:aidebookmark, "s:AideBookmarkSortCompare")
+    let l:z = s:AideZone(l:line)
+    if l:z == 1
+        if a:case == 0
+            call sort(t:aidebookmark)
+        else " sort path
+            call sort(t:aidebookmark, "s:AideBookmarkSortCompare")
+        endif
+        call s:AideUpdateBookmark()
+    elseif l:z == 3
+        " TODO tree
+    elseif l:z == 4
+        " TODO tree
+    elseif l:z == 5
+        " TODO assistent programs
     endif
-    call s:AideUpdateBookmark()
 endfunction " }}}
 function! s:AideOpenFile(case) " {{{ i/I
     let l:line = getline('.')
@@ -314,6 +322,7 @@ function! s:AideCRAction() " {{{
             exec 'file '.strpart(l:line, 2, l:i - 2).'.'.tabpagenr()
             let l:i = substitute(l:line, '^.*| ', '', '')
             call s:AideUpdateRootPath(l:i)
+            exec 'cd '.l:i
         endif
     elseif l:z == 2 " up-directory
         call s:AideUpdateRootPath(substitute(t:rootpath, '/[^/]*/$', '/', ''))
@@ -508,7 +517,7 @@ function! SwitchAide(b) " {{{
 endfunction " }}}
 " <Bar> == |
 nnoremap <silent> <Bar> :call SwitchAide(t:aide_bn)<CR>
-nnoremap <silent> <Leader><Tab> :call ToggleAide()<CR>
+nnoremap <silent> <Bslash><Tab> :call ToggleAide()<CR>
 
 if exists(':AIDE') != 2
     command -nargs=? AIDE call <SID>AIDE('<args>')
