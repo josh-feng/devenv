@@ -9,8 +9,8 @@ set mouse=
 set tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 set autoindent smartindent
 
-":verbose set ai? cin? cink? cino? si? inde? indk?
-" setlocal noautoindent nocindent nosmartindent indentexpr=
+"verbose set ai? cin? cink? cino? si? inde? indk?
+"setlocal noautoindent nocindent nosmartindent indentexpr=
 
 " set rnu!          " relativenumber
 set showmode
@@ -141,9 +141,11 @@ nmap ; :!
 nnoremap <silent> <Bslash><Bslash> :call RidSpace()<CR>
 let mapleader = ","
 
+nnoremap <silent> <Leader>, :set wrap!<CR>
+
 " TODO www/lynx/links2/gitbook: gx: xdg-open
-" nnoremap w
-" nnoremap W
+" nnoremap w    " markdown
+" nnoremap W    " markdown new
 
 nnoremap t <C-w>
 nmap <silent> Tc :tabnew<CR>
@@ -156,6 +158,15 @@ nmap <silent> Tp :tabmove -1<CR>
 " nnoremap <F4> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
 nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
 nnoremap <F3> :set invcursorline<CR>
+" quickfix
+nnoremap <F4> :copen<CR><c-w>J
+" nnoremap <F5> url handling
+
+" c-j generate 'NL'
+inoremap <silent> <C-h> <c-o>h
+inoremap <silent> <C-j> <c-o>j
+inoremap <silent> <C-k> <c-o>k
+inoremap <silent> <C-l> <c-o>l
 
 inoremap <F2> <C-R>=strftime("%Y/%m%d")<CR>
 
@@ -214,6 +225,8 @@ function! AddComment() " {{{
     " vnoremap <F2> :<C-u>for line in getline("'<", "'>") \| execute line \| endfor<CR>
 endfunction " }}}
 vnoremap <silent> <F2> x:call AddComment()<CR>
+
+" --- quickfix vimgrep/copen/cclose
 " }}}
 " ====================  PLUGINS SETTINGS  ===========================
 " ----- vundle ----- {{{ plugin manager: need vim reload
@@ -358,7 +371,6 @@ let g:coc_snippet_prev = '<c-p>'
 
 " autocmd FileType java setlocal omnifunc=javacomplete#Complete
 set completeopt=noinsert,menuone,noselect
-inoremap <c-c> <ESC>
 inoremap <expr> <CR> (pumvisible() ? "\<c-y>\<cr>" : "\<CR>")
 inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"

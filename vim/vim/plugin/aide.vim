@@ -1,7 +1,7 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
-" Last Change: Wed 07 Apr 2021 07:18:17 PM CST
-" Version:     1.06 (need mac/m$ env test)
+" Last Change: Sun 18 Apr 2021 10:37:54 PM CST
+" Version:     1.08 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (g:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -36,7 +36,7 @@ let s:aidehelp = [
     \ '" -------- in files/directories --------',
     \ '" u/U: toggle folding/update',
     \ '" d/D: display/query file/directory abs path and save to register',
-    \ '" a/A: open file in a new vertical split window/jump',
+    \ '" a/A: new file/directory',
     \ '" o/O: open file in a new tab/jump',
     \ '" r/R: open the file in the previous window/jump',
     \ '" i/I: open file in a new window/jump',
@@ -189,12 +189,22 @@ function! s:AideAdd(case) " {{{ a/A
     let l:z = s:AideZone(l:line)
     if l:z == 1
         call s:AideAddBookmark('')
-    elseif l:z == 5 " vertical in last wn
-        let l:line = getline('.')
-        if s:AideZone(l:line) != 5 | return | endif
-        let l:path = s:AideGetAbsPath(l:line, '^\s*')
-        exec t:aide_lastwn.'wincmd w | vnew '.l:path
-        if a:case == 0 | exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w' | endif " jump back
+    elseif l:z > 3
+        let l:path = s:AideGetAbsPath(l:line, l:z == 5 ? '^\s*' : '^.*\(▼\|▶\) ')
+        let l:path = substitute(l:path, "[^/]*$", "", "g")
+        if a:case == 1
+            let l:title = input("mkdir -p ".l:path)
+            if l:title != ''
+                silent call system('mkdir -p '.l:path.l:title)
+                call s:AideUpdate(1) " subdir
+            endif
+        else
+            let l:title = input("edit ".l:path)
+            if l:title != ''
+                exec t:aide_lastwn.'wincmd w | new '.l:path.l:title
+            "   exec t:aide_lastwn.'wincmd w | vnew '.l:path
+            endif
+        end
     endif
 endfunction " }}}
 function! s:AideDelete(case) " {{{ d/D
