@@ -22,7 +22,7 @@ if has('clipboard')
 endif
 
 " ------- cursor line ------
-highlight CursorLine   ctermbg=grey
+highlight CursorLine   ctermbg=darkgrey
 " highlight CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
 
 " --------------------------
@@ -310,6 +310,23 @@ let g:tagbar_left = 0              "设置在 vim 左边显示
 " command! -nargs=? TagbarDebug               call tagbar#StartDebug(<f-args>)
 " command! -nargs=0 TagbarDebugEnd            call tagbar#StopDebug()
 " }}}
+" --- " vim-instant-markdown " --- {{{
+Plugin 'instant-markdown/vim-instant-markdown', {'rtp': 'after'}
+"Uncomment to override defaults:
+let g:instant_markdown_slow = 1
+"let g:instant_markdown_autostart = 0
+"let g:instant_markdown_open_to_the_world = 1
+"let g:instant_markdown_allow_unsafe_content = 1
+"let g:instant_markdown_allow_external_content = 0
+let g:instant_markdown_mathjax = 1
+"let g:instant_markdown_mermaid = 1
+"let g:instant_markdown_logfile = '/tmp/instant_markdown.log'
+"let g:instant_markdown_autoscroll = 0
+"let g:instant_markdown_port = 8888
+"let g:instant_markdown_python = 1
+"let g:instant_markdown_browser = "firefox --new-window"
+let g:instant_markdown_browser = "chromium --new-window"
+" }}}
 " --- " vim-indent-guides " --- {{{
 Plugin 'nathanaelkane/vim-indent-guides'
 let g:indent_guides_enable_on_vim_startup = 0
@@ -344,10 +361,10 @@ nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
 " Remap keys for goto/search gd/gy/gi/gr
-nmap <silent> gl <Plug>(coc-definition)
+nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gx <Plug>(coc-implementation)
-nmap <silent> gb <Plug>(coc-references)
+nmap <silent> gr <Plug>(coc-references)
 
 nnoremap <silent> K :call Show_doc()<CR>
 function! Show_doc ()
