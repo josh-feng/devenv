@@ -169,6 +169,8 @@ inoremap <silent> <C-k> <c-o>k
 inoremap <silent> <C-l> <c-o>l
 
 inoremap <F2> <C-R>=strftime("%Y/%m%d")<CR>
+" inoremap <F3>
+inoremap <F4> <C-v>u
 
 " nnoremap <F8> :set invpaste paste?<CR>
 set pastetoggle=<F8>
@@ -309,23 +311,6 @@ let g:tagbar_left = 0              "设置在 vim 左边显示
 " command! -nargs=1 TagbarGetTypeConfig       call tagbar#gettypeconfig(<f-args>)
 " command! -nargs=? TagbarDebug               call tagbar#StartDebug(<f-args>)
 " command! -nargs=0 TagbarDebugEnd            call tagbar#StopDebug()
-" }}}
-" --- " vim-instant-markdown " --- {{{
-Plugin 'instant-markdown/vim-instant-markdown', {'rtp': 'after'}
-"Uncomment to override defaults:
-let g:instant_markdown_slow = 1
-"let g:instant_markdown_autostart = 0
-"let g:instant_markdown_open_to_the_world = 1
-"let g:instant_markdown_allow_unsafe_content = 1
-"let g:instant_markdown_allow_external_content = 0
-let g:instant_markdown_mathjax = 1
-"let g:instant_markdown_mermaid = 1
-"let g:instant_markdown_logfile = '/tmp/instant_markdown.log'
-"let g:instant_markdown_autoscroll = 0
-"let g:instant_markdown_port = 8888
-"let g:instant_markdown_python = 1
-"let g:instant_markdown_browser = "firefox --new-window"
-let g:instant_markdown_browser = "chromium --new-window"
 " }}}
 " --- " vim-indent-guides " --- {{{
 Plugin 'nathanaelkane/vim-indent-guides'
