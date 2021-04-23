@@ -1,6 +1,10 @@
 " ====================  GLOBAL SETTINGS  ============================
 " ----- basic settings ----- {{{
 " set runtimepath=/usr/share/vim/@VIMCUR@,~/.vim
+" verbose set ai? cin? cink? cino? si? inde? indk?
+" setlocal nocindent indentexpr=
+" set fileencodings=big5,gbk,gb18030,utf-8,iso8859-1,default
+set nocompatible encoding=utf-8
 filetype plugin indent on
 syntax on
 set hidden
@@ -9,21 +13,11 @@ set mouse=
 set tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 set autoindent smartindent
 
-"verbose set ai? cin? cink? cino? si? inde? indk?
-"setlocal noautoindent nocindent nosmartindent indentexpr=
-
-" set rnu!          " relativenumber
-set showmode
-set hlsearch
+set showmode hlsearch
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
-if has('clipboard')
-    set clipboard=unnamed
-endif
-
-" ------- cursor line ------
-highlight CursorLine   ctermbg=darkgrey
-" highlight CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
+if has('clipboard') | set clipboard=unnamed | endif
+autocmd StdinReadPre * let s:std_in = 1
 
 " --------------------------
 " let &t_EI = "\<Esc>]12;red\x7" " use a red cursor otherwise
@@ -47,15 +41,13 @@ highlight CursorLine   ctermbg=darkgrey
 ":e ++ff=dos
 ":w ++ff=unix
 ":set fileformat=unix to convert from dos to unix
-" =========================  VIM DIFF MODE  ===============================
+" ======================  VIM DIFF MODE  ============================
 " vimdiff/viewdiff mode {{{
 " do    get change form the other
 " dp    put change to the other
 " ]c    next diff
 " [c    prev diff
-if &diff
-    set scrollbind
-endif " }}}
+if &diff | set scrollbind | endif " }}}
 
 function! RidSpace() " clean space {{{
     if &filetype == 'make'
@@ -75,19 +67,9 @@ fu! CustomFoldText() " custom fold display {{{
     let expStr = repeat(".", w - strwidth(line1.fldStr))
     return strpart(line1, 0, w - strwidth(expStr.fldStr)).expStr.fldStr
 endf " }}}
-set foldenable
-set foldtext=CustomFoldText()
+set foldenable foldtext=CustomFoldText()
 
-" set fileencodings=big5,gbk,gb18030,utf-8,iso8859-1,default
-set encoding=utf-8
-set nocompatible              " be iMproved, required
-autocmd StdinReadPre * let s:std_in = 1
-
-au WinLeave * hi StatusLine ctermfg=darkgrey
-au WinEnter * hi StatusLine ctermfg=green
-" au WinEnter * hi StatusLine ctermfg=cyan
-" }}}
-" ----- Spell ----- {{{
+" Spell {{{
 " [s    search back
 " ]s    search forth
 " zg    add word under cursor
@@ -95,48 +77,27 @@ au WinEnter * hi StatusLine ctermfg=green
 set spellfile=~/.vim/spell/en.utf-8.add
 
 " set nospell
-" language setting en or fr
-" set spelllang=fr
+" set spelllang=fr " en or fr
 " }}}
-" ----- Color ----- {{{
+" }}}
+" ----- color ----- {{{
 set background=dark   " dark/light
+
+hi CursorLine   ctermbg=darkgrey
+" hi CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
+
 if (&t_Co == 256) " rxvt-unicode-256color
     hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
 else " colorscheme evening
-    " hi Comment term=bold cterm=NONE ctermfg=Cyan ctermbg=Blue gui=NONE guifg=Blue guibg=NONE
     hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
 endif
-highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
-highlight FoldColumn guibg=darkgrey guifg=white
+hi Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
+hi FoldColumn guibg=darkgrey guifg=white
+
+au WinLeave * highlight StatusLine ctermfg=darkgrey
+au WinEnter * highlight StatusLine ctermfg=green
 " }}}
-" ----- file support ----- {{{
-augroup filetype
-    au BufRead,BufNewFile *akefile*     set filetype=make
-    au BufRead,BufNewFile .*akefile*    set filetype=make
-    au BufRead,BufNewFile *.rml         set filetype=rml
-augroup END
-
-au BufNewFile,BufRead *.txt             setf text
-
-au FileType vim,help   let&l:kp=':help'
-au FileType python     set kp=pydoc
-au FileType c,cpp,h    set kp=man\ -S\ 3p:2:3
-au FileType perl       set kp=perldoc
-
-au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
-
-au FileType c,cpp      set ts=2 sw=2
-
-" Ignore these files when completing names and in Explorer
-set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.png,*.xpm,*.gif
-
-autocmd Syntax c,cpp,tcl,xml    set foldmethod=marker
-autocmd Syntax xml              syn match OotclComment "//.*"
-autocmd Syntax xml              hi def link OotclComment Comment
-
-autocmd BufWritePost $MYVIMRC source $MYVIMRC
-" }}}
-" ----- keybinding ----- {{{
+" ----- binding ----- {{{
 nmap ; :!
 nnoremap <silent> <Bslash><Bslash> :call RidSpace()<CR>
 let mapleader = ","
@@ -147,6 +108,9 @@ nnoremap <silent> <Leader>, :set wrap!<CR>
 " nnoremap w    " markdown
 " nnoremap W    " markdown new
 
+" nnoremap <F9> :set invpaste paste?<CR>
+set pastetoggle=<F9>
+
 nnoremap t <C-w>
 nmap <silent> Tc :tabnew<CR>
 nmap <silent> Tn :tabmove +1<CR>
@@ -155,28 +119,19 @@ nmap <silent> Tp :tabmove -1<CR>
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
 " map <F3> :let @@=expand('<cword>')<CR> " copy to "
 " map <F4> :let @+=expand('<cword>')<CR> " copy to selection
-" nnoremap <F4> i<C-R>=strftime("%Y/%m%d")<CR><Esc>
-nnoremap <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
-nnoremap <F3> :set invcursorline<CR>
-" quickfix
-nnoremap <F4> :copen<CR><c-w>J
-" nnoremap <F5> url handling
+nn <silent> <F2> :set invcursorcolumn invcursorline wrap! nu!<CR>
+nn <silent> <F3> :set invcursorline rnu!<CR>
+nn <silent> <F4> :copen<CR><c-w>J
 
 " c-j generate 'NL'
-inoremap <silent> <C-h> <c-o>h
-inoremap <silent> <C-j> <c-o>j
-inoremap <silent> <C-k> <c-o>k
-inoremap <silent> <C-l> <c-o>l
+inoremap <C-h> <c-o>h
+inoremap <C-j> <c-o>j
+inoremap <C-k> <c-o>k
+inoremap <C-l> <c-o>l
 
 inoremap <F2> <C-R>=strftime("%Y/%m%d")<CR>
 " inoremap <F3>
 inoremap <F4> <C-v>u
-
-" nnoremap <F8> :set invpaste paste?<CR>
-set pastetoggle=<F8>
-
-" search the link
-nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 
 " Useful bubble text normal mapping for arrow keys.
 " vnoremap <DOWN>  xjP`[<C-V>`]
@@ -227,8 +182,49 @@ function! AddComment() " {{{
     " vnoremap <F2> :<C-u>for line in getline("'<", "'>") \| execute line \| endfor<CR>
 endfunction " }}}
 vnoremap <silent> <F2> x:call AddComment()<CR>
+" }}}
+" ----- file support ----- {{{
+" Ignore these files when completing names and in Explorer
+set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.png,*.xpm,*.gif
 
-" --- quickfix vimgrep/copen/cclose
+autocmd BufWritePost $MYVIMRC source $MYVIMRC
+
+augroup filetype
+    au BufRead,BufNewFile *akefile*     set filetype=make
+    au BufRead,BufNewFile .*akefile*    set filetype=make
+    au BufRead,BufNewFile *.rml         set filetype=rml
+    au BufRead,BufNewFile *.txt         setf text
+augroup END
+
+au FileType vim           let&l:kp=':help'
+au FileType python        set kp=pydoc
+au FileType c,cpp,h,hpp   set kp=man\ -S\ 3p:2:3
+au FileType perl          set kp=perldoc
+
+au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
+
+au FileType c,cpp         set ts=2 sw=2
+
+autocmd Syntax c,cpp,tcl,xml    set foldmethod=marker
+autocmd Syntax xml              syn match OotclComment "//.*"
+autocmd Syntax xml              hi def link OotclComment Comment
+
+" markdown: TODO buffer/ftplug
+nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
+function! MDheader(mode) " markdown header {{{
+    let l:l = strlen(getline('.'))
+    if l:l == 0
+        put =repeat(a:mode == 1?'-':'*', 6)
+    else
+        put =repeat(a:mode == 1?'-':'=', l:l)
+    endif
+    silent normal! o
+    unlet l:l
+endfunction " }}}
+nnoremap <silent> <F5> :call MDheader(0)<CR>
+nnoremap <silent> <F6> :call MDheader(1)<CR>
+inoremap <F5> <Esc>:call MDheader(0)<CR>i
+inoremap <F6> <Esc>:call MDheader(1)<CR>i
 " }}}
 " ====================  PLUGINS SETTINGS  ===========================
 " ----- vundle ----- {{{ plugin manager: need vim reload
@@ -400,29 +396,22 @@ filetype plugin indent on    " or 'filetype plugin on'
 " environment variables start w/ $ : ex. $HOME
 " ab -- general abbreviation; ca -- command line mode abbreviation
 " ca mkix   !makeindex
-"
-" spacevim: https://github.com/SpaceVim/SpaceVim
 " ======================  PATTERN REGX  =============================
 " :g/\<condition\>\%(\s\+number\>\)\@!/p
-"
-" Explanation of the pattern
-"
-"     \<              begin of word (don't match "precondition")
-"     condition       matches itself
-"     \>              end of word (don't match "conditional")
-"     \%(             start subpattern
-"     \s\+            any number of whitespace (at least one)
-"     number          matches itself
-"     \>              end of word ("condition numbering" is different)
-"     \)              end subpattern
-"     \@!             subpattern must NOT match
+"   \<         begin of word (don't match "precondition")
+"   condition  matches itself
+"   \>         end of word (don't match "conditional")
+"   \%(        start subpattern
+"   \s\+       any number of whitespace (at least one)
+"   number     matches itself
+"   \>         end of word ("condition numbering" is different)
+"   \)         end subpattern
+"   \@!        subpattern must NOT match
 "
 " :s/\([.0-9]*\s\+\)\{3}/&\r/g
-"
 "   &   matched pattern
 "
 " insert <CR> after pattern example: s/\(\S\+\s\+\)\{76}/\0\r/g
-" :s/  / /g
 " :s/\([.0-9]* \)\{76}/&\r/g    " after matching 76 times
 " ===================================================================
 " use \r to insert linebreak
@@ -430,17 +419,7 @@ filetype plugin indent on    " or 'filetype plugin on'
 "   :s//\r&/g
 " =======================  REGISTERS  ===============================
 " : help registers
-" '='   the expression register: you are prompted to
-"       enter an expression (see |expression|)
-"       Note that 0x80 (128 decimal) is used for
-"       special keys.  E.g., you can use this to move
-"       the cursor up:
-"               CTRL-R ="\<Up>"
-"       Use CTRL-R CTRL-R to insert text literally.
-"       When the result is a |List| the items are used
-"       as lines.  They can have line breaks inside
-"       too.
-"       When the result is a Float it's automatically
-"       converted to a String.
+" '='   the expression register: you are prompted (see |expression|)
+"       When the result is a |List| the items are used as lines.
 " =================================================================== }}}
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
