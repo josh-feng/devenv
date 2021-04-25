@@ -335,7 +335,7 @@ nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
 " Remap keys for goto/search gd/gy/gi/gr
-nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gl <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gx <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
