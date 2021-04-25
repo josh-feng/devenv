@@ -9,34 +9,27 @@ filetype plugin indent on
 syntax on
 set hidden
 
-set mouse=
 set tabstop=4 shiftwidth=4 softtabstop=4 expandtab
-set autoindent smartindent
-
+set autoindent smartindent mouse=
 set showmode hlsearch
 nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
 if has('clipboard') | set clipboard=unnamed | endif
 autocmd StdinReadPre * let s:std_in = 1
 
-" --------------------------
 " let &t_EI = "\<Esc>]12;red\x7" " use a red cursor otherwise
-" let &t_ve = "\<Esc>[34h\<Esc>[?25h"
 " let &t_ve = "[34h[?25h"
 
 " word / filename under cursor <cfile> <cword>
-" variable 'iskeyword' is for searching/selection
 " variable 'isfname' is for filename setting
-" including '.' in searching should depend on file type
-" set iskeyword+=\.     " include .
-" set iskeyword-=\.     " disable it
-"
-" iskeyword --> string : searching and reconizing --> \k (local to buffer)
+" variable 'iskeyword' is for searching/selection
+" set iskeyword+=\.                 " include .
+" set iskeyword-=\.                 " disable it
 " set isk=@,48-57,_,128-167,224-235
-" set isk=@,48-57,_,192-255,#       make
-" set isk=@,46-57,_,192-255         make (include /)
+" set isk=@,48-57,_,192-255,#       " make
+" set isk=@,46-57,_,192-255         " make (include /)
 " set isk=@,48-57,_
-" set isk=a-z,A-Z,48-57,_,.,-,>     C/C++
+" set isk=a-z,A-Z,48-57,_,.,-,>     " C/C++
 
 ":e ++ff=dos
 ":w ++ff=unix
