@@ -341,7 +341,7 @@ function! s:AideCRAction() " {{{
         exec 'silent! '.t:aide_lastwn.'wincmd w'
         exec 'edit '.l:path
         " jump back to aide window
-        " exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w'
+        exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w'
     elseif l:z > 0 " directory
         setlocal modifiable
         if l:z == 3

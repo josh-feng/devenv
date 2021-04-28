@@ -98,7 +98,7 @@ let mapleader = ","
 nnoremap <silent> <Leader>, :set wrap!<CR>
 
 " TODO www/lynx/links2/gitbook: gx: xdg-open
-" nnoremap w    " markdown
+nnoremap <silent> w /\[[^\]]*\]([^)]*)<CR>
 " nnoremap W    " markdown new
 
 " nnoremap <F9> :set invpaste paste?<CR>
@@ -122,7 +122,7 @@ inoremap <C-j> <c-o>j
 inoremap <C-k> <c-o>k
 inoremap <C-l> <c-o>l
 
-inoremap <F2> <C-R>=strftime("%Y/%m%d")<CR>
+inoremap <F2> <C-R>=strftime("%Y/%m/%d")<CR>
 " inoremap <F3>
 inoremap <F4> <C-v>u
 
@@ -203,7 +203,6 @@ autocmd Syntax xml              syn match OotclComment "//.*"
 autocmd Syntax xml              hi def link OotclComment Comment
 
 " markdown: TODO buffer/ftplug
-nnoremap <silent> <Tab> /\[[^\]]*\]([^)]*)<CR>
 function! MDheader(mode) " markdown header {{{
     let l:l = strlen(getline('.'))
     if l:l == 0
@@ -330,7 +329,6 @@ let g:coc_disable_startup_warning = 1
 " don't give |ins-comletion-menu| messages
 set shortmess+=c
 inoremap <silent><expr> <s-space> coc#refresh()
-" Use `[g` and `]g` to navigate diagnostics
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
