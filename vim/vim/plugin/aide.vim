@@ -161,6 +161,7 @@ function! s:AideUpdate(case) " {{{ u/U
     let l:z = s:AideZone(l:line)
     if l:z == 1
         if a:case == 0 " from bms
+            unlet t:aidebookmark
             call s:AideUpdateBookmark()
         else " to bms
             if strlen(g:aide_bms) > 0 && 1 == confirm("Overwrite ".g:aide_bms."?", "&Yes\n&No", 1)

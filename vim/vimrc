@@ -80,7 +80,7 @@ hi CursorLine   ctermbg=darkgrey
 " hi CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
 
 if (&t_Co == 256) " rxvt-unicode-256color
-    hi comment ctermfg=242 ctermbg=black guifg=darkgray gui=bold
+    hi comment ctermfg=242 ctermbg=NONE guibg=NONE guifg=darkgrey
 else " colorscheme evening
     hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
 endif
