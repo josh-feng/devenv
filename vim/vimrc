@@ -60,7 +60,7 @@ fu! CustomFoldText() " custom fold display {{{
     let expStr = repeat(".", w - strwidth(line1.fldStr))
     return strpart(line1, 0, w - strwidth(expStr.fldStr)).expStr.fldStr
 endf " }}}
-set foldenable foldtext=CustomFoldText()
+set foldenable foldtext=CustomFoldText() fmr={{{,}}}
 
 " Spell {{{
 " [s    search back
@@ -76,12 +76,13 @@ set spellfile=~/.vim/spell/en.utf-8.add
 " ----- color ----- {{{
 set background=dark   " dark/light
 
-hi CursorLine   ctermbg=darkgrey
 " hi CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
 
 if (&t_Co == 256) " rxvt-unicode-256color
+    hi CursorLine   ctermbg=darkgrey
     hi comment ctermfg=242 ctermbg=NONE guibg=NONE guifg=darkgrey
 else " colorscheme evening
+    hi CursorLine   ctermbg=NONE
     hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
 endif
 hi Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
@@ -94,6 +95,7 @@ au WinEnter * highlight StatusLine ctermfg=green
 nmap ; :!
 nnoremap <silent> <Bslash><Bslash> :call RidSpace()<CR>
 let mapleader = ","
+let maplocalleader = ","
 
 nnoremap <silent> <Leader>, :set wrap!<CR>
 
@@ -105,10 +107,12 @@ nnoremap <silent> w /\[[^\]]*\]([^)]*)<CR>
 set pastetoggle=<F9>
 
 nnoremap t <C-w>
+nnoremap tm :vnew<CR>
 nmap <silent> Tc :tabnew<CR>
 nmap <silent> Tn :tabmove +1<CR>
 nmap <silent> Tp :tabmove -1<CR>
 
+" <F2>-<F3> all filetype
 " map <F2> a<C-R>=strftime("%c")<CR><Esc>
 " map <F3> :let @@=expand('<cword>')<CR> " copy to "
 " map <F4> :let @+=expand('<cword>')<CR> " copy to selection
@@ -122,7 +126,7 @@ inoremap <C-j> <c-o>j
 inoremap <C-k> <c-o>k
 inoremap <C-l> <c-o>l
 
-inoremap <F2> <C-R>=strftime("%Y/%m/%d")<CR>
+inoremap <F2> <C-R>=strftime("%Y-%m%d")<CR>
 " inoremap <F3>
 inoremap <F4> <C-v>u
 
@@ -175,6 +179,7 @@ function! AddComment() " {{{
     " vnoremap <F2> :<C-u>for line in getline("'<", "'>") \| execute line \| endfor<CR>
 endfunction " }}}
 vnoremap <silent> <F2> x:call AddComment()<CR>
+vnoremap <silent> <F3> xi[]{}<Esc>2hP2l
 " }}}
 " ----- file support ----- {{{
 " Ignore these files when completing names and in Explorer
@@ -183,40 +188,23 @@ set wildignore=.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.
 autocmd BufWritePost $MYVIMRC source $MYVIMRC
 
 augroup filetype
-    au BufRead,BufNewFile *akefile*     set filetype=make
-    au BufRead,BufNewFile .*akefile*    set filetype=make
-    au BufRead,BufNewFile *.rml         set filetype=rml
-    au BufRead,BufNewFile *.txt         setf text
+    au BufRead,BufNewFile *akefile*,.*akefile*,*.mk  set filetype=make
+
+    au BufRead,BufNewFile *.rml    set filetype=rml
+    au BufRead,BufNewFile *.txt    setf text
 augroup END
 
 au FileType vim           let&l:kp=':help'
 au FileType python        set kp=pydoc
-au FileType c,cpp,h,hpp   set kp=man\ -S\ 3p:2:3
 au FileType perl          set kp=perldoc
+au FileType c,cpp,h,hpp   set kp=man\ -S\ 3p:2:3
+au FileType c,cpp,h,hpp   set ts=2 sw=2
 
 au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
 
-au FileType c,cpp         set ts=2 sw=2
-
-autocmd Syntax c,cpp,tcl,xml    set foldmethod=marker
-autocmd Syntax xml              syn match OotclComment "//.*"
-autocmd Syntax xml              hi def link OotclComment Comment
-
-" markdown: TODO buffer/ftplug
-function! MDheader(mode) " markdown header {{{
-    let l:l = strlen(getline('.'))
-    if l:l == 0
-        put =repeat(a:mode == 1?'-':'*', 6)
-    else
-        put =repeat(a:mode == 1?'-':'=', l:l)
-    endif
-    silent normal! o
-    unlet l:l
-endfunction " }}}
-nnoremap <silent> <F5> :call MDheader(0)<CR>
-nnoremap <silent> <F6> :call MDheader(1)<CR>
-inoremap <F5> <Esc>:call MDheader(0)<CR>i
-inoremap <F6> <Esc>:call MDheader(1)<CR>i
+" autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
+" autocmd Syntax xml           syn match OotclComment "//.*"
+" autocmd Syntax xml           hi def link OotclComment Comment
 " }}}
 " ====================  PLUGINS SETTINGS  ===========================
 " ----- vundle ----- {{{ plugin manager: need vim reload
@@ -254,7 +242,7 @@ let g:pandoc#folding#fold_fenced_codeblocks = 1
 " let g:pandoc#folding#fold_vim_markers = 1
 " let g:pandoc#filetypes#handled = ["pandoc", "markdown"]
 " let g:pandoc#filetypes#pandoc_markdown = 0
-let g:pandoc#modules#enabled = ["formatting", "folding"]
+let g:pandoc#modules#enabled = ["formatting", "folding", "keyboard"]
 " let g:pandoc#formatting#mode = "h"
 " }}}
 " --- " tagbar " --- {{{
@@ -349,7 +337,7 @@ function! Show_doc ()
     endif
 endfunction
 
-command! -nargs=0 Tsc    :CocCommand tsserver.watchBuild
+command! -nargs=0 Tsc :CocCommand tsserver.watchBuild
 
 " snippets
 imap <C-i> <Plug>(coc-snippets-expand)

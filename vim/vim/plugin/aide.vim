@@ -12,6 +12,9 @@ scriptencoding utf-8
 if exists('loaded_aide') || &cp | finish | endif
 let loaded_aide = 1
 
+" register used in cut&paste and selection
+let s:reg = '*'
+
 " Initialize {{{ AIDE
 if exists('g:aide_force') && g:aide_force == 1
     autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | call ToggleAide() | endif
@@ -49,10 +52,11 @@ let s:bookmarkbound1 = '> ------ bookmark ------ }}}'
 function! s:AideToggleHelp() " {{{
     setlocal modifiable
     let t:showhelp = t:showhelp ? 0 : 1
-    call setreg('z', getreg('"'))
+    let l:z = getreg(s:reg)
     silent! global/^"/delete
     silent! 0put =(t:showhelp ? s:aidehelp : s:aidehelp[0])
-    call setreg('"', getreg('z'))
+    call setreg(s:reg, l:z)
+    unlet l:z
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideZone(line) " {{{ desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -88,17 +92,19 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
 endfunction "}}}
 function! s:AideRemoveTree(ind) " {{{
     setlocal modifiable
-    call setreg('z', getreg('"'))
+    let l:z = getreg(s:reg)
     let l:indent = repeat(' ', a:ind)
     normal! j
     while match(getline('.'), l:indent) == 0
         delete
     endwhile
     normal! k
-    call setreg('"', getreg('z'))
+    call setreg(s:reg, l:z)
+    unlet l:z
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideTree() " {{{
+    let l:z = getreg(s:reg)
     let l:pos = getpos('.')
     let l:line = getline('.')
     let l:path = s:AideGetAbsPath(l:line, '^.*\(▼\|▶\) ')
@@ -122,10 +128,12 @@ function! s:AideTree() " {{{
     unlet l:treedir l:treefile l:tree
     silent! global/^$/delete
     silent! call setpos('.', l:pos)
+    call setreg(s:reg, l:z)
+    unlet l:z
 endfunction "}}}
 function! s:AideUpdateRootPath(path) " {{{
     setlocal modifiable
-    call setreg('z', getreg('"'))
+    let l:z = getreg(s:reg)
     silent! global/^\.\. up/delete
     silent! $
     silent! call search("^> ", 'bW')
@@ -137,7 +145,8 @@ function! s:AideUpdateRootPath(path) " {{{
     unlet l:title
     silent! call s:AideTree()
     normal! k
-    call setreg('"', getreg('z'))
+    call setreg(s:reg, l:z)
+    unlet l:z
     exec "lcd ".a:path
     setlocal nomodifiable
 endfunction "}}}
@@ -358,7 +367,7 @@ function! s:AideCRAction() " {{{
 endfunction "}}}
 function! s:AideUpdateBookmark() " {{{
     setlocal modifiable
-    call setreg('z', getreg('"'))
+    let l:z = getreg(s:reg)
     if !exists('t:aidebookmark')
         silent! let t:aidebookmark = readfile(g:aide_bms)
     endif
@@ -375,7 +384,8 @@ function! s:AideUpdateBookmark() " {{{
         silent! foldclose
     endif
     " setlocal statusline=%{g:aide_bms}
-    call setreg('"', getreg('z'))
+    call setreg(s:reg, l:z)
+    unlet l:z
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideEnterBuffer() " {{{ Buffer Initialization TODO
@@ -465,7 +475,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     " }}}
     " Autocommands {{{
     exec 'au BufWipeout '.bufname('').' unlet t:aide_bn t:aidebookmark'
-    exec 'au BufEnter '.t:aide_bn.' call s:AideEnterBuffer()'
+    " exec 'au BufWinEnter '.t:aide_bn.' call s:AideEnterBuffer()'
     " }}}
 
     call s:AideEnterBuffer()
