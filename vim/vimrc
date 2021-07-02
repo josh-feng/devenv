@@ -189,7 +189,6 @@ autocmd BufWritePost $MYVIMRC source $MYVIMRC
 
 augroup filetype
     au BufRead,BufNewFile *akefile*,.*akefile*,*.mk  set filetype=make
-
     au BufRead,BufNewFile *.rml    set filetype=rml
     au BufRead,BufNewFile *.txt    setf text
 augroup END
@@ -330,8 +329,8 @@ nnoremap <silent> K :call Show_doc()<CR>
 function! Show_doc ()
     if (index(['vim', 'help'], &filetype) >= 0)
         execute 'h '.expand('<cword>')
-    elseif (coc#rpc#ready())
-        call CocActionAsync('doHover')
+    " elseif (coc#rpc#ready())
+    "     call CocActionAsync('doHover')
     else
         execute '!'.&keywordprg." ".expand('<cword>')
     endif
