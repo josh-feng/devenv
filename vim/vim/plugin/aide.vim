@@ -13,7 +13,7 @@ if exists('loaded_aide') || &cp | finish | endif
 let loaded_aide = 1
 
 " register used in cut&paste and selection
-let s:reg = '*'
+let s:reg = has('clipboard') ? '*' : '"'
 
 " Initialize {{{ AIDE
 if exists('g:aide_force') && g:aide_force == 1
