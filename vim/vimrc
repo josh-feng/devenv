@@ -80,7 +80,7 @@ set background=dark   " dark/light
 
 if (&t_Co == 256) " rxvt-unicode-256color
     hi CursorLine   ctermbg=darkgrey
-    hi comment ctermfg=242 ctermbg=NONE guibg=NONE guifg=darkgrey
+    hi comment ctermfg=248 ctermbg=NONE guibg=NONE guifg=darkgrey
 else " colorscheme evening
     hi CursorLine   ctermbg=NONE
     hi comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold
@@ -162,7 +162,7 @@ function! AddComment() " {{{
     if visualmode() == 'v'
         let @" = l:s.@".l:e
     elseif visualmode() == "V"
-        let @" = substitute(@", '[^\n]\+', l:s.'\0'.l:e, 'g')
+        let @" = substitute(@", '[^\n]\+', ' '.l:s.'\0'.l:e, 'g')
     " else " ^V not support
     endif
     normal P

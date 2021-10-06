@@ -1,120 +1,240 @@
 #!/usr/bin/env lua
--- ======================================================================== --
+-- ================================================================== --
 -- Lua Object Model
 -- Usage example:
 --      lom = require('lom')
---      doc = lom.ParseXml(file)
---      xml = lom.Dump(doc, true)
--- ======================================================================== --
-local lom = {id = ''} -- version control
-
+--      doc = lom(file)
+--      doc = lom() doc:parse(txt):parse() or doc:parse(txt):buildxlink()
+--      xml = lom.dump(doc, true)
+-- ================================================================== --
 local lxp = require('lxp') -- the standard Lua Expat module
 local tun = require('util') -- for path
+local class = require('pool')
 
 local next, assert, type = next, assert, type
 local strlen, strsub, strmatch, strgmatch = string.len, string.sub, string.match, string.gmatch
 local strrep, strgsub, strfind = string.rep, string.gsub, string.find
 local tinsert, tremove, tconcat = table.insert, table.remove, table.concat
-
-lom.indent = strrep(' ', 4)
--- ======================================================================== --
+-- ================================================================== --
 -- LOM (Lua Object Model)
--- ======================================================================== --
--- node == token == tag == table
-lom.Parse = function (txt, mode) -- {{{ trim the leading and tailing space of data 1:end space, 2:blank line
-    mode = tonumber(mode) or 1
-    local trim = mode % 3 -- trim: 0/1/2 (html:+3)
-    local node = {} -- working variable: doc == root node (node == token == tag == table)
+-- ================================================================== --
+local function starttag (p, name, attr) -- {{{
+    local stack = p:getcallbacks().stack
+    tinsert(stack, {['.'] = name, ['@'] = attr})
+end -- }}}
+local function endtag (p, name) -- {{{
+    local stack = p:getcallbacks().stack
+    local element = tremove(stack)
+    -- assert(element['.'] == name)
+    tinsert(stack[#stack], element)
+end -- }}}
+local function cleantext (p, txt) -- {{{
+    if strfind(txt, '%S') then
+        txt = strmatch(txt, '^.*%S')
+        local stack = p:getcallbacks().stack
+        tinsert(stack[#stack], txt)
+    end
+end -- }}}
+local function text (p, txt) -- {{{
+    local stack = p:getcallbacks().stack
+    tinsert(stack[#stack], txt)
+end -- }}}
+local function comment (p, txt) -- {{{
+    local stack = p:getcallbacks().stack
+    tinsert(stack[#stack], {txt})
+end -- }}}
 
-    local lomcallbacks = {
-        StartElement = function (parser, name, attr) -- {{{
-            local xn = {['.'] = node; ['@'] = #attr > 0 and attr or nil;}
-            tinsert(node, xn)
-            node = xn
-        end; -- }}}
-        EndElement = function (parser, name) node, node['.'] =  node['.'], name end;
-        CharacterData = function (parser, s) -- {{{
-            if strmatch(s, '%S') or trim == 0 then
-                tinsert(node, trim > 0 and strmatch(s, '^(.-)%s*$') or s)
-            end
-        end; -- }}}
-        Comment = function (parser, s)
-            if strmatch(s, '%S') and trim <= 1 then
-                tinsert(node, {trim > 0 and strmatch(s, '^(.-)%s*$') or s})
-            end
-        end;
+-- ======================================================================== --
+local function parse (o, txt) -- friend function {{{
+    local p = o.docs[o.root] -- root = ''
+    local status, msg, line, col, pos = p:parse(txt) -- passed nil if failed
+    if not (txt and status) then
+        o.docs[o.root] = p:getcallbacks().stack[1]
+        o.docs[o.root]['?'] = status and {} or {msg..' #'..line}
+        p:close() -- seems destroy the lxp obj
+        o.parse = nil
+        o:buildxlink()
+    end
+    return o -- for cascade oop
+end --}}}
+
+local function parseXml (o, filename, mode) -- friend function {{{
+    if o.docs[filename] then return filename end
+
+    local p = lxp.new {
+        StartElement = starttag,
+        EndElement = endtag,
+        CharacterData = mode and text or cleantext,
+        Comment = mode and comment or nil,
+        _nonstrict = true,
+        stack = {{}}
     }
 
-    local plom = lxp.new(lomcallbacks)
-    if mode > 2 then
-        plom:parse('<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml">\n')
+    -- HTML
+    -- '<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml">\n')
+    -- content
+    -- '\n</html>'
+
+    if filename then
+        filename = tun.normpath(filename)
+        local file, msg = io.open(filename, 'r')
+        if not file then
+            o.docs[filename] = {['?'] = {msg}}
+            return filename
+        end
+        local status, msg, line, col, pos = p:parse(file:read('*all'))
+        file:close()
+        if status then status, msg, line = p:parse() end
+        o.docs[filename] = p:getcallbacks().stack[1]
+        o.docs[filename]['?'] = status and {} or {msg..' #'..line}
+        p:close()
+    else
+        filename = ''
+        o.docs[filename] = p
+        o.parse = parse
     end
-    local status, msg, line, col, pos = plom:parse(txt) -- passed nil if failed
-    if mode > 2 then plom:parse('\n</html>') end
-    plom:parse()
-    plom:close() -- seems destroy the lxp obj
-    node['?'] = status and {} or {msg..' #'..line}
-    return node
-end
--- }}}
--- ======================================================================== --
-lom.ParseXml = function (filename, mode, doctree) -- doc = lom.ParseXml(xmlfile, docfactory) -- {{{
-    filename = tun.normpath(filename)
-    if type(doctree) == 'table' and doctree[filename] then return doctree[filename] end
+    return filename
+end --}}}
 
-    local file, msg = io.open(filename, 'r')
-    if not file then return {['?'] = {msg}} end
-    local doc = lom.Parse(file:read('*all'), mode) -- mode +3 for html
-    file:close()
-
-    if type(doctree) == 'table' then doctree[filename] = doc end
-    return doc
-end -- }}}
-lom.XmlBuild = function (xmlfile, mode) -- topxml, doctree = lom.XmlBuild(rootfile) -- {{{ -- trace and meta
-    local topxml, base = tun.normpath(xmlfile)
-    local doctree = {}
-    local doc = lom.ParseXml(topxml, mode, doctree) -- doc table
-
-    local function TraceTbl (xn, xml) -- {{{ lua table form
-        local v = xn['@'] and xn['@']['xlink:href']
-        if v then -- attr
-
-            local link, xpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
-            if link == '' then -- back to this doc root
-                link = xml
-            else -- new file
-                if strsub(link, 1, 1) ~= '/' then link = strgsub(xml, '[^/]*$', '')..link end
-                link = tun.normpath(link)
-            end -- }}}
-
-            if not doctree[link] then TraceTbl(lom.ParseXml(link, mode, doctree), link) end
-            link, xpath = tun.xPath(doctree[link], strmatch(xpath or '', '#xpointer%((.*)%)'))
-
-            if #link == 1 then -- the linked table
-                local meta = link[1]
-                repeat -- loop detect {{{
-                    meta = getmetatable(meta) and getmetatable(meta).__index
-                    if meta == xn then break end
-                until not meta -- }}}
-                if meta then
-                    tinsert(doctree[xml]['?'], 'loop '.. v) -- error message
-                elseif xn ~= link[1] then
-                    setmetatable(xn, {__index = link[1]})
-                    TraceTbl(link[1], xml)
-                end
+local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
+    local res, order = {}
+    if tmpl then
+        set = set or '='
+        for token in strgmatch(strgsub(tmpl, sep or ',', ' '), '(%S+)') do
+            local k, v = strmatch(token, '([^'..set..']+)'..set..'(.*)')
+            if k and v and k ~= '' then
+                local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
+                res[k] = qo or v
+            elseif sep then -- also numbered
+                tinsert(res, token)
             else
-                tinsert(doctree[xml]['?'], 'broken <'..xn['.']..'> '..xpath..':'..#link..':'..v) -- error message
+                order = token
             end
         end
-        for i = 1, #xn do if type(xn[i]) == 'table' then TraceTbl(xn[i], xml) end end -- continous override
-    end -- }}}
-
-    if #doc['?'] == 0 then TraceTbl(doc, topxml) end -- no error msg
-    return topxml, doctree
+    end
+    return res, tonumber(order)
 end -- }}}
+
+local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
+    doc = doc or o.docs[o.root]
+    if (not path) or path == '' or #doc == 0 then return doc, path end
+    -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
+    local tag, attr, idx
+    tag, path = strmatch(path, '([^/]+)(.*)$')
+    tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
+    attr, idx = strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
+    local xn = {} -- xml-node (doc)
+    local docs = doc['!'] and #(doc['!']) or 0
+    repeat
+        for i = 1, #doc do -- no metatable
+            local mt = doc[i]
+            if type(mt) == 'table' and mt['.'] == tag and tun.match(mt['@'], attr) then
+                if idx and idx < 0 then xn[1] = nil end -- clean up
+                if path ~= '' or idx == 0 then
+                    -- collect along the metatable (NB: ipairs will dupe metatable)
+                    for j = 1, #mt do
+                        if type(mt[j]) == 'table' or path == '' then tinsert(xn, mt[j]) end
+                    end
+                else
+                    tinsert(xn, mt)
+                end
+                if idx and idx > 0 then break end
+            end
+        end
+        if idx and idx > 0 and #xn > 0 then break end
+        if docs > 0 then
+            doc = docs['!'][docs]
+            docs = docs - 1
+        else
+            doc = false
+        end
+    until not doc
+    if path == '' and idx == 0 then xn['.'] = tag; xn = {xn} end
+    return xPath(o, path, xn)
+end -- }}}
+
 -- ======================================================================== --
--- Output
+
+local lom = class {
+    docs = false;
+    root = false;
+
+    parse = false; -- implemented friend function
+
+    xpath = function (o, path, doc) -- {{{ return doc/xml-node table, missingTag
+        return xPath(o, path, doc or o.docs[o.root])
+    end; -- }}}
+
+    buildxlink = function (o) -- xlink/xpointer based on root {{{
+        if o.parse then o:parse() end
+        local function traceTbl (doc, xml) -- {{{ lua table form
+            local link = doc['@'] and doc['@']['xlink:href']
+            if link then -- attr
+                local xpath
+                link, xpath = strmatch(link, '^([^#]*)(.*)') -- {{{ file_link, tag_path
+                if link == '' then -- back to this doc root
+                    link = xml
+                else -- new file
+                    if strsub(link, 1, 1) ~= '/' then link = strgsub(xml, '[^/]*$', '')..link end
+                    link = tun.normpath(link)
+                end -- }}}
+
+                if not o.docs[link] then traceTbl(o.docs[parseXml(o, link)], link) end
+                link, xpath = xPath(o, strmatch(xpath or '', '#xpointer%((.*)%)'), o.docs[link])
+
+                if #link > 0 then
+                    for i = #link, 1, -1 do
+                        if doc == link[i] then
+                            tinsert(o.docs[xml]['?'],
+                                'loop '..xml..':'..i..':'..doc['@']['xlink:href'])
+                            tremove(link, i)
+                        end
+                    end
+                end
+                if #link == 0 then -- error message
+                    tinsert(o.docs[xml]['?'], 'broken <'..doc['.']..'> '..xpath..':'..#link..':'..v)
+                end
+                doc['!'] = link -- xlink
+            end
+            for i = 1, #doc do -- continous override
+                if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
+            end
+        end -- }}}
+        local doc = o.docs[o.root]
+        if #doc['?'] == 0 then traceTbl(doc, o.root) end -- no error msg
+    end; -- }}}
+
+    ['<'] = function (o, filename) --{{{
+        o.docs = {}
+        o.root = parseXml(o, filename)
+        if filename then o:buildxlink() end
+    end; --}}}
+
+    -- member functions
+    selectAll = function (o)
+    end;
+
+    select = function (o)
+    end;
+
+    dump = function (o)
+        return 'OK'
+    end;
+
+    -- Output
+}
+
 -- ======================================================================== --
+-- service for checking object model -- {{{
+if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then
+    local xml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
+    local doc = lom()
+    doc:parse(xml:read('a')):parse()
+    print(doc.docs['']['?'][1] or doc:dump())
+end -- }}}
+
+return lom
+--[=[
 lom.xmlstr = function (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
@@ -161,74 +281,11 @@ lom.Dump = function (docs, fxml) -- {{{ dump fxml=1/html
         return tun.dumpVar(0, docs)
     end
 end -- }}}
--- ======================================================================== --
-if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then -- service for checking object model -- {{{
-    local xml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
-    xml = lom.Parse(xml:read('a'), 0)
-    print(xml['?'][1] or lom.Dump(xml))
-end -- }}}
-
-for k, v in pairs(lxp) do print(k, v) end
-
-return lom
+--]=]
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
 -- ======================================================================== --
 -- LOM (Lua Object Model) : based on the standard LOM
 -- ======================================================================== --
--- interesting technique of stack operation {{{
--- node == token == tag => table (stack operation)
-local callbacks = {
-    StartElement = function (parser, name, attr) -- {{{
-        local node = parser:getcallbacks().node
-        local elem = { tag = name }
-        if next(attr) ~= nil then
-            for i = 1, #attr do attr[i] = nil end -- free attr order info
-            for k, v in pairs(attr) do elem['@'..attr] = v end
-        end
-        tinsert(node, elem)
-    end; -- }}}
-
-    EndElement = function (parser, name) -- {{{
-        local node = parser:getcallbacks().node
-        local elem = tremove(node)
-        assert(elem.tag == name)
-        tinsert(node[#node], elem)
-    end; -- }}}
-
-    CharacterData = function (parser, s) -- {{{
-        if strmatch(s, '^%s*$') then return end -- NB: skip blank lines
-        local node = parser:getcallbacks().node
-        local elem = node[#node] -- top of the stack
-        local n = #elem
-        if type(elem[n]) == 'string' then
-            elem[n] = elem[n]..s
-        else
-            tinsert(elem, s)
-        end
-    end; -- }}}
-}
-
-local function parse (o)
-    local p = lxp.new(callbacks)
-    callbacks.node = {{}} -- stack FILO/LIFO
-    local status, msg, line, col
-    if type(o) == 'string' then
-        status, msg, line = p:parse(o)
-        if not status then return nil, msg..' @line '..line  end
-    else
-        for i, v in ipairs(o) do
-            status, msg, line = p:parse(v)
-            if not status then
-                return nil, msg..' @line '..line..' ('..i..')'
-            end
-        end
-    end
-    status, msg, line, col, pos = p:parse()
-    if not status then return nil, msg..' @line '..line end
-    p:close() -- seems destroy the lxp obj
-    return callbacks.node[1][1]
-end -- }}}
-
 lxp.new(callbacks [, separator])
     The optional separator character in the parser constructor defines the character used
     in the namespace expanded element names.  The separator character is optional (if not
