@@ -20,7 +20,7 @@ local tinsert, tremove, tconcat = table.insert, table.remove, table.concat
 -- ================================================================== --
 local function starttag (p, name, attr) -- {{{
     local stack = p:getcallbacks().stack
-    tinsert(stack, {['.'] = name, ['@'] = attr})
+    tinsert(stack, {['.'] = name, ['@'] = #attr > 0 and attr or nil})
 end -- }}}
 local function endtag (p, name) -- {{{
     local stack = p:getcallbacks().stack
@@ -97,7 +97,7 @@ local function parseXml (o, filename, mode) -- friend function {{{
 end --}}}
 
 local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
-    local res, order = {}
+    local res = {}
     if tmpl then
         set = set or '='
         for token in strgmatch(strgsub(tmpl, sep or ',', ' '), '(%S+)') do
@@ -105,55 +105,94 @@ local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
             if k and v and k ~= '' then
                 local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
                 res[k] = qo or v
-            elseif sep then -- also numbered
+            else -- also numbered
                 tinsert(res, token)
-            else
-                order = token
             end
         end
     end
-    return res, tonumber(order)
+    return res
 end -- }}}
 
 local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     doc = doc or o.docs[o.root]
     if (not path) or path == '' or #doc == 0 then return doc, path end
-    -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
-    local tag, attr, idx
+    -- NB: xpointer does not have standard treatment
+    -- /A/B[@attr="val",@bb='4']
+    -- anywhere/A/B/1/-2/3
+    local anywhere = strsub(path, 1, 1) ~= '/'
+    local tag, attr
     tag, path = strmatch(path, '([^/]+)(.*)$')
+    local idx = tonumber(tag)
+    if idx then return doc[idx % #doc], path end
     tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
-    attr, idx = strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
+    attr = strToTbl(attr)
+
     local xn = {} -- xml-node (doc)
-    local docs = doc['!'] and #(doc['!']) or 0
+    local docl = doc['&']
+    local docn = docl and #docl or 0
     repeat
-        for i = 1, #doc do -- no metatable
+        for i = 1, #doc do
             local mt = doc[i]
-            if type(mt) == 'table' and mt['.'] == tag and tun.match(mt['@'], attr) then
-                if idx and idx < 0 then xn[1] = nil end -- clean up
-                if path ~= '' or idx == 0 then
-                    -- collect along the metatable (NB: ipairs will dupe metatable)
-                    for j = 1, #mt do
-                        if type(mt[j]) == 'table' or path == '' then tinsert(xn, mt[j]) end
-                    end
-                else
+            if type(mt) == 'table' then
+                if mt['.'] == tag and tun.match(mt['@'], attr) then
                     tinsert(xn, mt)
+                elseif anywhere then
+                    local subdoc, subpath = xPath(o, path, mt)
+                    if subpath == '' then
+                        for _, v in ipairs(subdoc) do tinsert(xn, v) end
+                    end
                 end
-                if idx and idx > 0 then break end
             end
         end
-        if idx and idx > 0 and #xn > 0 then break end
-        if docs > 0 then
-            doc = docs['!'][docs]
-            docs = docs - 1
+        if docn > 0 then
+            doc = docl[docn]
+            docn = docn - 1
         else
             doc = false
         end
     until not doc
-    if path == '' and idx == 0 then xn['.'] = tag; xn = {xn} end
+    if path == '' then xn['.'] = tag; xn = {xn} end
     return xPath(o, path, xn)
 end -- }}}
 
 -- ======================================================================== --
+local function xmlstr (s, fenc) -- {{{
+    -- encode: gzip -c | base64 -w 128
+    -- decode: base64 -i -d | zcat -f
+    -- return '<!-- base64 -i -d | zcat -f -->{{{'..
+    --     tun.popen(s, 'tun.gzip -c | base64 -w 128'):read('*all')..'}}}'
+    s = tostring(s)
+    if strfind(s, '\n') or (strlen(s) > 1024) then -- large text
+        if fenc or strfind(s, ']]>') then -- enc flag or hostile strings
+            local status, stdout, stderr = tun.popen(s, 'gzip -c | base64 -w 128')
+            return '<!-- base64 -i -d | zcat -f -->{{{'..stdout..'}}}'
+        else
+            -- return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
+            --         strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
+            return (strfind(s, '&') or strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
+        end
+    else -- escape characters
+        return strgsub(strgsub(strgsub(strgsub(strgsub(s,
+            '&', '&amp;'), '"', '&quot;'), "'", '&apos;'), '<', '&lt;'), '>', '&gt;')
+    end
+end -- }}}
+
+local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; {'comment'}, ...}
+    if 'string' == type(node) then return node end
+    if not node['.'] then return node[1] and '<!--'..node[1]..'-->' end
+    local res = {}
+    if node['@'] then
+        for _, k in ipairs(node['@']) do tinsert(res, k..'="'..strgsub(node['@'][k], '"', '\\"')..'"') end
+    end
+    res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
+    if #node == 0 then return res..' />' end
+    res = {res..'>'}
+    for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
+    if #res == 2 and #(res[2]) < 100 and not strfind(res[2], '\n') then
+        return res[1]..res[2]..'</'..node['.']..'>'
+    end
+    return strgsub(tconcat(res, '\n'), '\n', '\n'..lom.indent)..'\n</'..node['.']..'>'
+end -- }}}
 
 local lom = class {
     docs = false;
@@ -167,9 +206,11 @@ local lom = class {
 
     buildxlink = function (o) -- xlink/xpointer based on root {{{
         if o.parse then o:parse() end
+        local stamp = math.random()
         local function traceTbl (doc, xml) -- {{{ lua table form
             local link = doc['@'] and doc['@']['xlink:href']
-            if link then -- attr
+            -- if link then print(xml, doc['.'], 'link', link) end
+            if link and ((not doc['&']) or (doc['&']['#'] ~= stamp)) then -- attr
                 local xpath
                 link, xpath = strmatch(link, '^([^#]*)(.*)') -- {{{ file_link, tag_path
                 if link == '' then -- back to this doc root
@@ -179,22 +220,27 @@ local lom = class {
                     link = tun.normpath(link)
                 end -- }}}
 
-                if not o.docs[link] then traceTbl(o.docs[parseXml(o, link)], link) end
+                if not o.docs[link] then parseXml(o, link) end
+                if xml ~= link then traceTbl(o.docs[link], link) end
                 link, xpath = xPath(o, strmatch(xpath or '', '#xpointer%((.*)%)'), o.docs[link])
 
                 if #link > 0 then
                     for i = #link, 1, -1 do
                         if doc == link[i] then
                             tinsert(o.docs[xml]['?'],
-                                'loop '..xml..':'..i..':'..doc['@']['xlink:href'])
+                                'loop '..doc['@']['xlink:href']..':'..i..':'..xpath)
                             tremove(link, i)
                         end
                     end
                 end
                 if #link == 0 then -- error message
-                    tinsert(o.docs[xml]['?'], 'broken <'..doc['.']..'> '..xpath..':'..#link..':'..v)
+                    tinsert(o.docs[xml]['?'], 'broken <'..doc['.']..'> '..xpath)
+                    doc['&'] = nil
+                else
+                    doc['&'] = link -- xlink
+                    link['#'] = stamp
+                    -- print(doc['@']['xlink:href'], 'linked', #link)
                 end
-                doc['!'] = link -- xlink
             end
             for i = 1, #doc do -- continous override
                 if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
@@ -217,11 +263,12 @@ local lom = class {
     select = function (o)
     end;
 
-    dump = function (o)
-        return 'OK'
-    end;
-
     -- Output
+    dump = function (o, fxml) -- {{{ dump fxml=1/html
+        return (not fxml) and tun.dumpVar(0, o.docs[o.root])
+            or (fxml == 1 and '' or '<?xml version="1.0" encoding="UTF-8"?>\n')..
+            dumpLom(o.docs[o.root])
+    end;-- }}}
 }
 
 -- ======================================================================== --
@@ -234,54 +281,6 @@ if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then
 end -- }}}
 
 return lom
---[=[
-lom.xmlstr = function (s, fenc) -- {{{
-    -- encode: gzip -c | base64 -w 128
-    -- decode: base64 -i -d | zcat -f
-    -- return '<!-- base64 -i -d | zcat -f -->{{{'..
-    --     tun.popen(s, 'tun.gzip -c | base64 -w 128'):read('*all')..'}}}'
-    s = tostring(s)
-    if strfind(s, '\n') or (strlen(s) > 1024) then -- large text
-        if fenc or strfind(s, ']]>') then -- enc flag or hostile strings
-            local status, stdout, stderr = tun.popen(s, 'gzip -c | base64 -w 128')
-            return '<!-- base64 -i -d | zcat -f -->{{{'..stdout..'}}}'
-        else
-            -- return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
-            --         strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
-            return (strfind(s, '&') or strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
-        end
-    else -- escape characters
-        return strgsub(strgsub(strgsub(strgsub(strgsub(s,
-            '&', '&amp;'), '"', '&quot;'), "'", '&apos;'), '<', '&lt;'), '>', '&gt;')
-    end
-end -- }}}
-local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; {'comment'}, ...}
-    if 'string' == type(node) then return node end
-    if not node['.'] then return node[1] and '<!--'..node[1]..'-->' end
-    local res = {}
-    if node['@'] then
-        for _, k in ipairs(node['@']) do tinsert(res, k..'="'..strgsub(node['@'][k], '"', '\\"')..'"') end
-    end
-    res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
-    if #node == 0 then return res..' />' end
-    res = {res..'>'}
-    for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
-    if #res == 2 and #(res[2]) < 100 and not strfind(res[2], '\n') then
-        return res[1]..res[2]..'</'..node['.']..'>'
-    end
-    return strgsub(tconcat(res, '\n'), '\n', '\n'..lom.indent)..'\n</'..node['.']..'>'
-end -- }}}
-lom.Dump = function (docs, fxml) -- {{{ dump fxml=1/html
-    if type(docs) ~= 'table' then return '' end
-    if fxml then
-        local res = {}
-        for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-        return (fxml == 1 and '' or '<?xml version="1.0" encoding="UTF-8"?>\n')..tconcat(res, '\n')
-    else
-        return tun.dumpVar(0, docs)
-    end
-end -- }}}
---]=]
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
 -- ======================================================================== --
 -- LOM (Lua Object Model) : based on the standard LOM
