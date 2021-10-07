@@ -123,35 +123,31 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     local tag, attr
     tag, path = strmatch(path, '([^/]+)(.*)$')
     local idx = tonumber(tag)
-    if idx then return doc[idx % #doc], path end
+    if idx then return xPath(o, path, {doc[idx % #doc]}) end
     tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
-    attr = strToTbl(attr)
+    attr = attr and strToTbl(attr)
+    -- print(tag, path)
 
     local xn = {} -- xml-node (doc)
     local docl = doc['&']
-    local docn = docl and #docl or 0
+    local docn = docl and 0 or false
     repeat
         for i = 1, #doc do
             local mt = doc[i]
             if type(mt) == 'table' then
-                if mt['.'] == tag and tun.match(mt['@'], attr) then
-                    tinsert(xn, mt)
+                if mt['.'] == tag and ((not attr) or tun.match(mt['@'], attr)) then
+                    for j = 1, #mt do tinsert(xn, mt[j]) end
                 elseif anywhere then
-                    local subdoc, subpath = xPath(o, path, mt)
+                    local subdoc, subpath = xPath(o, tag, mt)
                     if subpath == '' then
                         for _, v in ipairs(subdoc) do tinsert(xn, v) end
                     end
                 end
             end
         end
-        if docn > 0 then
-            doc = docl[docn]
-            docn = docn - 1
-        else
-            doc = false
-        end
+        if docn then docn = docn < #docl and docn + 1 end
+        doc = docn and docl[docn]
     until not doc
-    if path == '' then xn['.'] = tag; xn = {xn} end
     return xPath(o, path, xn)
 end -- }}}
 
