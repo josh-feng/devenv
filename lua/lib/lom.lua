@@ -138,10 +138,9 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
                 if mt['.'] == tag and ((not attr) or tun.match(mt['@'], attr)) then
                     for j = 1, #mt do tinsert(xn, mt[j]) end
                 elseif anywhere then
-                    local subdoc, subpath = xPath(o, tag, mt)
-                    if subpath == '' then
-                        for _, v in ipairs(subdoc) do tinsert(xn, v) end
-                    end
+                    -- print(tag)
+                    local subdoc = xPath(o, tag, mt) -- TODO attr
+                    for _, v in ipairs(subdoc) do tinsert(xn, v) end
                 end
             end
         end
