@@ -1,6 +1,7 @@
 #!/usr/bin/env lua
 -- ================================================================== --
 -- Lua Object Model
+-- DOM: tbm = {['.'] = tag; ['@'] = {}; ['&'] = {{}..}; {'comment'}, ...}
 -- Usage example:
 --      lom = require('lom')
 --      doc = lom(file)
@@ -44,7 +45,6 @@ local function comment (p, txt) -- {{{
     tinsert(stack[#stack], {txt})
 end -- }}}
 
--- ======================================================================== --
 local function parse (o, txt) -- friend function {{{
     local p = o.docs[o.root] -- root = ''
     local status, msg, line, col, pos = p:parse(txt) -- passed nil if failed
@@ -95,7 +95,7 @@ local function parseXml (o, filename, mode) -- friend function {{{
     end
     return filename
 end --}}}
-
+-- ======================================================================== --
 local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
     local res = {}
     if tmpl then
@@ -114,7 +114,6 @@ local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
 end -- }}}
 
 local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
-    doc = doc or o.docs[o.root]
     if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment
     -- /A/B[@attr="val",@bb='4']
@@ -125,7 +124,7 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     local idx = tonumber(tag)
     if idx then return xPath(o, path, {doc[idx % #doc]}) end
     tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
-    attr = attr and strToTbl(attr)
+    local attrspec = strToTbl(attr)
     -- print(tag, path)
 
     local xn = {} -- xml-node (doc)
@@ -135,12 +134,23 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
         for i = 1, #doc do
             local mt = doc[i]
             if type(mt) == 'table' then
-                if mt['.'] == tag and ((not attr) or tun.match(mt['@'], attr)) then
-                    for j = 1, #mt do tinsert(xn, mt[j]) end
-                elseif anywhere then
-                    -- print(tag)
-                    local subdoc = xPath(o, tag, mt) -- TODO attr
-                    for _, v in ipairs(subdoc) do tinsert(xn, v) end
+                if mt['.'] == tag and ((attr == '') or tun.match(mt['@'], attrspec)) then
+                    if path == '' then -- final res
+                        tinsert(xn, mt)
+                    else -- build intermediate working res
+                        for j = 1, #mt do tinsert(xn, mt[j]) end
+                    end
+                elseif anywhere and (#mt > 0 or mt['&']) then
+                    -- print(tag, mt['.'], path, attr, mt, mt['&'])
+                    local tagatt = tag..attr..path
+                    local mtl = mt['&']
+                    local mtn = mtl and 0 or false
+                    repeat
+                        local sub = xPath(o, tagatt, mt)
+                        for j = 1, #sub do tinsert(xn, sub[j]) end
+                        if mtn then mtn = mtn < #mtl and mtn + 1 end
+                        mt = mtn and mtl[mtn]
+                    until not mt
                 end
             end
         end
@@ -149,7 +159,6 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     until not doc
     return xPath(o, path, xn)
 end -- }}}
-
 -- ======================================================================== --
 local function xmlstr (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
@@ -164,7 +173,8 @@ local function xmlstr (s, fenc) -- {{{
         else
             -- return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
             --         strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
-            return (strfind(s, '&') or strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
+            return (strfind(s, '&') or strfind(s, '<') or strfind(s, '>'))
+                and '<![CDATA[\n'..s..']]>' or s
         end
     else -- escape characters
         return strgsub(strgsub(strgsub(strgsub(strgsub(s,
@@ -172,7 +182,7 @@ local function xmlstr (s, fenc) -- {{{
     end
 end -- }}}
 
-local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; {'comment'}, ...}
+local function dumpLom (node) -- {{{
     if 'string' == type(node) then return node end
     if not node['.'] then return node[1] and '<!--'..node[1]..'-->' end
     local res = {}
@@ -182,32 +192,36 @@ local function dumpLom (node) -- {{{ DOM: tbm = {['.'] = tag; ['@'] = {}; {'comm
     res = '<'..node['.']..(#res > 0 and ' '..tconcat(res, ' ') or '')
     if #node == 0 then return res..' />' end
     res = {res..'>'}
-    for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or lom.xmlstr(node[i])) end
+    for i = 1, #node do tinsert(res, type(node[i]) == 'table' and dumpLom(node[i]) or xmlstr(node[i])) end
     if #res == 2 and #(res[2]) < 100 and not strfind(res[2], '\n') then
         return res[1]..res[2]..'</'..node['.']..'>'
     end
-    return strgsub(tconcat(res, '\n'), '\n', '\n'..lom.indent)..'\n</'..node['.']..'>'
+    return strgsub(tconcat(res, '\n'), '\n', '\n  ')..'\n</'..node['.']..'>' -- indent 2
 end -- }}}
 
 local lom = class {
     docs = false;
     root = false;
 
-    parse = false; -- implemented friend function
+    parse = false; -- implemented in friend function
 
-    xpath = function (o, path, doc) -- {{{ return doc/xml-node table, missingTag
-        return xPath(o, path, doc or o.docs[o.root])
-    end; -- }}}
+    xpath = function (o, path, doc) return xPath(o, path, doc or o.docs[o.root]) end;
 
     buildxlink = function (o) -- xlink/xpointer based on root {{{
         if o.parse then o:parse() end
         local stamp = math.random()
+        local stack = {}
         local function traceTbl (doc, xml) -- {{{ lua table form
-            local link = doc['@'] and doc['@']['xlink:href']
-            -- if link then print(xml, doc['.'], 'link', link) end
-            if link and ((not doc['&']) or (doc['&']['#'] ~= stamp)) then -- attr
-                local xpath
-                link, xpath = strmatch(link, '^([^#]*)(.*)') -- {{{ file_link, tag_path
+            local href = doc['@'] and doc['@']['xlink:href']
+            if href then -- print(xml..'<'..doc['.']..'>'..href)
+                tinsert(stack, xml..'<'..doc['.']..'>'..href)
+                if stack[href] then
+                    return tinsert(o.docs[xml]['?'], 'loop '..tconcat(stack, '->'))
+                end
+                stack[href] = true
+            end
+            if href and ((not doc['&']) or (doc['&']['#'] ~= stamp)) then -- attr
+                local link, xpath = strmatch(href, '^([^#]*)(.*)') -- {{{ file_link, tag_path
                 if link == '' then -- back to this doc root
                     link = xml
                 else -- new file
@@ -219,15 +233,6 @@ local lom = class {
                 if xml ~= link then traceTbl(o.docs[link], link) end
                 link, xpath = xPath(o, strmatch(xpath or '', '#xpointer%((.*)%)'), o.docs[link])
 
-                if #link > 0 then
-                    for i = #link, 1, -1 do
-                        if doc == link[i] then
-                            tinsert(o.docs[xml]['?'],
-                                'loop '..doc['@']['xlink:href']..':'..i..':'..xpath)
-                            tremove(link, i)
-                        end
-                    end
-                end
                 if #link == 0 then -- error message
                     tinsert(o.docs[xml]['?'], 'broken <'..doc['.']..'> '..xpath)
                     doc['&'] = nil
@@ -236,6 +241,10 @@ local lom = class {
                     link['#'] = stamp
                     -- print(doc['@']['xlink:href'], 'linked', #link)
                 end
+            end
+            if href then
+                stack[href] = nil
+                tremove(stack) -- #stack
             end
             for i = 1, #doc do -- continous override
                 if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
@@ -251,28 +260,30 @@ local lom = class {
         if filename then o:buildxlink() end
     end; --}}}
 
-    -- member functions
+    -- output
+    dump = function (o, fxml) -- {{{ dump fxml=1/html
+        if not fxml then return tun.dumpVar(0, o.docs[o.root]) end
+        local res = {fxml == 1 and '<?xml version="1.0" encoding="UTF-8"?>' or nil}
+        for j = 1, #(o.docs[o.root]) do tinsert(res, dumpLom(o.docs[o.root][j])) end
+        return tconcat(res, '\n')
+    end;-- }}}
+
+    -- member functions support cascade oo style
     selectAll = function (o)
     end;
 
-    select = function (o)
+    select = function (o, path)
+        local new = o() -- fast copy
+        new.docs[new.root] = o:xpath(path)
+        return new
     end;
-
-    -- Output
-    dump = function (o, fxml) -- {{{ dump fxml=1/html
-        return (not fxml) and tun.dumpVar(0, o.docs[o.root])
-            or (fxml == 1 and '' or '<?xml version="1.0" encoding="UTF-8"?>\n')..
-            dumpLom(o.docs[o.root])
-    end;-- }}}
 }
-
 -- ======================================================================== --
 -- service for checking object model -- {{{
 if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then
-    local xml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
-    local doc = lom()
-    doc:parse(xml:read('a')):parse()
-    print(doc.docs['']['?'][1] or doc:dump())
+    local doc = lom(arg[1] == '-' and nil or arg[1])
+    if arg[1] == '-' then doc:parse(io.stdin:read('a')):parse() end
+    print(doc.docs[o.root]['?'][1] or doc:dump())
 end -- }}}
 
 return lom
