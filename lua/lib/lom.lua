@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- ================================================================== --
--- Lua Object Model
+-- Lua Object Model: based on lxp
 -- DOM: tbm = {['.'] = tag; ['@'] = {}; ['&'] = {{}..}; {'comment'}, ...}
 -- Usage example:
 --      lom = require('lom')
@@ -95,7 +95,7 @@ local function parseXml (o, filename, mode) -- friend function {{{
     end
     return filename
 end --}}}
--- ======================================================================== --
+-- ================================================================== --
 local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
     local res = {}
     if tmpl then
@@ -159,7 +159,7 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     until not doc
     return xPath(o, path, xn)
 end -- }}}
--- ======================================================================== --
+-- ================================================================== --
 local function xmlstr (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
@@ -254,10 +254,17 @@ local lom = class {
         if #doc['?'] == 0 then traceTbl(doc, o.root) end -- no error msg
     end; -- }}}
 
-    ['<'] = function (o, filename) --{{{
+    ['<'] = function (o, data) --{{{
         o.docs = {}
-        o.root = parseXml(o, filename)
-        if filename then o:buildxlink() end
+        if type(data) == 'table' then -- partial table-tree
+            local n = {}
+            for _, v in pairs(data) do tinsert(n, v) end
+            o.root = ''
+            o.docs[o.root] = n
+        else -- data is nil or filename
+            o.root = parseXml(o, data)
+            if data then o:buildxlink() end
+        end
     end; --}}}
 
     -- output
@@ -269,16 +276,19 @@ local lom = class {
     end;-- }}}
 
     -- member functions support cascade oo style
-    selectAll = function (o)
-    end;
+    selectAll = function (o, path) return class:new(o, o:xpath(path)) end;
 
-    select = function (o, path)
-        local new = o() -- fast copy
-        new.docs[new.root] = o:xpath(path)
-        return new
+    select = function (o, path) return class:new(o, o:xpath(path..'/1')) end;
+
+    attr = function (o, var, val) -- TODO
+        if val then
+            return o
+        end
+        local vals = {}
+        return vals
     end;
 }
--- ======================================================================== --
+-- ================================================================== --
 -- service for checking object model -- {{{
 if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then
     local doc = lom(arg[1] == '-' and nil or arg[1])
@@ -288,16 +298,13 @@ end -- }}}
 
 return lom
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
--- ======================================================================== --
--- LOM (Lua Object Model) : based on the standard LOM
--- ======================================================================== --
+-- ================================================================== --
 lxp.new(callbacks [, separator])
     The optional separator character in the parser constructor defines the character used
     in the namespace expanded element names.  The separator character is optional (if not
     defined the parser will not handle namespaces) but if defined it must be different from
     the character '\0'.
 
--- ======================================================================== --
 callbacks.StartNamespaceDecl = function(parser, namespaceName)
     Called when the parser detects an XML namespace declaration with namespaceName.
     Namespace declarations occur inside start tags, but the StartNamespaceDecl handler is
@@ -308,7 +315,6 @@ callbacks.EndNamespaceDecl = function(parser, namespaceName)
     The handling of the End namespace is done after the handling of the End tag For the element
     the namespace is associated with.
 
--- ======================================================================== --
 callbacks.StartDoctypeDecl = function(parser, name, sysid, pubid, has_internal_subset)
     Called when the parser detects the beginning of an XML DTD (DOCTYPE) section. These
     precede the XML root element and take the form:
@@ -332,7 +338,6 @@ callbacks.NotationDecl = function(parser, notationName, base, systemId, publicId
     specified in the entity declaration and is never nil. The publicId parameter is
     the public id given in the entity declaration and may be nil.
 
--- ======================================================================== --
 callbacks.CharacterData = function(parser, string)
     Called when the parser recognizes an XML CDATA string.
 
@@ -342,7 +347,6 @@ callbacks.StartCdataSection = function(parser)
 callbacks.EndCdataSection = function(parser)
     Called when the parser detects the End of a CDATA section.
 
--- ======================================================================== --
 callbacks.Comment = function(parser, string)
     Called when the parser recognizes an XML comment string.
 
@@ -358,7 +362,6 @@ callbacks.DefaultExpand = function(parser, string)
     which wouldnot otherwise be handled.
     Using this handler doesnot affect expansion of internal entity references.
 
--- ======================================================================== --
 callbacks.StartElement = function(parser, elementName, attributes)
     Called when the parser detects the begining of an XML element with elementName.
     The attributes parameter is a Lua table with all the element attribute names and values.
@@ -381,7 +384,6 @@ callbacks.StartElement = function(parser, elementName, attributes)
 callbacks.EndElement = function(parser, elementName)
     Called when the parser detects the ending of an XML element with elementName.
 
--- ======================================================================== --
 callbacks.ExternalEntityRef = function(parser, subparser, base, systemId, publicId)
     Called when the parser detects an external entity reference.
     The subparser is a LuaExpat parser created with the same callbacks and Expat context
@@ -411,5 +413,5 @@ XML in general
     Element names cannot contain spaces
     Any name can be used, no words are reserved (except xml).
 --]]
--- ======================================================================== --
+-- ================================================================== --
 -- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
