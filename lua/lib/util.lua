@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
--- utility subroutine
+-- utility subroutines on top of 'posix' module
 -- ======================================================================== --
 local tun = {id = ''} -- version control
 
@@ -223,7 +223,7 @@ tun.tblToStr = function (tbl, sep) -- {{{ build the set
     return tconcat(res, sep or ',')
 end -- }}}
 tun.strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
-    local res, order = {}
+    local res = {}
     if tmpl then
         set = set or '='
         for token in strgmatch(strgsub(tmpl, sep or ',', ' '), '(%S+)') do
@@ -231,14 +231,12 @@ tun.strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
             if k and v and k ~= '' then
                 local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
                 res[k] = qo or v
-            elseif sep then -- also numbered
-                tinsert(res, token)
             else
-                order = token
+                tinsert(res, tonumber(token) or token)
             end
         end
     end
-    return res, tonumber(order)
+    return res
 end -- }}}
 tun.match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
     if type(targ) ~= 'table' then return not next(tmpl) end
@@ -251,7 +249,9 @@ tun.match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
         end
     end
     if fExact then
-        for k in pairs(targ) do if tmpl[k] == nil then return false end end
+        for k in pairs(targ) do
+            if type(k) == 'string' and tmpl[k] == nil then return false end
+        end
     end
     return true
 end -- }}}
