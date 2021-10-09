@@ -139,7 +139,6 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
                 if mt['.'] == tag and (autopass or tun.match(mt['@'], attrspec)) then
                     tinsert(xn, mt)
                 elseif anywhere and (#mt > 0 or mt['&']) then
-                    -- print(tag, mt['.'], path, attr, mt, mt['&'])
                     local mtl = mt['&']
                     local mtn = mtl and 0 or false
                     repeat
@@ -155,15 +154,14 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
         doc = docn and docl[docn]
     until not doc
 
-    -- print(tagatt, #attrspec, #xn)
-    if #attrspec > 0 and #xn > 0 then
+    if #attrspec > 0 and #xn > 0 then -- collect the indixed table
         local nxn = {}
         for i = 1, #attrspec do
             if type(attrspec[i]) == 'number' then
                 tinsert(nxn, xn[(attrspec[i] - 1) % #xn + 1])
             end
         end
-        if #nxn ~= 0 then xn = nxn end
+        if #nxn ~= 0 then xn = nxn end -- collected
     end
     if path ~= '' and #xn > 0 then -- not final so break for further search
         local nxn = {}
@@ -294,13 +292,18 @@ local lom = class {
     -- member functions support cascade oo style
     select = function (o, path) return class:new(o, o:xpath(path)) end;
 
-    attr = function (o, var, val) -- TODO
+    attr = function (o, var, val) -- {{{
         if val then
+            for _, t in ipairs(o.docs[o.root]) do
+                if t['@'][var] == nil then tinsert(t['@'], var) end
+                t['@'][var] = val
+            end
             return o
         end
         local vals = {}
+        for _, t in ipairs(o.docs[o.root]) do tinsert(vals, t['@'][var]) end
         return vals
-    end;
+    end; -- }}}
 }
 -- ================================================================== --
 -- service for checking object model -- {{{
