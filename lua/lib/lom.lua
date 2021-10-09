@@ -1,16 +1,16 @@
 #!/usr/bin/env lua
 -- ================================================================== --
--- Lua Object Model: based on lxp
+-- Lua Object Model: on top of 'lxp'
 -- DOM: tbm = {['.'] = tag; ['@'] = {}; ['&'] = {{}..}; {'comment'}, ...}
 -- Usage example:
 --      lom = require('lom')
---      doc = lom(file)
---      doc = lom() doc:parse(txt):parse() or doc:parse(txt):buildxlink()
---      xml = lom.dump(doc, true)
+--      doc = lom(xmlfile)
+--      doc = lom() doc:parse(xml):parse() or doc:parse(xml):buildxlink()
+--      xml = doc:dump(1)
 -- ================================================================== --
 local lxp = require('lxp') -- the standard Lua Expat module
-local tun = require('util') -- for path
-local class = require('pool')
+local tun = require('util') -- https://github.com/josh-feng/devenv.git
+local class = require('pool') -- https://github.com/josh-feng/pool.git
 
 local next, assert, type = next, assert, type
 local strlen, strsub, strmatch, strgmatch = string.len, string.sub, string.match, string.gmatch
@@ -46,11 +46,12 @@ local function comment (p, txt) -- {{{
 end -- }}}
 
 local function parse (o, txt) -- friend function {{{
-    local p = o.docs[o.root] -- root = ''
+    local p = o.root
     local status, msg, line, col, pos = p:parse(txt) -- passed nil if failed
     if not (txt and status) then
-        o.docs[o.root] = p:getcallbacks().stack[1]
-        o.docs[o.root]['?'] = status and {} or {msg..' #'..line}
+        o.docs[''] = p:getcallbacks().stack[1]
+        o.root = o.docs['']
+        o.root['?'] = status and {} or {msg..' #'..line}
         p:close() -- seems destroy the lxp obj
         o.parse = nil
         o:buildxlink()
@@ -59,7 +60,7 @@ local function parse (o, txt) -- friend function {{{
 end --}}}
 
 local function parseXml (o, filename, mode) -- friend function {{{
-    if o.docs[filename] then return filename end
+    if o.docs[filename] then return end
 
     local p = lxp.new {
         StartElement = starttag,
@@ -89,11 +90,10 @@ local function parseXml (o, filename, mode) -- friend function {{{
         o.docs[filename]['?'] = status and {} or {msg..' #'..line}
         p:close()
     else
-        filename = ''
-        o.docs[filename] = p
+        o.docs[''] = p
         o.parse = parse
     end
-    return filename
+    -- return filename
 end --}}}
 -- ================================================================== --
 local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
@@ -214,15 +214,16 @@ local function dumpLom (node) -- {{{
 end -- }}}
 
 local lom = class {
+    root = false; -- doc root
     docs = false;
-    root = false;
 
     parse = false; -- implemented in friend function
 
-    xpath = function (o, path, doc) return xPath(o, path, doc or o.docs[o.root]) end;
+    xpath = function (o, path, doc) return xPath(o, path, doc or o.root) end;
 
-    buildxlink = function (o) -- xlink/xpointer based on root {{{
+    buildxlink = function (o, rootxml) -- xlink/xpointer based on root {{{
         if o.parse then o:parse() end
+        o.docs = o.docs or {[''] = o.root} -- re-build
         local stamp = math.random()
         local stack = {}
         local function traceTbl (doc, xml) -- {{{ lua table form
@@ -264,53 +265,61 @@ local lom = class {
                 if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
             end
         end -- }}}
-        local doc = o.docs[o.root]
-        if #doc['?'] == 0 then traceTbl(doc, o.root) end -- no error msg
+        if #o.root['?'] == 0 then traceTbl(o.root, rootxml or '') end -- no error msg
     end; -- }}}
 
     ['<'] = function (o, data) --{{{
-        o.docs = {}
         if type(data) == 'table' then -- partial table-tree
-            local n = {}
-            for _, v in pairs(data) do tinsert(n, v) end
-            o.root = ''
-            o.docs[o.root] = n
+            o.root = data -- TODO sanity check
         else -- data is nil or filename
-            o.root = parseXml(o, data)
-            if data then o:buildxlink() end
+            data = data and tun.normpath(data)
+            o.docs = {}
+            parseXml(o, data)
+            o.root = o.docs[data or '']
+            if data then o:buildxlink(data) end
         end
     end; --}}}
 
     -- output
     dump = function (o, fxml) -- {{{ dump fxml=1/html
-        if not fxml then return tun.dumpVar(0, o.docs[o.root]) end
+        if not fxml then return tun.dumpVar(0, o.root) end
         local res = {fxml == 1 and '<?xml version="1.0" encoding="UTF-8"?>' or nil}
-        for j = 1, #(o.docs[o.root]) do tinsert(res, dumpLom(o.docs[o.root][j])) end
+        for j = 1, #o.root do tinsert(res, dumpLom(o.root[j])) end
         return tconcat(res, '\n')
     end;-- }}}
 
-    -- member functions support cascade oo style
+    -- member functions supporting cascade oo style {{{
     select = function (o, path) return class:new(o, o:xpath(path)) end;
 
     attr = function (o, var, val) -- {{{
         if val then
-            for _, t in ipairs(o.docs[o.root]) do
+            for _, t in ipairs(o.root) do
                 if t['@'][var] == nil then tinsert(t['@'], var) end
                 t['@'][var] = val
             end
             return o
         end
         local vals = {}
-        for _, t in ipairs(o.docs[o.root]) do tinsert(vals, t['@'][var]) end
+        for _, t in ipairs(o.root) do tinsert(vals, t['@'][var]) end
         return vals
     end; -- }}}
+
+    append = function (o) -- TODO
+    end;
+
+    insert = function (o) -- TODO
+    end;
+
+    text = function (o) -- TODO
+    end;
+    -- }}}
 }
 -- ================================================================== --
--- service for checking object model -- {{{
+-- service for checking object model and demo/debug -- {{{
 if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then
     local doc = lom(arg[1] == '-' and nil or arg[1])
     if arg[1] == '-' then doc:parse(io.stdin:read('a')):parse() end
-    print(doc.docs[o.root]['?'][1] or doc:dump())
+    print(doc.root['?'][1] or doc:dump())
 end -- }}}
 
 return lom
