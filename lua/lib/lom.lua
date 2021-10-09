@@ -98,6 +98,7 @@ end --}}}
 -- ================================================================== --
 local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
     local res = {}
+    local autopass = true
     if tmpl then
         set = set or '='
         for token in strgmatch(strgsub(tmpl, sep or ',', ' '), '(%S+)') do
@@ -105,27 +106,28 @@ local function strToTbl (tmpl, sep, set) -- {{{ -- build the tmpl from string
             if k and v and k ~= '' then
                 local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
                 res[k] = qo or v
-            else -- also numbered
-                tinsert(res, token)
+                autopass = false
+            else
+                tinsert(res, tonumber(token) or token)
+                if autopass then autopass = type(res[#res]) == 'number' end
             end
         end
     end
-    return res
+    return res, autopass
 end -- }}}
 
 local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment
     -- /A/B[@attr="val",@bb='4']
-    -- anywhere/A/B/1/-2/3
+    -- anywhere/A/B[-3]/-2/3
     local anywhere = strsub(path, 1, 1) ~= '/'
-    local tag, attr
-    tag, path = strmatch(path, '([^/]+)(.*)$')
-    local idx = tonumber(tag)
-    if idx then return xPath(o, path, {doc[idx % #doc]}) end
-    tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
-    local attrspec = strToTbl(attr)
-    -- print(tag, path)
+    local tagatt
+    tagatt, path = strmatch(path, '([^/]+)(.*)$')
+    local idx = tonumber(tagatt)
+    if idx then return xPath(o, path, {doc[(idx - 1) % #doc + 1]}) end
+    local tag, attr = strmatch(tagatt, '([^%[]+)%[?([^%]]*)')
+    local attrspec, autopass = strToTbl(attr)
 
     local xn = {} -- xml-node (doc)
     local docl = doc['&']
@@ -134,15 +136,10 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
         for i = 1, #doc do
             local mt = doc[i]
             if type(mt) == 'table' then
-                if mt['.'] == tag and ((attr == '') or tun.match(mt['@'], attrspec)) then
-                    if path == '' then -- final res
-                        tinsert(xn, mt)
-                    else -- build intermediate working res
-                        for j = 1, #mt do tinsert(xn, mt[j]) end
-                    end
+                if mt['.'] == tag and (autopass or tun.match(mt['@'], attrspec)) then
+                    tinsert(xn, mt)
                 elseif anywhere and (#mt > 0 or mt['&']) then
                     -- print(tag, mt['.'], path, attr, mt, mt['&'])
-                    local tagatt = tag..attr..path
                     local mtl = mt['&']
                     local mtn = mtl and 0 or false
                     repeat
@@ -157,6 +154,25 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
         if docn then docn = docn < #docl and docn + 1 end
         doc = docn and docl[docn]
     until not doc
+
+    -- print(tagatt, #attrspec, #xn)
+    if #attrspec > 0 and #xn > 0 then
+        local nxn = {}
+        for i = 1, #attrspec do
+            if type(attrspec[i]) == 'number' then
+                tinsert(nxn, xn[(attrspec[i] - 1) % #xn + 1])
+            end
+        end
+        if #nxn ~= 0 then xn = nxn end
+    end
+    if path ~= '' and #xn > 0 then -- not final so break for further search
+        local nxn = {}
+        for i = 1, #xn do
+            local mt = xn[i]
+            for j = 1, #mt do tinsert(nxn, mt[j]) end
+        end
+        xn = nxn
+    end
     return xPath(o, path, xn)
 end -- }}}
 -- ================================================================== --
@@ -276,9 +292,7 @@ local lom = class {
     end;-- }}}
 
     -- member functions support cascade oo style
-    selectAll = function (o, path) return class:new(o, o:xpath(path)) end;
-
-    select = function (o, path) return class:new(o, o:xpath(path..'/1')) end;
+    select = function (o, path) return class:new(o, o:xpath(path)) end;
 
     attr = function (o, var, val) -- TODO
         if val then

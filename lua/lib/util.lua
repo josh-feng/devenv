@@ -243,7 +243,12 @@ end -- }}}
 tun.match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
     if type(targ) ~= 'table' then return not next(tmpl) end
     if tmpl then
-        for k, v in pairs(tmpl) do if targ[k] ~= v then return false end end
+        for k, v in pairs(tmpl) do
+            if (type(k) == 'number' and type(v) == 'string' and targ[v] == nil)
+                or (targ[k] ~= v) then
+                return false
+            end
+        end
     end
     if fExact then
         for k in pairs(targ) do if tmpl[k] == nil then return false end end
