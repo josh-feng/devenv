@@ -9,7 +9,6 @@ Just copy individual file to meet your need.
     ▼ lua/
       ▼ lib/
         lom.lua
-        lxt.lua
         util.lua
         XmlObject.lua
       ▼ lrm/
@@ -76,20 +75,6 @@ With lrps.lua or lrp.so, the script lrm.lua provide a sample lua object model bu
 
 ### Requirement
 
-- lxp
 - posix
 - pool
 
-### Lua XML Table (LXT)
-
-lxt.lua provide a simple x/html parser to LXT format.
-
-**Example.1**
-
-    lxt = require('lxt')
-    lxt.ParseXml('file.xhtml', 0)
-    lxt.ParseXml('file.xhtml', 1) -- clean end space
-    lxt.ParseXml('file.xhtml', 2) -- clean space @ both ends
-    lxt.ParseXml('file.html', 3)
-    lxt.ParseXml('file.html', 4)  -- clean end space
-    lxt.ParseXml('file.html', 5)  -- clean space @ both ends

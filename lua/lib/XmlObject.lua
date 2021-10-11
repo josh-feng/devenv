@@ -1,6 +1,5 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
--- TODO change to lxt
 local class = require("pool")
 local tun = require("util")
 
@@ -17,7 +16,7 @@ local tun = require("util")
 local XmlObject = class { -- class module paradigm
     id = "";
     engine = false; -- engine class
-    node = false;   -- lxt
+    node = false;   -- lom
 
     mode = false;   -- strict/checking mode
     skip = false;   -- (backward compatible)
@@ -28,23 +27,29 @@ local XmlObject = class { -- class module paradigm
     -- create all objects for the subnodes (non-recursively)
     ["<"] = function (o, engine, node) -- {{{ constructor
         o.engine = engine
-        o.node = node   -- all attributes and elements (a tag/subnode is a table)
+        o.node = node -- node = node.root
 
-        for i = 1, #node do -- {{{
-            local subn = node[i]
-            local suba = type(subn) == 'table' and subn['@'] -- subnode attr
-            if suba and suba.obj then -- skip node content/text: assign the object
-                subn['*'] = assert(require(suba.obj), "fail loading "..suba.obj)(engine, subn)
-                if tun.check(suba.strict) then -- check unused-tag {{{ honor metatable
-                    for j = 1, #subn do -- some of them are text/comments:
-                        local v = subn[j]
-                        if type(v) == 'table' and not string.find(subn['*'].dtd, v['.']) then
-                            o:Info("WRN: undefined "..subn['.'].."["..(suba.name or "").."]"..v['.'])
+        local nodel = node['&']
+        local nodec = nodel and 0 or false
+        repeat
+            for i = 1, #node do -- {{{
+                local subn = node[i]
+                local suba = type(subn) == 'table' and subn['@'] -- subnode attr
+                if suba and suba.obj then -- skip node content/text: assign the object
+                    subn['*'] = assert(require(suba.obj), "fail loading "..suba.obj)(engine, subn)
+                    if tun.check(suba.strict) then -- check unused-tag {{{ honor metatable
+                        for j = 1, #subn do -- some of them are text/comments:
+                            local v = subn[j]
+                            if type(v) == 'table' and not string.find(subn['*'].dtd, v['.']) then
+                                o:Info("WRN: undefined "..subn['.'].."["..(suba.name or "").."]"..v['.'])
+                            end
                         end
-                    end
-                end -- }}}
-            end
-        end -- }}}
+                    end -- }}}
+                end
+            end -- }}}
+            if nodec then nodec = nodec < #nodel and nodec + 1 end
+            node = nodec and nodel[nodec]
+        until not node
 
         -- standard basic attributes/elements
         o.mode = tonumber(o:XmlAttribute('mode')) or 0
@@ -70,7 +75,7 @@ local XmlObject = class { -- class module paradigm
         if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
         elem, pos = string.match(tag, '([^%[]+)%[?([^%]]*)')
         o.dtd = string.find(o.dtd, elem) and o.dtd or (elem..' '..o.dtd)
-        tag = tun.xPath(o.node, tag) -- tagtbl -- original (possible metatable)
+        tag = o.node:xpath(tag) -- tagtbl -- original (possible metatable)
         if type(cls) == 'string' then
             for i = 1, #tag do -- {{{
                 local subn = tag[i] -- subnode
@@ -97,7 +102,7 @@ local XmlObject = class { -- class module paradigm
         if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
         elem, pos = string.match(tag, '([^%[]+)%[?([^%]]*)')
         o.dtd = string.find(o.dtd, elem) and o.dtd or (elem..' '..o.dtd)
-        tag = tun.xPath(o.node, tag) -- tagtbl -- original (possible metatable)
+        tag = o.node:xpath(tag) -- tagtbl -- original (possible metatable)
         if #tag == 0 then
             return errmsg and err('Missing ('..o.node['.']..'.'..elem..') '..tostring(errmsg), 2)
         end
@@ -111,7 +116,7 @@ local XmlObject = class { -- class module paradigm
             local tag, pos = string.match(elem, '([^/]+)(.*)$')
             if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
             elem, pos = string.match(tag, '([^%[]+)%[?([^%]]*)')
-            tag = tun.xPath(o.node, tag) -- tagtbl -- original (possible metatable)
+            tag = o.node:xpath(tag) -- tagtbl -- original (possible metatable)
             if #tag == 0 then return o:Info('WRN: Run empty '.. elem) end -- if not defined
             for i = 1, #tag do
                 local sub = tag[i]['*']
@@ -145,11 +150,11 @@ local XmlObject = class { -- class module paradigm
 }
 
 -- {{{ ==================  demo and self-test (QA)  ==========================
-local q = XmlObject(nil, {'T', ' Fab  '; 'T', '8 '}) -- nil engine
-if -- failing conditins:
-    q:XmlValue('T[0]')[2] ~= '8'
-    or q:XmlElement('T[1]')[1] ~= ' Fab  '
-then error('QA failed.', 1) end -- }}}
+-- local q = XmlObject(nil, {'T', ' Fab  '; 'T', '8 '}) -- nil engine
+-- if -- failing conditins:
+--     q:XmlValue('T[0]')[2] ~= '8'
+--     or q:XmlElement('T[1]')[1] ~= ' Fab  '
+-- then error('QA failed.', 1) end -- }}}
 
 return XmlObject
 -- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
