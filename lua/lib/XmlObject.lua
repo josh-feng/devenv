@@ -27,10 +27,10 @@ local XmlObject = class { -- class module paradigm
     -- create all objects for the subnodes (non-recursively)
     ["<"] = function (o, engine, node) -- {{{ constructor
         o.engine = engine
-        o.node = node -- node = node.root
+        o.node = node -- node
 
         local nodel = node['&']
-        local nodec = nodel and 0 or false
+        local nodec = nodel and 0
         repeat
             for i = 1, #node do -- {{{
                 local subn = node[i]
@@ -138,7 +138,14 @@ local XmlObject = class { -- class module paradigm
     Build = function (o, dbgmsg) -- self: based on the node content to modify the engine data {{{
         if o.skip then return dbgmsg and o:Info(dbgmsg) end -- infra CODING debug message
         local node, engine, data = o.node, o.engine, o.engine.data
-        for i = 1, #node do if type(node[i]) == 'table' then o:Run(node[i]) end end
+        local nodel = node['&']
+        local nodec = nodel and 0
+        repeat
+            for i = 1, #node do if type(node[i]) == 'table' then o:Run(node[i]) end end
+            if nodec then nodec = nodec < #nodel and nodec + 1 end
+            node = nodec and nodel[nodec]
+        until not node
+
         if o.debug then end -- BKM
     end; -- }}}
 
