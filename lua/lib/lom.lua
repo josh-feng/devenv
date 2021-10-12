@@ -4,9 +4,10 @@
 -- DOM: tbm = {['.'] = tag; ['@'] = {}; ['&'] = {{}..}; {'comment'}, ...}
 -- Usage example:
 --      lom = require('lom')
---      doc = lom(xmlfile)
---      doc = lom() doc:parse(xml):parse() or doc:parse(xml):buildxlink()
---      xml = doc:dump(1)
+--      doc = lom.xml(xmlfile or '')
+--      doc = lom.xml() doc:parse(txt):parse()
+--      lom.buildxlink()
+--      xmltxt = doc:dump(1)
 -- ================================================================== --
 local lxp = require('lxp') -- the standard Lua Expat module
 local tun = require('util') -- https://github.com/josh-feng/devenv.git
@@ -19,7 +20,7 @@ local tinsert, tremove, tconcat = table.insert, table.remove, table.concat
 -- ================================================================== --
 -- LOM (Lua Object Model)
 -- ================================================================== --
-local docs = {} -- hidden list
+local docs = {} -- xml object list (hidden upvalue)
 
 local function starttag (p, name, attr) -- {{{
     local stack = p:getcallbacks().stack
@@ -49,7 +50,7 @@ end -- }}}
 
 local function parse (o, txt) -- friend function {{{
     local p = o['*']
-    local status, msg, line, col, pos = p:parse(txt) -- passed nil if failed
+    local status, msg, line, col, pos = p:parse(txt) -- pass nil if failed
     if not (txt and status) then
         if not status then o['?'] = {msg..' #'..line} end
         p:close() -- seems destroy the lxp obj
@@ -81,7 +82,7 @@ end -- }}}
 
 local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
     if (not path) or path == '' or #doc == 0 then return doc, path end
-    -- NB: xpointer does not have standard treatment
+    -- xpath syntax: NB: xpointer does not have standard treatment
     -- /A/B[@attr="val",@bb='4']
     -- anywhere/A/B[-3]/-2/3
     local anywhere = strsub(path, 1, 1) ~= '/'
@@ -94,7 +95,7 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
 
     local xn = {} -- xml-node (doc)
     local docl = doc['&']
-    local docn = docl and 0 or false
+    local docn = docl and 0
     repeat
         for i = 1, #doc do
             local mt = doc[i]
@@ -103,7 +104,7 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
                     tinsert(xn, mt)
                 elseif anywhere and (#mt > 0 or mt['&']) then
                     local mtl = mt['&']
-                    local mtn = mtl and 0 or false
+                    local mtn = mtl and 0
                     repeat
                         local sub = xPath(o, tagatt, mt)
                         for j = 1, #sub do tinsert(xn, sub[j]) end
@@ -179,17 +180,13 @@ end -- }}}
 local dom = class { -- lua document object model
     ['.'] = false; -- tag name
     ['@'] = false; -- attr
-    ['&'] = false; -- xlink
+    ['&'] = false; -- xlink table
+    ['#'] = false; -- stamp
     ['?'] = false; -- errors
     ['*'] = false; -- module
 
-    parse = false; -- implemented in friend function
-
-    xpath = function (o, path, doc) return xPath(o, path, doc or o.root) end;
-
     ['<'] = function (o, spec, mode) --{{{
         if type(spec) == 'table' then -- partial table-tree
-            tinsert(docs, o)
             for k, v in pairs(spec) do o[k] = v end
         elseif type(spec) == 'string' then -- '' for text
             local p = lxp.new {
@@ -202,11 +199,9 @@ local dom = class { -- lua document object model
             }
 
             if spec == '' then
-                tinsert(docs, o)
                 o['*'] = p
                 o.parse = parse
             else
-                docs[spec] = o
                 local file, msg = io.open(spec, 'r')
                 if file then
                     local status, msg, line, col, pos = p:parse(file:read('*all'))
@@ -218,18 +213,31 @@ local dom = class { -- lua document object model
                     o['?'] = {msg}
                 end
             end
+        end
+        if type(spec) == 'string' and spec ~= '' then
+            docs[spec] = o
         else
             tinsert(docs, o)
         end
     end; --}}}
 
-    ['>'] = function (o) for i = 1, #o in ipairs(o) do o[i] = nil end end;
+    ['>'] = function (o) for i = 1, #o do o[i] = nil end end;
+
+    parse = false; -- implemented in friend function
+
+    xpath = function (o, path, doc) return xPath(o, path, doc or o) end;
 
     -- output
     dump = function (o, fxml) -- {{{ dump fxml=1/html
-        if not fxml then return tun.dumpVar(0, o.root) end
+        if not fxml then return tun.dumpVar(0, o) end
         local res = {fxml == 1 and '<?xml version="1.0" encoding="UTF-8"?>' or nil}
-        for j = 1, #o do tinsert(res, dumpLom(o)) end
+        local docl = o['&']
+        local docn = docl and 0
+        repeat
+            for j = 1, #o do tinsert(res, dumpLom(o[j])) end
+            if docn then docn = docn < #docl and docn + 1 end
+            o = docn and docl[docn]
+        until not o
         return tconcat(res, '\n')
     end;-- }}}
 
@@ -238,14 +246,14 @@ local dom = class { -- lua document object model
 
     attr = function (o, var, val) -- {{{
         if val then
-            for _, t in ipairs(o.root) do
+            for _, t in ipairs(o) do
                 if t['@'][var] == nil then tinsert(t['@'], var) end
                 t['@'][var] = val
             end
             return o
         end
         local vals = {}
-        for _, t in ipairs(o.root) do tinsert(vals, t['@'][var]) end
+        for _, t in ipairs(o) do tinsert(vals, t['@'][var]) end
         return vals
     end; -- }}}
 
@@ -260,15 +268,7 @@ local dom = class { -- lua document object model
     -- }}}
 }
 
--- ================================================================== --
--- service for checking object model and demo/debug -- {{{
-if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lom.lua' then
-    local doc = lom(arg[1] == '-' and nil or arg[1])
-    if arg[1] == '-' then doc:parse(io.stdin:read('a')):parse() end
-    -- print(doc.root['?'][1] or doc:dump())
-end -- }}}
-
-return {
+local lom = {
     xml = function (spec) -- {{{
         if type(spec) == 'string' then -- '' for incremental text
             spec = tun.normpath(spec)
@@ -280,8 +280,6 @@ return {
     buildxlink = function () -- xlink -- xlink/xpointer based on root {{{
         for _, xml in ipairs(docs) do if xml.parse then xml:parse() end end
         local stamp = math.random()
-
-        -- buildxlink = function (o, rootxml)
         local stack = {}
         local function traceTbl (doc, xml) -- {{{ lua table form
             local href = doc['@'] and doc['@']['xlink:href']
@@ -289,6 +287,7 @@ return {
                 tinsert(stack, xml..'<'..doc['.']..'>'..href)
                 if stack[href] then
                     href = 'loop '..tconcat(stack, '->')
+                    tremove(stack)
                     if not docs[xml]['?'] then docs[xml]['?'] = {} end
                     return tinsert(docs[xml]['?'], href)
                 end
@@ -299,18 +298,20 @@ return {
                     if link == '' then -- back to this doc root
                         link = xml
                     else -- new file
-                        if strsub(link, 1, 1) ~= '/' then link = strgsub(xml, '[^/]*$', '')..link end
+                        if strsub(link, 1, 1) ~= '/' then
+                            link = strgsub(type(xml) == 'string' and xml or '', '[^/]*$', '')..link
+                        end
                         link = tun.normpath(link)
                     end -- }}}
 
-                    if not docs[link] then parseXml(o, link) end
+                    if (type(link) == 'string') and not docs[link] then docs[link] = dom(link) end
                     if xml ~= link then traceTbl(docs[link], link) end
                     link, xpath = xPath(o, strmatch(xpath or '', '#xpointer%((.*)%)'), docs[link])
 
                     if #link == 0 then -- error message
                         href ='broken <'..doc['.']..'> '..xpath
-                        if docs[xml]['?'] then tinsert(docs[xml]['?'], href)
-                        else docs[xml]['?'] = {href} end
+                        if not docs[xml]['?'] then docs[xml]['?'] = {} end
+                        tinsert(docs[xml]['?'], href)
                         doc['&'] = nil
                     else
                         doc['&'] = link -- xlink
@@ -326,12 +327,21 @@ return {
                 if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
             end
         end -- }}}
-        for xml, o in pairs(docs) do
-            if not o['?'] then traceTbl(o, xml) end
-        end
+        for xml, o in pairs(docs) do if not o['?'] then traceTbl(o, xml) end end
+        -- for xml, o in pairs(docs) do print(xml, o['?'] and tconcat(o['?'], '\n')) end
     end; -- }}}
 }
 
+-- ================================================================== --
+-- service for checking object model and demo/debug -- {{{
+if arg and #arg > 0 then
+    local doc = lom.xml(arg[1] == '-' and '' or arg[1])
+    if arg[1] == '-' then doc:parse(io.stdin:read('a')):parse() end
+    lom.buildxlink()
+    print(doc['?'] and tconcat(doc['?'], '\n') or doc:dump())
+end -- }}}
+
+return lom
 -- lom = require('lom')
 -- a = lom.xml()
 -- b = lom.xml('')
