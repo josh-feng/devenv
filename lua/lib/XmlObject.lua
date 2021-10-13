@@ -1,6 +1,7 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
 local class = require("pool")
+local lom = require("lom")
 local tun = require("util")
 
 -- object corresponding to a xml tag w/ a class attribute
@@ -24,7 +25,7 @@ local XmlObject = class { -- class module paradigm
     dtd = "";
 
     -- assign the xmlobject's engine and lom-node
-    -- create all objects for the subnodes (non-recursively)
+    -- create all modules/objects for the subnodes (non-recursively)
     ["<"] = function (o, engine, node) -- {{{ constructor
         o.engine = engine
         o.node = node -- node
@@ -35,8 +36,8 @@ local XmlObject = class { -- class module paradigm
             for i = 1, #node do -- {{{
                 local subn = node[i]
                 local suba = type(subn) == 'table' and subn['@'] -- subnode attr
-                if suba and suba.obj then -- skip node content/text: assign the object
-                    subn['*'] = assert(require(suba.obj), "fail loading "..suba.obj)(engine, subn)
+                if suba and suba.mod then -- skip node content/text: assign the object
+                    subn['*'] = assert(require(suba.mod), "fail loading "..suba.mod)(engine, subn)
                     if tun.check(suba.strict) then -- check unused-tag {{{ honor metatable
                         for j = 1, #subn do -- some of them are text/comments:
                             local v = subn[j]
@@ -80,7 +81,7 @@ local XmlObject = class { -- class module paradigm
             for i = 1, #tag do -- {{{
                 local subn = tag[i] -- subnode
                 local suba = subn['@']
-                if not (suba and suba.obj) then -- assign the object
+                if not (suba and suba.mod) then -- assign the object
                     subn['*'] = assert(require(cls), 'fail loading '..cls)(o.engine, subn)
                     if tun.check(suba.strict) then -- check unused-tag {{{ honor metatable
                         for j = 1, #subn do -- some of them are text/comments:
@@ -93,8 +94,7 @@ local XmlObject = class { -- class module paradigm
                 end
             end -- }}}
         end
-        cls, pos = tun.strToTbl(pos) -- ignore cls
-        return (not pos) and tag or tag[1] or (errmsg and error('No <'..elem..'>: '..tostring(errmsg)))
+        return (#tag == 0 and errmsg) and error('No <'..elem..'>: '..tostring(errmsg)) or tag
     end; -- }}}
 
     XmlValue = function (o, elem, errmsg) -- {{{ xml (string) value -- tagtbl
@@ -106,17 +106,20 @@ local XmlObject = class { -- class module paradigm
         if #tag == 0 then
             return errmsg and err('Missing ('..o.node['.']..'.'..elem..') '..tostring(errmsg), 2)
         end
-        elem, pos = tun.strToTbl(pos) -- ignore elem
-        return tun.xnVal(pos and tag[1] or tag, pos)
+        elem = {}
+        for i = 1, #tag do
+            for _, v in ipairs(tag[i]) do if type(v) == 'string' then table.insert(elem, v) end end
+        end
+        return elem
     end; -- }}}
 
     Run = function (o, elem, ...) -- build the node element/subnode {{{
-        if elem == '.' then error('Call .', 2) end --- error?
+        -- if elem == '.' then error('Call .', 2) end --- error?
         if type(elem) == 'string' then -- run all subnode class/object' Build if attr meets
             local tag, pos = string.match(elem, '([^/]+)(.*)$')
             if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
             elem, pos = string.match(tag, '([^%[]+)%[?([^%]]*)')
-            tag = o.node:xpath(tag) -- tagtbl -- original (possible metatable)
+            tag = o.node:xpath(tag) -- tagtbl
             if #tag == 0 then return o:Info('WRN: Run empty '.. elem) end -- if not defined
             for i = 1, #tag do
                 local sub = tag[i]['*']
@@ -157,7 +160,9 @@ local XmlObject = class { -- class module paradigm
 }
 
 -- {{{ ==================  demo and self-test (QA)  ==========================
--- local q = XmlObject(nil, {'T', ' Fab  '; 'T', '8 '}) -- nil engine
+-- local o = lom.xml({{['.'] = 'T', ' Fab  '; {['.'] = 'T', '8 '}}})
+-- local q = XmlObject(nil, o) -- nil engine
+-- print(q:XmlValue('T[3]')[1], q:XmlElement('T[1]')[1])
 -- if -- failing conditins:
 --     q:XmlValue('T[0]')[2] ~= '8'
 --     or q:XmlElement('T[1]')[1] ~= ' Fab  '
