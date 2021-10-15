@@ -114,7 +114,6 @@ local XmlObject = class { -- class module paradigm
     end; -- }}}
 
     Run = function (o, elem, ...) -- build the node element/subnode {{{
-        -- if elem == '.' then error('Call .', 2) end --- error?
         if type(elem) == 'string' then -- run all subnode class/object' Build if attr meets
             local tag, pos = string.match(elem, '([^/]+)(.*)$')
             if pos ~= '' then error('ERR: compound element ('..elem..')', 2) end
@@ -148,25 +147,23 @@ local XmlObject = class { -- class module paradigm
             if nodec then nodec = nodec < #nodel and nodec + 1 end
             node = nodec and nodel[nodec]
         until not node
-
         if o.debug then end -- BKM
     end; -- }}}
 
     Validate = function (o, elem) -- BKM: check the element formats/values {{{
         local valid = {}
         for k, v in pairs(o) do table.insert(valid, k..' = '..tostring(v)) end
-        o:Info('Validate '..elem..'\n  '..table.concat(valid, '\n '))
+        o:Info('Validate '..elem..'\n  '..table.concat(valid, '\n  '))
     end; -- }}}
 }
 
 -- {{{ ==================  demo and self-test (QA)  ==========================
--- local o = lom.xml({{['.'] = 'T', ' Fab  '; {['.'] = 'T', '8 '}}})
--- local q = XmlObject(nil, o) -- nil engine
--- print(q:XmlValue('T[3]')[1], q:XmlElement('T[1]')[1])
--- if -- failing conditins:
---     q:XmlValue('T[0]')[2] ~= '8'
---     or q:XmlElement('T[1]')[1] ~= ' Fab  '
--- then error('QA failed.', 1) end -- }}}
+local o = lom.xml({{['.'] = 'T', ' Fab  '; {['.'] = 'T', '8 '}},})
+local q = XmlObject(nil, o) -- nil engine
+if -- failing conditins:
+    q:XmlValue('T[0]')[1] ~= ' Fab  '
+    or q:XmlElement('T[2]')[1][2][1] ~= '8 '
+then error('QA failed.', 1) end -- }}}
 
 return XmlObject
 -- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
