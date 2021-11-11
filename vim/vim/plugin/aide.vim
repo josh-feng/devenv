@@ -9,8 +9,8 @@
 
 scriptencoding utf-8
 
-if exists('loaded_aide') || &cp | finish | endif
-let loaded_aide = 1
+if exists('g:loaded_aide') || &cp | finish | endif
+let g:loaded_aide = 1
 
 " register used in cut&paste and selection
 let s:reg = has('clipboard') ? '*' : '"'
@@ -147,7 +147,7 @@ function! s:AideUpdateRootPath(path) " {{{
     normal! k
     call setreg(s:reg, l:z)
     unlet l:z
-    exec "lcd ".a:path
+    exec "tcd ".a:path
     setlocal nomodifiable
 endfunction "}}}
 function! s:AideAddBookmark(path) " {{{
@@ -244,7 +244,7 @@ function! s:AideOpenTab(case) " {{{ o/O
         let t:rootpath = l:rootpath
         let t:aidebookmark = deepcopy(l:aidebookmark)
         call ToggleAide()
-        exec 'cd '.l:rootpath
+        exec 'tcd '.l:rootpath
         exec 'silent! file '.strpart(substitute(l:line, '|.*', '', ''), 2).'.'.tabpagenr()
         if a:case == 0 | silent! tabp | endif
         set nolazyredraw
@@ -316,7 +316,7 @@ function! s:AideTreeRootPathBookmark(case) " {{{ c/C
         let l:line = strpart(l:line, 7, strlen(l:line) - 8)
         if a:case == 0 " update rootpath exec 'chd '.l:line
             let @"=l:line
-            exec 'cd '.l:line
+            exec 'tcd '.l:line
             setlocal statusline=%!getcwd()
         else
             call s:AideAddBookmark(l:line)
@@ -342,7 +342,7 @@ function! s:AideCRAction() " {{{
             exec 'file '.strpart(l:line, 2, l:i - 2).'.'.tabpagenr()
             let l:i = substitute(l:line, '^.*| ', '', '')
             call s:AideUpdateRootPath(l:i)
-            exec 'cd '.l:i
+            exec 'tcd '.l:i
         endif
     elseif l:z == 2 " up-directory
         call s:AideUpdateRootPath(substitute(t:rootpath, '/[^/]*/$', '/', ''))
@@ -418,7 +418,7 @@ function! s:InitAide() " {{{ Buffer Initialization
     endif
 
     setlocal buflisted
-    let t:aide_bn = bufnr('')
+    let t:aide_bn = bufnr()
     if t:aide_bn == -1 | unlet t:aide_bn | endif
     setlocal nobuflisted
     setlocal cursorline
@@ -524,7 +524,7 @@ function! ToggleAide() " {{{
     set nolazyredraw
 endfunction " }}}
 function! SwitchAide(b) " {{{
-    let l:ssb = bufnr('')
+    let l:ssb = bufnr()
     if l:ssb == a:b
         exec 'silent! '.t:aide_lastwn.'wincmd w'
     elseif exists('t:aide_bn')
@@ -540,10 +540,10 @@ endfunction " }}}
 nnoremap <silent> <Bar> :call SwitchAide(t:aide_bn)<CR>
 nnoremap <silent> <Bslash><Tab> :call ToggleAide()<CR>
 
-if exists(':AIDE') != 2
+if exists(':AIDE') != 2 " {{{
     command -nargs=? AIDE call <SID>AIDE('<args>')
     if !exists('g:aide_mx') | let g:aide_mx = winwidth(0)*6/10 | endif
     if !exists('g:aide_h2') | let g:aide_h2 = winheight(0)/2 | endif
-endif
+endif " }}}
 finish
 " vim: ts=8 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
