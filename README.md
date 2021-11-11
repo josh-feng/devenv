@@ -75,6 +75,7 @@ With lrps.lua or lrp.so, the script lrm.lua provide a sample lua object model bu
 
 ### Requirement
 
+Add these package
 - posix
 - pool
 
