@@ -4,9 +4,9 @@
 -- DOM: tbm = {['.'] = tag; ['@'] = {}; ['&'] = {{}..}; {'comment'}, ...}
 -- Usage example:
 --      lom = require('lom')
---      doc = lom.xml(xmlfile or '')
---      doc = lom.xml() doc:parse(txt):parse()
---      lom.buildxlink()
+--      doc = lom(xmlfile or '')
+--      doc = lom() doc:parse(txt):parse()
+--      lom(true) -- buildxlink
 --      xmltxt = doc:dump(1)
 -- ================================================================== --
 local lxp = require('lxp') -- the standard Lua Expat module
@@ -184,6 +184,7 @@ local dom = class { -- lua document object model
     ['#'] = false; -- stamp
     ['?'] = false; -- errors
     ['*'] = false; -- module
+    ['+'] = false; -- data
 
     ['<'] = function (o, spec, mode) --{{{
         if type(spec) == 'table' then -- partial table-tree
@@ -245,7 +246,14 @@ local dom = class { -- lua document object model
     select = function (o, path) return class:new(o, o:xpath(path)) end;
 
     attr = function (o, var, val) -- {{{
-        if val then
+        if type(val) == 'function' then -- handle data
+            if type(o['+']) ~= 'table' then return end
+            for i = 1, #(o['+']) do -- TODO
+                -- o[i]['@'] = o[i]['@'] or {}
+                -- if o[i]['@'][var] == nil then tinsert(o[i]['@'], var) end
+                -- o[i]['@'][var] = val(o['*'], i)
+            end
+        elseif val then
             for _, t in ipairs(o) do
                 if t['@'][var] == nil then tinsert(t['@'], var) end
                 t['@'][var] = val
@@ -257,97 +265,117 @@ local dom = class { -- lua document object model
         return vals
     end; -- }}}
 
-    append = function (o) -- TODO
+    text = function (o, txt)
+        if type(o[1]) == 'table' then tinsert(o[1], txt) end
+        return o
     end;
 
-    insert = function (o) -- TODO
+    insert = function (o, ele, i) -- {{{ also append
+        if type(o[1]) == 'table' then
+            tinsert(o[1], ((tonumber(i) or 0) -1) % (#(o[1]) + 1) + 1, {['.'] = ele})
+        end
+        return o
+    end; -- }}}
+
+    enter = function (o) -- TODO
+        return o
     end;
 
-    text = function (o) -- TODO
+    data = function (o, data) -- TODO
+        return o
+    end;
+
+    exit = function (o) -- TODO
+        return o
     end;
     -- }}}
 }
 
-local lom = {
-    xml = function (spec) -- {{{
+local buildxlink = function () -- xlink -- xlink/xpointer based on root {{{
+    for _, xml in ipairs(docs) do if xml.parse then xml:parse() end end
+    local stamp = math.random()
+    local stack = {}
+    local function traceTbl (doc, xml) -- {{{ lua table form
+        local href = doc['@'] and doc['@']['xlink:href']
+        if href then -- print(xml..'<'..doc['.']..'>'..href)
+            tinsert(stack, xml..'<'..doc['.']..'>'..href)
+            if stack[href] then
+                href = 'loop '..tconcat(stack, '->')
+                tremove(stack)
+                if not docs[xml]['?'] then docs[xml]['?'] = {} end
+                return tinsert(docs[xml]['?'], href)
+            end
+            stack[href] = true
+
+            if (not doc['&']) or (doc['&']['#'] ~= stamp) then -- attr
+                local link, xpath = strmatch(href, '^([^#]*)(.*)') -- {{{ file_link, tag_path
+                if link == '' then -- back to this doc root
+                    link = xml
+                else -- new file
+                    if strsub(link, 1, 1) ~= '/' then
+                        link = strgsub(type(xml) == 'string' and xml or '', '[^/]*$', '')..link
+                    end
+                    link = tun.normpath(link)
+                end -- }}}
+
+                if (type(link) == 'string') and not docs[link] then docs[link] = dom(link) end
+                if xml ~= link then traceTbl(docs[link], link) end
+                link, xpath = xPath(o, strmatch(xpath or '', '#xpointer%((.*)%)'), docs[link])
+
+                if #link == 0 then -- error message
+                    href ='broken <'..doc['.']..'> '..xpath
+                    if not docs[xml]['?'] then docs[xml]['?'] = {} end
+                    tinsert(docs[xml]['?'], href)
+                    doc['&'] = nil
+                else
+                    doc['&'] = link -- xlink
+                    link['#'] = stamp
+                    -- print(doc['@']['xlink:href'], 'linked', #link)
+                end
+            end
+
+            stack[href] = nil
+            tremove(stack) -- #stack
+        end
+        for i = 1, #doc do -- continous override
+            if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
+        end
+    end -- }}}
+    for xml, o in pairs(docs) do if not o['?'] then traceTbl(o, xml) end end
+    -- for xml, o in pairs(docs) do print(xml, o['?'] and tconcat(o['?'], '\n')) end
+end; -- }}}
+
+local lom = docs; -- doctree for files, user's management
+
+setmetatable(lom, {
+    __metatable = true;
+    __call = function (c, spec) -- {{{ dom object creator
         if type(spec) == 'string' then -- '' for incremental text
             spec = tun.normpath(spec)
             if docs[spec] then return docs[spec] end
+        elseif spec and type(spec) ~= 'table' then -- closing
+            return buildxlink()
         end
         return dom(spec)
     end; -- }}}
-
-    buildxlink = function () -- xlink -- xlink/xpointer based on root {{{
-        for _, xml in ipairs(docs) do if xml.parse then xml:parse() end end
-        local stamp = math.random()
-        local stack = {}
-        local function traceTbl (doc, xml) -- {{{ lua table form
-            local href = doc['@'] and doc['@']['xlink:href']
-            if href then -- print(xml..'<'..doc['.']..'>'..href)
-                tinsert(stack, xml..'<'..doc['.']..'>'..href)
-                if stack[href] then
-                    href = 'loop '..tconcat(stack, '->')
-                    tremove(stack)
-                    if not docs[xml]['?'] then docs[xml]['?'] = {} end
-                    return tinsert(docs[xml]['?'], href)
-                end
-                stack[href] = true
-
-                if (not doc['&']) or (doc['&']['#'] ~= stamp) then -- attr
-                    local link, xpath = strmatch(href, '^([^#]*)(.*)') -- {{{ file_link, tag_path
-                    if link == '' then -- back to this doc root
-                        link = xml
-                    else -- new file
-                        if strsub(link, 1, 1) ~= '/' then
-                            link = strgsub(type(xml) == 'string' and xml or '', '[^/]*$', '')..link
-                        end
-                        link = tun.normpath(link)
-                    end -- }}}
-
-                    if (type(link) == 'string') and not docs[link] then docs[link] = dom(link) end
-                    if xml ~= link then traceTbl(docs[link], link) end
-                    link, xpath = xPath(o, strmatch(xpath or '', '#xpointer%((.*)%)'), docs[link])
-
-                    if #link == 0 then -- error message
-                        href ='broken <'..doc['.']..'> '..xpath
-                        if not docs[xml]['?'] then docs[xml]['?'] = {} end
-                        tinsert(docs[xml]['?'], href)
-                        doc['&'] = nil
-                    else
-                        doc['&'] = link -- xlink
-                        link['#'] = stamp
-                        -- print(doc['@']['xlink:href'], 'linked', #link)
-                    end
-                end
-
-                stack[href] = nil
-                tremove(stack) -- #stack
-            end
-            for i = 1, #doc do -- continous override
-                if type(doc[i]) == 'table' and doc[i]['.'] then traceTbl(doc[i], xml) end
-            end
-        end -- }}}
-        for xml, o in pairs(docs) do if not o['?'] then traceTbl(o, xml) end end
-        -- for xml, o in pairs(docs) do print(xml, o['?'] and tconcat(o['?'], '\n')) end
-    end; -- }}}
-}
+})
 
 -- ================================================================== --
 -- service for checking object model and demo/debug -- {{{
-if arg and #arg > 0 then
-    local doc = lom.xml(arg[1] == '-' and '' or arg[1])
+if arg and #arg > 0 and strfind(arg[0], 'lom.lua$') then
+    local doc = lom(arg[1] == '-' and '' or arg[1])
     if arg[1] == '-' then doc:parse(io.stdin:read('a')):parse() end
-    lom.buildxlink()
+    lom(true)
     print(doc['?'] and tconcat(doc['?'], '\n') or doc:dump())
 end -- }}}
 
 return lom
 -- lom = require('lom')
--- a = lom.xml()
--- b = lom.xml('')
--- c = lom.xml('/path/to/xmlfile')
--- d = lom.xml({})
--- lom.buildxlink()
+-- a = lom()
+-- b = lom('')
+-- c = lom('/path/to/xmlfile')
+-- d = lom({})
+-- lom(true) -- buildxlink
 --[[ {{{  MINI TUTORIAL https://matthewwild.co.uk/projects/luaexpat/manual.html
 -- ================================================================== --
 lxp.new(callbacks [, separator])
@@ -465,4 +493,4 @@ XML in general
     Any name can be used, no words are reserved (except xml).
 --]]
 -- ================================================================== --
--- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+-- vim:ts=4:sw=4:sts=4:et:fe:fdm=marker:fmr={{{,}}}:fdl=1

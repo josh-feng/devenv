@@ -367,4 +367,4 @@ tun.whos = function (t) -- {{{
     end
 end -- }}}
 return tun
--- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+-- vim:ts=4:sw=4:sts=4:et:fe:fdm=marker:fmr={{{,}}}:fdl=1

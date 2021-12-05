@@ -166,4 +166,4 @@ if -- failing conditins:
 then error('QA failed.', 1) end -- }}}
 
 return XmlObject
--- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+-- vim:ts=4:sw=4:sts=4:et:fe:fdm=marker:fmr={{{,}}}:fdl=1
