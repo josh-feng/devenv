@@ -10,7 +10,7 @@
 --      xmltxt = doc:dump(1)
 -- ================================================================== --
 local lxp = require('lxp') -- the standard Lua Expat module
-local tun = require('util') -- https://github.com/josh-feng/devenv.git
+local we = require('us') -- https://github.com/josh-feng/devenv.git
 local class = require('pool') -- https://github.com/josh-feng/pool.git
 
 local next, assert, type = next, assert, type
@@ -100,7 +100,7 @@ local function xPath (o, path, doc) -- {{{ return doc/xml-node table, missingTag
         for i = 1, #doc do
             local mt = doc[i]
             if type(mt) == 'table' then
-                if mt['.'] == tag and (autopass or tun.match(mt['@'], attrspec)) then
+                if mt['.'] == tag and (autopass or we.match(mt['@'], attrspec)) then
                     tinsert(xn, mt)
                 elseif anywhere and (#mt > 0 or mt['&']) then
                     local mtl = mt['&']
@@ -142,11 +142,11 @@ local function xmlstr (s, fenc) -- {{{
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
     -- return '<!-- base64 -i -d | zcat -f -->{{{'..
-    --     tun.popen(s, 'tun.gzip -c | base64 -w 128'):read('*all')..'}}}'
+    --     we.popen(s, 'we.gzip -c | base64 -w 128'):read('*all')..'}}}'
     s = tostring(s)
     if strfind(s, '\n') or (strlen(s) > 1024) then -- large text
         if fenc or strfind(s, ']]>') then -- enc flag or hostile strings
-            local status, stdout, stderr = tun.popen(s, 'gzip -c | base64 -w 128')
+            local status, stdout, stderr = we.popen(s, 'gzip -c | base64 -w 128')
             return '<!-- base64 -i -d | zcat -f -->{{{'..stdout..'}}}'
         else
             -- return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
@@ -230,7 +230,7 @@ local dom = class { -- lua document object model
 
     -- output
     dump = function (o, fxml) -- {{{ dump fxml=1/html
-        if not fxml then return tun.dumpVar(0, o) end
+        if not fxml then return we.dumpVar(0, o) end
         local res = {fxml == 1 and '<?xml version="1.0" encoding="UTF-8"?>' or nil}
         local docl = o['&']
         local docn = docl and 0
@@ -267,6 +267,18 @@ local dom = class { -- lua document object model
 
     text = function (o, txt)
         if type(o[1]) == 'table' then tinsert(o[1], txt) end
+        return o
+    end;
+
+    style = function (o) -- TODO
+        return o
+    end;
+
+    filter = function (o) -- TODO
+        return o
+    end;
+
+    map = function (o) -- TODO
         return o
     end;
 
@@ -315,7 +327,7 @@ local buildxlink = function () -- xlink -- xlink/xpointer based on root {{{
                     if strsub(link, 1, 1) ~= '/' then
                         link = strgsub(type(xml) == 'string' and xml or '', '[^/]*$', '')..link
                     end
-                    link = tun.normpath(link)
+                    link = we.normpath(link)
                 end -- }}}
 
                 if (type(link) == 'string') and not docs[link] then docs[link] = dom(link) end
@@ -351,7 +363,7 @@ setmetatable(lom, {
     __metatable = true;
     __call = function (c, spec) -- {{{ dom object creator
         if type(spec) == 'string' then -- '' for incremental text
-            spec = tun.normpath(spec)
+            spec = we.normpath(spec)
             if docs[spec] then return docs[spec] end
         elseif spec and type(spec) ~= 'table' then -- closing
             return buildxlink()
@@ -493,4 +505,4 @@ XML in general
     Any name can be used, no words are reserved (except xml).
 --]]
 -- ================================================================== --
--- vim:ts=4:sw=4:sts=4:et:fe:fdm=marker:fmr={{{,}}}:fdl=1
+-- vim:ts=4:sw=4:sts=4:et:fen:fdm=marker:fmr={{{,}}}:fdl=1
