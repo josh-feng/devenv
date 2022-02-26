@@ -211,7 +211,7 @@ function! s:AideAdd(case) " {{{ a/A
         else
             let l:title = input("edit ".l:path)
             if l:title != ''
-                exec t:aide_lastwn.'wincmd w | new '.l:path.l:title
+                exec t:aide_lastwn.'wincmd w | split '.l:path.l:title
             "   exec t:aide_lastwn.'wincmd w | vnew '.l:path
             endif
         end
@@ -306,7 +306,7 @@ function! s:AideOpenFile(case) " {{{ i/I
     let l:line = getline('.')
     if s:AideZone(l:line) != 5 | return | endif
     let l:path = s:AideGetAbsPath(l:line, '^\s*')
-    exec t:aide_lastwn.'wincmd w | new '.l:path
+    exec t:aide_lastwn.'wincmd w | split '.l:path
     if a:case == 0 | exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w' | endif " jump back
 endfunction " }}}
 function! s:AideTreeRootPathBookmark(case) " {{{ c/C
@@ -328,7 +328,7 @@ function! s:AideTreeRootPathBookmark(case) " {{{ c/C
     let l:path = s:AideGetAbsPath(l:line, '^.*\(▼\|▶\) ')
     if a:case == 0 " update rootpath
         call s:AideUpdateRootPath(l:path)
-    else "a:case == 1 " new bookmark
+    else " a:case == 1 " new bookmark
         call s:AideAddBookmark(l:path)
     endif
 endfunction " }}}
@@ -351,7 +351,7 @@ function! s:AideCRAction() " {{{
         exec 'silent! '.t:aide_lastwn.'wincmd w'
         exec 'edit '.l:path
         " jump back to aide window
-        exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w'
+        " exec 'silent! '.bufwinnr(t:aide_bn).'wincmd w'
     elseif l:z > 0 " directory
         setlocal modifiable
         if l:z == 3
