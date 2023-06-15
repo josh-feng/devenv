@@ -4,7 +4,7 @@
 -- Usage example:
 --      lrm = require('lrm')
 --      doc = lrm.ParseRml(file)
---      rml = lrm.Dump(docs)
+--      fml = lrm.Dump(docs)
 -- ======================================================================== --
 local lrm = {id = ''} -- version control
 
@@ -56,14 +56,14 @@ local match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
     end
     return true
 end -- }}}
-local function rPath (doc, path) -- {{{ return doc/rml-node table, missingTag
+local function rPath (doc, path) -- {{{ return doc/fml-node table, missingTag
     if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
     local tag, attr, idx
     tag, path = strmatch(path, '([^/]+)(.*)$')
     tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
     attr, idx = strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
-    local xn = {} -- rml-node (doc)
+    local xn = {} -- fml-node (doc)
     repeat -- collect along the metatable (if mode is defined)
         for i = 1, #doc do -- no metatable -- {{{
             local mt = doc[i]
@@ -91,7 +91,7 @@ end -- }}}
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
-lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/rml, 1/lua
+lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/fml, 1/lua
     local node = {} -- working variable: doc == root node (node == token == tag == table)
 
     local lrmcallbacks = {
@@ -135,7 +135,7 @@ lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/rml, 1/lua
 end
 -- }}}
 -- ======================================================================== --
-lrm.ParseRml = function (filename, doctree, mode) -- doc = lrm.ParseRml(rmlfile, docfactory) -- {{{
+lrm.ParseRml = function (filename, doctree, mode) -- doc = lrm.ParseRml(fmlfile, docfactory) -- {{{
     filename = normpath(filename)
     if type(doctree) == 'table' and doctree[filename] then return doctree[filename] end
 
@@ -147,20 +147,20 @@ lrm.ParseRml = function (filename, doctree, mode) -- doc = lrm.ParseRml(rmlfile,
     if type(doctree) == 'table' then doctree[filename] = doc end
     return doc
 end -- }}}
-lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfile) -- {{{ -- trace and meta
-    local toprml, base = normpath(rmlfile)
+lrm.RmlBuild = function (fmlfile, mode) -- topfml, doctree = lrm.RmlBuild(rootfile) -- {{{ -- trace and meta
+    local topfml, base = normpath(fmlfile)
     local doctree = {}
-    local doc = lrm.ParseRml(toprml, doctree, mode) -- doc table
+    local doc = lrm.ParseRml(topfml, doctree, mode) -- doc table
 
-    local function TraceTbl (xn, rml) -- {{{ lua table form
+    local function TraceTbl (xn, fml) -- {{{ lua table form
         local v = xn['@'] and xn['@']['url']
         if v then -- attr
 
             local link, rpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
             if link == '' then -- back to this doc root
-                link = rml
+                link = fml
             else -- new file
-                if strsub(link, 1, 1) ~= '/' then link = strgsub(rml, '[^/]*$', '')..link end
+                if strsub(link, 1, 1) ~= '/' then link = strgsub(fml, '[^/]*$', '')..link end
                 link = normpath(link)
             end -- }}}
 
@@ -174,20 +174,20 @@ lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfi
                     if meta == xn then break end
                 until not meta -- }}}
                 if meta then
-                    tinsert(doctree[rml]['?'], 'loop '.. v) -- error message
+                    tinsert(doctree[fml]['?'], 'loop '.. v) -- error message
                 elseif xn ~= link[1] then
                     setmetatable(xn, {__index = link[1]})
-                    TraceTbl(link[1], rml)
+                    TraceTbl(link[1], fml)
                 end
             else
-                tinsert(doctree[rml]['?'], 'broken <'..xn['.']..'> '..rpath..':'..#link..':'..v) -- error message
+                tinsert(doctree[fml]['?'], 'broken <'..xn['.']..'> '..rpath..':'..#link..':'..v) -- error message
             end
         end
-        for i = 1, #xn do if type(xn[i]) == 'table' then TraceTbl(xn[i], rml) end end -- continous override
+        for i = 1, #xn do if type(xn[i]) == 'table' then TraceTbl(xn[i], fml) end end -- continous override
     end -- }}}
 
-    if #doc['?'] == 0 then TraceTbl(doc, toprml) end -- no error msg
-    return toprml, doctree
+    if #doc['?'] == 0 then TraceTbl(doc, topfml) end -- no error msg
+    return topfml, doctree
 end -- }}}
 local function Simplify (doc, keys) -- {{{
     if (not doc['*'] or doc['*'] == '') and (not doc['@']) and #doc == 0 then return end
@@ -236,11 +236,11 @@ lrm.rPath = rPath
 -- ======================================================================== --
 lrm.threData = 512 -- threshold
 lrm.threItem = 8   -- threshold
-local rmlstring = function (s) -- {{{
+local fmlstring = function (s) -- {{{
     local q = (strfind(s, "^'") or not strfind(s, '"')) and '"' or "'"
     return q..strgsub(s, '([^\\])'..q..'(%s)', '%1\\'..q..'%2')..q
 end -- }}}
-local rmlpaste = function (s) -- {{{ -- encode: gzip -c | base64 -w 128 -- decode: base64 -i -d | zcat -f
+local fmlpaste = function (s) -- {{{ -- encode: gzip -c | base64 -w 128 -- decode: base64 -i -d | zcat -f
     local seal, t = '', {}
     for _ in strgmatch(s, '%[(%w*)%]>') do if _ ~= '' and not t[_] then tinsert(t, _) ; t[_] = true end end -- uniq
     table.sort(t, function (a, b) return strlen(a) < strlen(b) end)
@@ -248,22 +248,22 @@ local rmlpaste = function (s) -- {{{ -- encode: gzip -c | base64 -w 128 -- decod
     -- for i = 1, #t do end
     return '<txt['..seal..']'..s..'['..seal..']>'
 end -- }}}
-lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
+lrm.fmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     if s == '' then return s end
-    if mode == 0 then return rmlstring(s) end
-    if mode == 1 then return rmlpaste(s) end
+    if mode == 0 then return fmlstring(s) end
+    if mode == 1 then return fmlpaste(s) end
     local t, d
     if strfind(s, '[\n\t]') or strfind(s, '%s%s') then -- {{{
         t, d = strmatch(s, '^(.*%s%s+%S*)(.*)$')
         if d and strfind(d, '[\n\t]') then
             d, s = strmatch(d, '^(.*[\n\t])%s*(.*)')
-            d = rmlpaste(t..d)..' '
+            d = fmlpaste(t..d)..' '
         elseif d and strfind(t, '[\n\t]') then
-            d, s = rmlpaste(t)..' ', d
+            d, s = fmlpaste(t)..' ', d
         elseif t then
-            d, s = rmlstring(t)..' ', d
+            d, s = fmlstring(t)..' ', d
         else
-            d, s = rmlpaste(s), ''
+            d, s = fmlpaste(s), ''
         end
     else
         t, d = strmatch(s, '^(.-%S+)(.*)$')
@@ -305,14 +305,14 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
         for _, k in ipairs(node['@']) do
             local v = node['@'][k]
             if v then
-                tinsert(res, attr and k..' = '..strgsub(lrm.rmldata(v, 0), '\n', '\n'..indent) or k..'='..v)
+                tinsert(res, attr and k..' = '..strgsub(lrm.fmldata(v, 0), '\n', '\n'..indent) or k..'='..v)
             else
                 tinsert(res, k)
             end
         end
         attr = attr and '{\n'..tconcat(res, '\n')..'\n}' or tconcat(res, '|')
     end -- }}}
-    res = node['*'] and lrm.rmldata(node['*']) or ''
+    res = node['*'] and lrm.fmldata(node['*']) or ''
     local foldb, folde = '', ''
     if strlen(res) > lrm.threData or #node > lrm.threItem then foldb, folde = fold_b, fold_e end
     if strfind(res, '\n') or #node > 0 then
@@ -336,19 +336,19 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
     end -- }}}
     return (strgsub(res, '\n', '\n'..indent))
 end -- }}}
-lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
+lrm.Dump = function (docs) -- {{{ dump table -- fml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-    return #res == 0 and '' or '#rml version=1 mode=0 tab=4\n'..strgsub(tconcat(res, '\n'), '[ ]*\n', '\n')..
+    return #res == 0 and '' or '#fml version=1 mode=0 tab=4\n'..strgsub(tconcat(res, '\n'), '[ ]*\n', '\n')..
         '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1' -- editor hint
 end -- }}}
 -- ======================================================================== --
 if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lrm.lua' then -- service for checking object model -- {{{
-    local rml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
-    rml = lrm.Parse(rml:read('a'), 0)
-    print(rml['?'][1] or lrm.Dump(rml))
+    local fml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
+    fml = lrm.Parse(fml:read('a'), 0)
+    print(fml['?'][1] or lrm.Dump(fml))
 end -- }}}
 
 return lrm
 -- ======================================================================== --
--- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+-- vim:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->

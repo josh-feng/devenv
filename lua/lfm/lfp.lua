@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 --[=[ RML (Reduced Markup Language) Parser
-    rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+    fml     := '#fml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
     hspace  := ' ' | '\t'
     vspace  := '\r'
     space   := hspace | vspace
@@ -15,7 +15,7 @@
     sdata   := ['|"] .* ['|"]
     pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 --]=]
-local lrp = require('pool') { -- linux rml parser (script version)
+local lrp = require('pool') { -- linux fml parser (script version)
     spec = false; -- document spec
     tags = false; -- tag hierarchy
     data = false; -- current data
@@ -69,7 +69,7 @@ local lrp = require('pool') { -- linux rml parser (script version)
     end; -- }}}
 
     setSpec = function (o, line) -- {{{ tab:version:mode:style:stamp
-        line = string.match(line, '^#rml%s(.*)')
+        line = string.match(line, '^#fml%s(.*)')
         if line then
             for item in string.gmatch(line, '%S+') do
                 local k, v = string.match(item, '([^=]*)=(.*)')
@@ -164,9 +164,9 @@ local lrp = require('pool') { -- linux rml parser (script version)
         return d -- }}}
     end; -- }}}
 
-    parse = function (o, rml) -- {{{
+    parse = function (o, fml) -- {{{
         local l, c, p, msg = 0 -- message, line, column, position
-        for line in string.gmatch(rml, '[^\n]*') do -- {{{
+        for line in string.gmatch(fml, '[^\n]*') do -- {{{
             o.seek = true
             l = l + 1
             o:debug(l, line)
@@ -174,7 +174,7 @@ local lrp = require('pool') { -- linux rml parser (script version)
             s = string.len(s)
             repeat -- {{{
                 if not o.tags then
-                    line, msg = o:setSpec(line) -- #rml [var=val]*
+                    line, msg = o:setSpec(line) -- #fml [var=val]*
                 elseif o.quot then
                     line, msg = o:setString(line)
                 elseif o.seal then
@@ -274,9 +274,9 @@ local lrp = require('pool') { -- linux rml parser (script version)
     end; -- }}}
 }
 -- {{{ ==================  demo and self-test (QA)  ==========================
-local rml = lrp()
-local status, msg, line = rml:parse(
-[[#rml version=1.0 tab=4 mode=1 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=var://style
+local fml = lrp()
+local status, msg, line = fml:parse(
+[[#fml version=1.0 tab=4 mode=1 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=var://style
   #<[]comment start
   #[]>comment end
 
@@ -314,18 +314,18 @@ doc2|h1:
         :
     |p:
         regular "data]])
-msg = msg or rml:close()
+msg = msg or fml:close()
 if msg or not status then error('RML QA failed @'..line..': '..msg, 1) end
 -- }}}
-if arg and #arg > 0 and string.gsub(arg[0], '^.*/', '') == 'lrps.lua' then -- service to check rml syntax -- {{{
-    rml = lrp(true, false)
-    status, msg, line = rml:parse(
+if arg and #arg > 0 and string.gsub(arg[0], '^.*/', '') == 'lrps.lua' then -- service to check fml syntax -- {{{
+    fml = lrp(true, false)
+    status, msg, line = fml:parse(
         ((arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Failed open '..arg[1])):read('a')
         )
-    msg = msg or rml:close()
+    msg = msg or fml:close()
     if msg or not status then print('@line('..line..'): '..msg) end -- as unix tradition, say nothing if OK
 end -- }}}
 
 return lrp -- lua object model
 -- ======================================================================== --
--- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+-- vim:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->

@@ -1,6 +1,6 @@
-#rml version=1 mode=0 tab=4 style=tag://style
+#fml version=1 mode=0 tab=4 style=tag://style
 #<[] RML (Reduced Markup Language) Syntax # {{{ Regular Expression (C-string)
-    rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+    fml     := '#fml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
     hspace  := ' ' | '\t'
     vspace  := '\r'
     space   := hspace | vspace
@@ -26,8 +26,8 @@ style: # {{{
 
 |h1: (Semi) Bakus Naur Form for RML (Reduced Markup Language) # {{{
 |p: # Syntax
-    <BNF[rml]
-    rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+    <BNF[fml]
+    fml     := '#fml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
     hspace  := ' ' | '\t'
     vspace  := '\r'
     space   := hspace | vspace
@@ -41,8 +41,8 @@ style: # {{{
     ndata   := [^space]+
     sdata   := ['|"] .* ['|"]
     pdata   := '<' [id] '[' id ']' .- '[' id ']>'
-    [rml]>
+    [fml]>
 |p: # Footnote
     : C-string := C style string (_any quoted characters_)
 # }}}
-# vim: ft=rml ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+# vim:ft=fml:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->
