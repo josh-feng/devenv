@@ -1,7 +1,6 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
-" Last Change: Sun 18 Apr 2021 10:37:54 PM CST
-" Version:     1.08 (need mac/m$ env test)
+" Version:     1.09 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (g:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
@@ -369,6 +368,7 @@ function! s:AideUpdateBookmark() " {{{
     setlocal modifiable
     let l:z = getreg(s:reg)
     if !exists('t:aidebookmark')
+        silent! call system('touch '.g:aide_bms)
         silent! let t:aidebookmark = readfile(g:aide_bms)
     endif
     call uniq(t:aidebookmark)
