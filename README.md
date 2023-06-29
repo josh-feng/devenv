@@ -1,6 +1,6 @@
 # devenv
 
-Personal settings, probably not for public consumption.\
+Personal settings, probably not for public consumption.
 It is not necessary to git clone the whole repository.
 Just copy individual file to meet your need.
 
@@ -11,12 +11,10 @@ Just copy individual file to meet your need.
         lom.lua
         util.lua
         XmlObject.lua
-      ▼ lrm/
-        lrm.lua
-        lrp.cpp
-        lrp.hpp
-        lrps.lua
-        rml.rml
+      ▼ lfm/
+        lfm.lua
+        lfp.lua
+        fml.fml
     ▼ vim/
       ▼ vim/
         ▼ autoload/
@@ -30,7 +28,7 @@ Just copy individual file to meet your need.
     README.md
     tmux.conf
 
-## vim-aide project
+# vim-aide project
 
 This simple vim module create an IDE-like side panel, which supports `tagbar` module in the same panel if `tagbar` is installed:
 - Copy the file vim/vim/plugin/**aide.vim** to your vim folder **~/.vim/plugin/**
@@ -41,18 +39,14 @@ This simple vim module create an IDE-like side panel, which supports `tagbar` mo
 
 ![vim-aide](images/vim-aide.png)
 
-## Reduced Markup Language (RML)
+# Fake Markup Language (FML)
 
-- lrps.lua
-- lrm.lua
-- rml.rml
-- rml.vim
 
 Several formats (xml, markdown, json, yaml, etc.) are not stable and/or have some limitations.
 We will develop our own. The goal is to have a succinct format to break a text into usable fields.
 
-    Syntax: RML works like punctutaions
-        rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+    Syntax: FML works like punctutaions
+        fml     := '#fml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
         hspace  := ' ' | '\t'
         vspace  := '\r'
         space   := hspace | vspace
@@ -67,15 +61,15 @@ We will develop our own. The goal is to have a succinct format to break a text i
         sdata   := ['|"] .* ['|"]
         pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 
-lrps.lua provide a basic/simple lua script to parse an RML file,
-it can be coded to C/C++ lib for efficiency. In fact, lrp.so will be the C-module parser.
-With lrps.lua or lrp.so, the script lrm.lua provide a sample lua object model builder for RML file
 
-## lua
+- `lfp.lua` basic parser
+- `lfm.lua`
+- `fml.fml`
+- `fml.vim`
 
-### Requirement
+`lfp.lua` provide a basic/simple lua script to parse an FML file,
+it can be coded to C/C++ lib for efficiency.
+The file `lfm.lua`, using the parser `lfp.lua`, provides a sample lua object model builder for FML files.
 
-Add these package
-- posix
-- pool
-
+# []()
+<!--vim:ts=4:sw=4:sts=4:et:fen:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->

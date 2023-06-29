@@ -136,4 +136,4 @@ syn region  fmlPaste    matchgroup=fmlCDATA nextgroup=fmlComment fold nextgroup=
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<md\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@fmlPasteHookMd
 " ------------------  paste hook ------------------"}}}
-" vim:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->
+" vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

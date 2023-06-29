@@ -18,5 +18,4 @@ syntax include @CDATA_LUA  $VIMRUNTIME/syntax/lua.vim
 syntax region xmlCdataLua  start=/\V<LuaCode><![CDATA[/ end=/\V]]>/ contains=@CDATA_LUA keepend
 syntax region xmlCdataLua  start=/\V<LuaCode>/ end=/\V<\/LuaCode>/ contains=@CDATA_LUA keepend
 
-" commentstring
-" setlocal cms=<!--%s-->
+" vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

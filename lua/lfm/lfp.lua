@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
---[=[ RML (Reduced Markup Language) Parser
+--[=[ FML (Fake Markup Language) Parser
     fml     := '#fml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
     hspace  := ' ' | '\t'
     vspace  := '\r'
@@ -15,7 +15,7 @@
     sdata   := ['|"] .* ['|"]
     pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 --]=]
-local lrp = require('pool') { -- linux fml parser (script version)
+local lfp = require('pool') { -- linux fml parser (script version)
     spec = false; -- document spec
     tags = false; -- tag hierarchy
     data = false; -- current data
@@ -82,7 +82,7 @@ local lrp = require('pool') { -- linux fml parser (script version)
             o.tags = {}
         else
             o.close = o.debug -- no o.tags
-            return line, 'Not an RML document'
+            return line, 'Not an FML document'
         end
     end; -- }}}
 
@@ -274,7 +274,7 @@ local lrp = require('pool') { -- linux fml parser (script version)
     end; -- }}}
 }
 -- {{{ ==================  demo and self-test (QA)  ==========================
-local fml = lrp()
+local fml = lfp()
 local status, msg, line = fml:parse(
 [[#fml version=1.0 tab=4 mode=1 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=var://style
   #<[]comment start
@@ -315,10 +315,10 @@ doc2|h1:
     |p:
         regular "data]])
 msg = msg or fml:close()
-if msg or not status then error('RML QA failed @'..line..': '..msg, 1) end
+if msg or not status then error('FML QA failed @'..line..': '..msg, 1) end
 -- }}}
-if arg and #arg > 0 and string.gsub(arg[0], '^.*/', '') == 'lrps.lua' then -- service to check fml syntax -- {{{
-    fml = lrp(true, false)
+if arg and #arg > 0 and string.gsub(arg[0], '^.*/', '') == 'lfps.lua' then -- service to check fml syntax -- {{{
+    fml = lfp(true, false)
     status, msg, line = fml:parse(
         ((arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Failed open '..arg[1])):read('a')
         )
@@ -326,6 +326,6 @@ if arg and #arg > 0 and string.gsub(arg[0], '^.*/', '') == 'lrps.lua' then -- se
     if msg or not status then print('@line('..line..'): '..msg) end -- as unix tradition, say nothing if OK
 end -- }}}
 
-return lrp -- lua object model
+return lfp -- lua object model
 -- ======================================================================== --
--- vim:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->
+-- vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

@@ -400,4 +400,4 @@ filetype plugin indent on    " or 'filetype plugin on'
 " '='   the expression register: you are prompted (see |expression|)
 "       When the result is a |List| the items are used as lines.
 " =================================================================== }}}
-" vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+" vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

@@ -546,4 +546,4 @@ if exists(':AIDE') != 2 " {{{
     if !exists('g:aide_h2') | let g:aide_h2 = winheight(0)/2 | endif
 endif " }}}
 finish
-" vim: ts=8 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1
+" vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

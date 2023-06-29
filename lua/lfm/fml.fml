@@ -45,4 +45,4 @@ style: # {{{
 |p: # Footnote
     : C-string := C style string (_any quoted characters_)
 # }}}
-# vim:ft=fml:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->
+# vim:ft=fml:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

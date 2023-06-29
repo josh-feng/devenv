@@ -2,13 +2,13 @@
 -- ======================================================================== --
 -- Lua RML-object Model
 -- Usage example:
---      lrm = require('lrm')
---      doc = lrm.ParseRml(file)
---      fml = lrm.Dump(docs)
+--      lfm = require('lfm')
+--      doc = lfm.ParseRml(file)
+--      fml = lfm.Dump(docs)
 -- ======================================================================== --
-local lrm = {id = ''} -- version control
+local lfm = {id = ''} -- version control
 
-local lrp = require('lrps') -- the standard Lua Expat module (or lrp.so)
+local lfp = require('lfp') -- the standard Lua Expat module (or lfp.so)
 
 local next, assert, type = next, assert, type
 local strlen, strsub, strmatch, strgmatch = string.len, string.sub, string.match, string.gmatch
@@ -91,10 +91,10 @@ end -- }}}
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
-lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/fml, 1/lua
+lfm.Parse = function (txt, fmt) -- {{{ fmt: 0/fml, 1/lua
     local node = {} -- working variable: doc == root node (node == token == tag == table)
 
-    local lrmcallbacks = {
+    local lfmcallbacks = {
         Spec = function (parser, spec) -- {{{
         end; -- }}}
         StartTag = function (parser, name, attr) -- {{{
@@ -127,30 +127,30 @@ lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/fml, 1/lua
         end; -- }}}
     }
 
-    local plrm = lrp(lrmcallbacks)
-    local status, msg, line = plrm:parse(txt) -- status, msg, line, col, pos
-    plrm:close() -- seems destroy the lrp obj
+    local plfm = lfp(lfmcallbacks)
+    local status, msg, line = plfm:parse(txt) -- status, msg, line, col, pos
+    plfm:close() -- seems destroy the lfp obj
     node['?'] = status and {} or {msg..' @line '..line}
     return node
 end
 -- }}}
 -- ======================================================================== --
-lrm.ParseRml = function (filename, doctree, mode) -- doc = lrm.ParseRml(fmlfile, docfactory) -- {{{
+lfm.ParseRml = function (filename, doctree, mode) -- doc = lfm.ParseRml(fmlfile, docfactory) -- {{{
     filename = normpath(filename)
     if type(doctree) == 'table' and doctree[filename] then return doctree[filename] end
 
     local file, msg = io.open(filename, 'r')
     if not file then return {['?'] = {msg}} end
-    local doc = lrm.Parse(file:read('*all'), mode)
+    local doc = lfm.Parse(file:read('*all'), mode)
     file:close()
 
     if type(doctree) == 'table' then doctree[filename] = doc end
     return doc
 end -- }}}
-lrm.RmlBuild = function (fmlfile, mode) -- topfml, doctree = lrm.RmlBuild(rootfile) -- {{{ -- trace and meta
+lfm.RmlBuild = function (fmlfile, mode) -- topfml, doctree = lfm.RmlBuild(rootfile) -- {{{ -- trace and meta
     local topfml, base = normpath(fmlfile)
     local doctree = {}
-    local doc = lrm.ParseRml(topfml, doctree, mode) -- doc table
+    local doc = lfm.ParseRml(topfml, doctree, mode) -- doc table
 
     local function TraceTbl (xn, fml) -- {{{ lua table form
         local v = xn['@'] and xn['@']['url']
@@ -164,7 +164,7 @@ lrm.RmlBuild = function (fmlfile, mode) -- topfml, doctree = lrm.RmlBuild(rootfi
                 link = normpath(link)
             end -- }}}
 
-            if not doctree[link] then TraceTbl(lrm.ParseRml(link, doctree, mode), link) end
+            if not doctree[link] then TraceTbl(lfm.ParseRml(link, doctree, mode), link) end
             link, rpath = rPath(doctree[link], strmatch(rpath or '', '#ptr%((.*)%)'))
 
             if #link == 1 then -- the linked table
@@ -226,16 +226,16 @@ local function Simplify (doc, keys) -- {{{
     doc['@'] = #attr > 0 and attr or nil
     return ((doc['*'] and doc['*'] ~= '') or doc['@'] or #doc > 0) and doc or nil
 end -- }}}
-lrm.Simplify = function (docs, keys) -- {{{
+lfm.Simplify = function (docs, keys) -- {{{
     for _, doc in ipairs(docs) do docs[_] = Simplify(doc, keys) end
     return docs -- for cascade
 end -- }}}
-lrm.rPath = rPath
+lfm.rPath = rPath
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
-lrm.threData = 512 -- threshold
-lrm.threItem = 8   -- threshold
+lfm.threData = 512 -- threshold
+lfm.threItem = 8   -- threshold
 local fmlstring = function (s) -- {{{
     local q = (strfind(s, "^'") or not strfind(s, '"')) and '"' or "'"
     return q..strgsub(s, '([^\\])'..q..'(%s)', '%1\\'..q..'%2')..q
@@ -248,7 +248,7 @@ local fmlpaste = function (s) -- {{{ -- encode: gzip -c | base64 -w 128 -- decod
     -- for i = 1, #t do end
     return '<txt['..seal..']'..s..'['..seal..']>'
 end -- }}}
-lrm.fmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
+lfm.fmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     if s == '' then return s end
     if mode == 0 then return fmlstring(s) end
     if mode == 1 then return fmlpaste(s) end
@@ -305,16 +305,16 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
         for _, k in ipairs(node['@']) do
             local v = node['@'][k]
             if v then
-                tinsert(res, attr and k..' = '..strgsub(lrm.fmldata(v, 0), '\n', '\n'..indent) or k..'='..v)
+                tinsert(res, attr and k..' = '..strgsub(lfm.fmldata(v, 0), '\n', '\n'..indent) or k..'='..v)
             else
                 tinsert(res, k)
             end
         end
         attr = attr and '{\n'..tconcat(res, '\n')..'\n}' or tconcat(res, '|')
     end -- }}}
-    res = node['*'] and lrm.fmldata(node['*']) or ''
+    res = node['*'] and lfm.fmldata(node['*']) or ''
     local foldb, folde = '', ''
-    if strlen(res) > lrm.threData or #node > lrm.threItem then foldb, folde = fold_b, fold_e end
+    if strlen(res) > lfm.threData or #node > lfm.threItem then foldb, folde = fold_b, fold_e end
     if strfind(res, '\n') or #node > 0 then
         res = strfind(res, '\n') and ' '..foldb..'\n'..res or (res == '' and ' ' or ' '..res..' ')..foldb
         if #node == 0 then res = res..folde end
@@ -336,19 +336,19 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
     end -- }}}
     return (strgsub(res, '\n', '\n'..indent))
 end -- }}}
-lrm.Dump = function (docs) -- {{{ dump table -- fml is of multiple document format
+lfm.Dump = function (docs) -- {{{ dump table -- fml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
     return #res == 0 and '' or '#fml version=1 mode=0 tab=4\n'..strgsub(tconcat(res, '\n'), '[ ]*\n', '\n')..
         '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1' -- editor hint
 end -- }}}
 -- ======================================================================== --
-if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lrm.lua' then -- service for checking object model -- {{{
+if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lfm.lua' then -- service for checking object model -- {{{
     local fml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
-    fml = lrm.Parse(fml:read('a'), 0)
-    print(fml['?'][1] or lrm.Dump(fml))
+    fml = lfm.Parse(fml:read('a'), 0)
+    print(fml['?'][1] or lfm.Dump(fml))
 end -- }}}
 
-return lrm
+return lfm
 -- ======================================================================== --
--- vim:ts=4:sw=4:sts=4:et:foldenable:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->
+-- vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->
