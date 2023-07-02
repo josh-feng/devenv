@@ -1,6 +1,6 @@
 # devenv
 
-Personal settings, probably not for public consumption.
+Here are some files for personal settings, probably not for public consumption.
 It is not necessary to git clone the whole repository.
 Just copy individual file to meet your need.
 
@@ -72,4 +72,4 @@ it can be coded to C/C++ lib for efficiency.
 The file `lfm.lua`, using the parser `lfp.lua`, provides a sample lua object model builder for FML files.
 
 # []()
-<!--vim:ts=4:sw=4:sts=4:et:fen:fdm=marker:fmr={{{,}}}:fdl=1:sbr=-->
+<!--vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->
