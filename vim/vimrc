@@ -189,7 +189,7 @@ autocmd BufWritePost $MYVIMRC source $MYVIMRC
 
 augroup filetype
     au BufRead,BufNewFile *akefile*,.*akefile*,*.mk  set filetype=make
-    au BufRead,BufNewFile *.rml    set filetype=rml
+    au BufRead,BufNewFile *.fml    set filetype=fml
     au BufRead,BufNewFile *.txt    setf text
 augroup END
 
@@ -199,7 +199,7 @@ au FileType perl          set kp=perldoc
 au FileType c,cpp,h,hpp   set kp=man\ -S\ 3p:2:3
 au FileType c,cpp,h,hpp   set ts=2 sw=2
 
-au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
+au FileType text,tex,bib,mail,fml,pandoc set kp=sdcv
 
 " autocmd Syntax c,cpp,tcl,xml set foldmethod=marker
 " autocmd Syntax xml           syn match OotclComment "//.*"

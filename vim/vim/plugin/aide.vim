@@ -1,10 +1,9 @@
 " File:        aide.vim (alternative ide)
 " Author:      Josh Feng <joshfwisc@gmail.com>
-" Version:     1.09 (need mac/m$ env test)
+" Version:     1.10 (need mac/m$ env test)
 " Description: An IDE supporting Tagbar
 " Development: Bookmarks (g:aide_bms/t:bookmarks/t:roopath )
 "              desc/0 bookmark/1 updir/2 close_dir/3 open_dir/4 file/5
-" TODO: setlocal path, include
 
 scriptencoding utf-8
 
@@ -82,7 +81,9 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
         endif
     endwhile
     call setpos('.', l:pos)
-    let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*$', '/', '')
+    " NB: Assume link is a folder; otherwise, file.
+    let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*/$', '/', '')
+    let l:line = substitute(l:line, ' ->.*$', '', '')
     " concat and handle special char
     let l:path = substitute(t:rootpath.l:path.l:line, ' ', '\\ ','g')
     let l:path = substitute(l:path, '(', '\\(','g')
