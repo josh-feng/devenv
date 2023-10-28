@@ -81,7 +81,7 @@ function! s:AideGetAbsPath(line, patstart) " {{{ NB: pos is lost (arrow acount f
         endif
     endwhile
     call setpos('.', l:pos)
-    " NB: Assume link is a folder; otherwise, file.
+    " NB: assume folder; otherwise, file, so try folder first
     let l:line = substitute(substitute(a:line, a:patstart, '', ''), ' ->.*/$', '/', '')
     let l:line = substitute(l:line, ' ->.*$', '', '')
     " concat and handle special char
