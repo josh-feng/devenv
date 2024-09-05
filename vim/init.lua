@@ -18,13 +18,19 @@
 -- set runtimepath=/usr/share/vim/@VIMCUR@,~/.vim
 -- verbose set ai? cin? cink? cino? si? inde? indk?
 -- setlocal nocindent indentexpr=
--- set fileencodings=big5,gbk,gb18030,utf-8,iso8859-1,default
+vim.opt.mouse = ''
 vim.o.encoding = 'utf-8'
+vim.o.fileencoding = 'utf-8' -- gbk,gb18030,big5,iso8859-1,default
 vim.o.tabstop = 4
 vim.o.shiftwidth = 4
 vim.o.softtabstop = 4
+-- disable realtime editing result
+vim.o.icm = ''
 vim.cmd('filetype plugin indent on')
 vim.cmd('syntax enable')
+vim.o.expandtab = true
+vim.o.smartindent = true
+vim.o.showmode = true
 -- vim.cmd('expandtab smartindent showmode on')
 
 -- vim.cmd('nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>')
@@ -145,7 +151,7 @@ vim.keymap.set('n', 'Tp', ':tabmove -1<CR>', {silent = true})
 -- map <F4> :let @+=expand('<cword>')<CR> " copy to selection
 vim.keymap.set('n', '<F2>', ':set invcursorcolumn invcursorline wrap! nu!<CR>', {silent = true})
 vim.keymap.set('n', '<F3>', ':set invcursorline rnu!<CR>', {silent = true})
-vim.keymap.set('n', '<F4>', ':copen<CR><c-w>J', {silent = true})
+vim.keymap.set('n', '<F4>', ':copen<CR><c-w>J', {silent = true}) -- quickfix
 
 -- c-j generate 'NL'
 vim.keymap.set('i', '<C-h>', '<c-o>h')
@@ -165,10 +171,6 @@ vim.keymap.set('i', '<F4>', '<C-v>u')
 
 -- vnoremap m :!cconv -f big5 -t utf8<CR>
 -- vnoremap M :!cconv -f gb18030 -t utf8<CR>
--- vnoremap H
--- vnoremap L
--- vnoremap a
--- vnoremap i
 
 vim.cmd([[vnoremap f :s/\(\S\)\s\+/\1:/g<CR>]])
 vim.keymap.set('v', 'F', ':s/:/ /g<CR>')
@@ -179,22 +181,25 @@ vim.keymap.set('v', 'o', ':!/usr/bin/nl -n rz<CR>')
 vim.cmd([[vnoremap <silent> \ :s/\s\+$//g<CR>']])
 
 -- &cms &com: comment block/comment lines
-vim.cmd([[function! AddComment() " {{{
-    " register @"
+vim.cmd.AddComment = function () -- user function under vim.cmd {{{
+    vim.cmd([["
     " echo mode() visualmode(): v/V/^V
     " echo split(&cms, '%s')[0]
-    let l:c = split(&cms, '%s')
-    let l:s = l:c[0].' '
-    let l:e = ''
-    if len(l:c) > 1 | let l:e = ' '.l:c[1] | endif
+    let b:c = split(&cms, '%s')
+    let b:s = b:c[0].' '
+    let b:e = ''
+
+    if len(b:c) > 1 | let b:e = ' '.b:c[1] | endif
     if visualmode() == 'v'
-        let @" = l:s.@".l:e
+        let @" = b:s.@".b:e
     elseif visualmode() == "V"
-        let @" = substitute(@", '[^\n]\+', ' '.l:s.'\0'.l:e, 'g')
+        let @" = substitute(@", '[^\n]\+', ' '.b:s.'\0'.b:e, 'g')
     " else " ^V not support
     endif
-    normal P
-    unlet l:c l:s l:e
+    silent normal P
+    " if last line then use p
+
+    unlet b:c b:s b:e
     " if mode()=="v"
     "     let [line_start, column_start] = getpos("v")[1:2]
     "     let [line_end, column_end] = getpos(".")[1:2]
@@ -205,10 +210,13 @@ vim.cmd([[function! AddComment() " {{{
     " let lines = getline(line_start, line_end)
     " if len(lines) == 0 | return '' | endif
     " vnoremap <F2> :<C-u>for line in getline("'<", "'>") \| execute line \| endfor<CR>
-endfunction " }}}]])
+    ]])
+end -- }}}
+vim.keymap.set('v', '<F2>', 'x:lua vim.cmd.AddComment()<CR>', {silent = true})
 
-vim.keymap.set('v', '<F2>', 'x:call AddComment()<CR>', {silent = true})
-vim.keymap.set('v', '<F3>', 'xi[]{}<Esc>2hP2l', {silent = true})
+local libvim = '~/.config/nvim/lib.vim'
+vim.keymap.set('n', '<A-m>', ':split '..libvim..'<CR>', {silent = true})
+vim.keymap.set('v', '<A-m>', ':source '..libvim..'<CR>', {silent = true})
 -- }}}
 
 -- ----- file support ----- {{{
@@ -216,7 +224,7 @@ vim.keymap.set('v', '<F3>', 'xi[]{}<Esc>2hP2l', {silent = true})
 vim.o.wildignore = '.svn,CVS,.git,*.o,*.a,*.class,*.mo,*.la,*.so,*.obj,*.swp,*.jpg,*.png,*.xpm,*.gif'
 
 vim.cmd([[
-autocmd BufWritePost $MYVIMRC source $MYVIMRC
+autocmd BufWritePost $MYVIMRC source <afile>
 
 augroup filetype
     au BufRead,BufNewFile *akefile*,.*akefile*,*.mk  set filetype=make
@@ -239,15 +247,15 @@ au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
 -- }}}
 
 -- ====================  PLUGINS SETTINGS  ===========================
--- .config/nvim/lua/plugins.lua
-require('plugins')
--- NOTE: {{{
+require('plugins') -- lua/plugins.lua .config/nvim/lua/plugins.lua
+-- NOTE: {{{ :map :nmap ...
 -- ====================  GENERAL INFO  ===============================
 -- :!col -b " to ignore the control characters
 --
 -- gv    go back to previous visual selection
 -- va{   visual selection {
 -- di"   delete in "
+-- g/pattern/normal ...
 --
 -- environment variables start w/ $ : ex. $HOME
 -- ab -- general abbreviation; ca -- command line mode abbreviation

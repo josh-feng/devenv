@@ -71,5 +71,22 @@ We will develop our own. The goal is to have a succinct format to break a text i
 it can be coded to C/C++ lib for efficiency.
 The file `lfm.lua`, using the parser `lfp.lua`, provides a sample lua object model builder for FML files.
 
+We now formulate the fml
+
+1. @text@ italic
+2. @@text@@ bold
+3. ~text~ underline
+4. ~~text~ strike
+5. [text]@style@
+6. [text]~feature~
+7. text escape \@ \~ \\ \[ \]
+8. # heading
+9. !! comment
+10. ```block options
+11. block escape --8<-- -->8--
+
+
+
+
 # []()
 <!--vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->
