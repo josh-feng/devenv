@@ -3,19 +3,17 @@
 -- vim.call({func},{...}) vim.cmd({cmd}), vim.fn.{func}({...})
 
 -- ================================================================= --
+-- https://github.com/glepnir/nvim-lua-guide-zh
 -- :help packages
 -- ~/.local/share/nvim/site/pack/*
--- vim.cmd [[packadd packer]]
--- vim.cmd 'autocmd BufWritePost plugins.lua PackerCompile'
--- vim.cmd 'autocmd BufWritePost plugins.lua PackerUpdate'
--- vim.cmd 'autocmd BufWritePost plugins.lua PackerSync'
 
 -- https://github.com/junegunn/vim-plug?tab=readme-ov-file
+-- PlugUdate PlugInstall PlugClean
 -- put it in ~/.config/nvim/autoload/plug.vim
 vim.cmd [[
 call plug#begin()
 
-Plug 'neovim/nvim-lspconfig'
+Plug 'neovim/nvim-lspconfig', {'do': 'make'}
 Plug 'ms-jpq/coq_nvim'
 Plug 'vim-pandoc/vim-pandoc'
 Plug 'vim-pandoc/vim-pandoc-syntax'
@@ -51,7 +49,6 @@ vim.g['pandoc#modules#enabled'] = {"formatting", "folding", "keyboard"}
 -- :TSInstall <lang>
 -- :TSUpdate}}}
 
-
 -- aerial.nvim: https://github.com/stevearc/aerial.nvim
 -- telescope.nvim
 
@@ -64,7 +61,7 @@ require('FTerm').setup {
     ---Command to run inside the terminal
     ---NOTE: if given string[], it will skip the shell and directly executes the command
     ---@type fun():(string|string[])|string|string[]
-    cmd = os.getenv('SHELL'),
+    -- cmd = os.getenv('SHELL'),
 
     -- auto_close = true, ---Close the terminal as soon as shell/command exits.
     hl = 'Normal', ---Highlight group for the terminal. See `:h winhl`
@@ -79,18 +76,12 @@ vim.keymap.set('n', '<A-t>', '<CMD>lua require("FTerm").toggle()<CR>')
 vim.keymap.set('t', '<A-t>', '<C-\\><C-n><CMD>lua require("FTerm").toggle()<CR>')
 -- }}}
 
--- fix colors/highlighting in 0.8
-vim.api.nvim_set_hl(0, 'FloatBorder', {bg = '#3B4252', fg = '#5E81AC'})
-vim.api.nvim_set_hl(0, 'NormalFloat', {bg = '#3B4252'})
-vim.api.nvim_set_hl(0, 'TelescopeNormal', {bg = '#3B4252'})
-vim.api.nvim_set_hl(0, 'TelescopeBorder', {bg = '#3B4252'})
-
 local nvim_lsp = require('lspconfig')
-local coq = require('coq')
+-- local coq = require('coq')
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
-local on_attach = function (client, bufnr)-- {{{
+local on_attach = function (_, bufnr)-- {{{
     local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
     local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
@@ -154,6 +145,10 @@ nvim_lsp.lua_ls.setup {-- {{{
         return true
     end,
     on_attach = on_attach,
+    settings = {
+        -- suppress warning
+        Lua = { diagnostics = {globals = {'vim'}} }
+    },
 }-- }}}
 
 -- tagbar {{{

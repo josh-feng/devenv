@@ -24,8 +24,7 @@ vim.o.fileencoding = 'utf-8' -- gbk,gb18030,big5,iso8859-1,default
 vim.o.tabstop = 4
 vim.o.shiftwidth = 4
 vim.o.softtabstop = 4
--- disable realtime editing result
-vim.o.icm = ''
+vim.o.icm = '' -- disable realtime editing result
 vim.cmd('filetype plugin indent on')
 vim.cmd('syntax enable')
 vim.o.expandtab = true
@@ -108,36 +107,35 @@ vim.o.spellfile = '~/.vim/spell/en.utf-8.add'
 -- ----- color ----- {{{
 vim.o.background = 'dark'   -- dark/light
 
--- hi CursorColumn cterm=NONE ctermbg=black ctermfg=green guibg=NONE guifg=NONE
+-- vim.o.t_Co == '256' then -- rxvt-unicode-256color
+-- vim.cmd('hi CursorLine guibg=darkgrey')
+-- vim.cmd('hi Comment guifg=243 guibg=NONE guibg=NONE guifg=darkgrey')
+-- colorscheme evening
+-- vim.cmd('hi CursorLine ctermbg=NONE')
+-- vim.cmd('hi Comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold')
+-- vim.cmd('hi Folded term=bold guibg=darkgrey guifg=blue')
+-- vim.cmd('hi FoldColumn guibg=darkgrey guifg=white')
 
-if vim.o.t_Co == '256' then -- rxvt-unicode-256color
-    vim.cmd('hi CursorLine   ctermbg=darkgrey')
-    vim.cmd('hi Comment ctermfg=243 ctermbg=NONE guibg=NONE guifg=darkgrey')
-else -- colorscheme evening
-    vim.cmd('hi CursorLine   ctermbg=NONE')
-    vim.cmd('hi Comment ctermfg=darkblue ctermbg=black guifg=gray gui=bold')
-end
-vim.cmd('hi Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue')
-vim.cmd('hi FoldColumn guibg=darkgrey guifg=white')
+vim.cmd('hi StatusLineNC guibg=grey')
+vim.cmd('au WinEnter * highlight StatusLine guibg=green')
 
-vim.cmd('au WinLeave * highlight StatusLine ctermfg=darkgrey')
-vim.cmd('au WinEnter * highlight StatusLine ctermfg=green')
+-- LSP E/W/I/H
+vim.cmd('hi DiagnosticError guibg=black')
+vim.cmd('hi DiagnosticWarn  guibg=black')
+vim.cmd('hi DiagnosticInfo  guibg=black')
+vim.cmd('hi DiagnosticHint  guibg=black')
 -- }}}
 
--- ----- binding ----- {{{
--- nmap ;; :split | terminal
+-- ----- binding ----- {{{ w/W to be defined
+vim.g.mapleader = ','       -- let mapleader = ","
+vim.g.maplocalleader = ','  -- let maplocalleader = ","
+
 vim.keymap.set('n', ';', ':!')
 vim.keymap.set('n', '<Bslash><Bslash>', ':call RidSpace()<CR>', {silent = true})
-vim.cmd([[let mapleader = ","]])
-vim.cmd([[let maplocalleader = ","]])
-
 vim.keymap.set('n', '<Leader>,', ':set wrap!<CR>', {silent = true})
 
--- TODO www/lynx/links2/gitbook: gx: xdg-open
-vim.cmd([=[nmap <silent> w /\[[^\]]*\]([^)]*)<CR>]=])
-
 -- nnoremap <F9> :set invpaste paste?<CR>
-vim.o.pastetoggle = '<F9>'
+-- vim.o.pastetoggle = '<F9>'
 
 vim.keymap.set('n', 't', '<C-w>')
 vim.keymap.set('n', 'tm', ':vnew<CR>')
@@ -152,6 +150,16 @@ vim.keymap.set('n', 'Tp', ':tabmove -1<CR>', {silent = true})
 vim.keymap.set('n', '<F2>', ':set invcursorcolumn invcursorline wrap! nu!<CR>', {silent = true})
 vim.keymap.set('n', '<F3>', ':set invcursorline rnu!<CR>', {silent = true})
 vim.keymap.set('n', '<F4>', ':copen<CR><c-w>J', {silent = true}) -- quickfix
+-- vim.keymap.set('n', '<F5>', ':lua vim.diagnostic.able(0)<CR>', {silent = true})
+vim.keymap.set("n", "<F5>", function() -- current buffer
+    vim.diagnostic[vim.diagnostic.is_disabled(0) and 'enable' or 'disable'](0)
+end, {silent = true})
+vim.keymap.set("n", "<F6>", function() -- all buffers
+    local current_value = vim.diagnostic.config().virtual_text
+    vim.diagnostic.config({ virtual_text = not current_value })
+end, { desc = "Toggle virtual text" })
+
+
 
 -- c-j generate 'NL'
 vim.keymap.set('i', '<C-h>', '<c-o>h')
@@ -160,8 +168,7 @@ vim.keymap.set('i', '<C-k>', '<c-o>k')
 vim.keymap.set('i', '<C-l>', '<c-o>l')
 
 vim.keymap.set('i', '<F2>', '<C-R>=strftime("%Y-%m%d")<CR>')
--- inoremap <F3>
-vim.keymap.set('i', '<F4>', '<C-v>u')
+-- vim.keymap.set('i', '<F4>', '<C-v>u')
 
 -- Useful bubble text normal mapping for arrow keys.
 -- vnoremap <DOWN>  xjP`[<C-V>`]
@@ -235,7 +242,7 @@ augroup END
 au FileType vim           let&l:kp=':help'
 au FileType python        set kp=pydoc
 au FileType perl          set kp=perldoc
-au FileType c,cpp,h,hpp   set kp=man\ -S\ 3p:2:3
+au FileType c,cpp,h,hpp   set kp=man\ -s\ 3p:2:3
 au FileType c,cpp,h,hpp   set ts=2 sw=2
 
 au FileType text,tex,bib,mail,rml,pandoc set kp=sdcv
@@ -287,4 +294,4 @@ require('plugins') -- lua/plugins.lua .config/nvim/lua/plugins.lua
 --       When the result is a |List| the items are used as lines.
 -- ===================================================================
 -- }}}
--- vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1
+-- vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->
